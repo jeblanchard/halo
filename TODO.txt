@@ -1,0 +1,1 @@
+Add documentation of us using the bochs environment variables.
