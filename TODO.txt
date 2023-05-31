@@ -5,3 +5,6 @@ Add a script that replaces the boshrc file with the one created here.
 Add a little description of how to handle the TODO file to the project
 README.
 
+Add a script that boots Bochs with the updated configurations. May
+need to handle OS privileges.
+
