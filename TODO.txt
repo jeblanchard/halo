@@ -1,4 +1,4 @@
-Add documentation of us using the bochs environment variables.
+Add documentation of this using the bochs environment variables.
 
 Add a script that replaces the boshrc file with the one created here.
 
