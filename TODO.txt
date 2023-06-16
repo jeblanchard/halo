@@ -1,8 +1,4 @@
-Add documentation of this using the bochs environment variables.
-
 Add a script that replaces the boshrc file with the one created here.
-
-Add a script that boots Bochs with the updated configurations. May
-need to handle OS privileges.
+May need to handle OS privileges.
 
 Find a tool that formats the assembly code properly.
