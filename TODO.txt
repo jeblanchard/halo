@@ -3,8 +3,6 @@ May need to handle OS privileges.
 
 Find a tool that formats the assembly code properly.
 
-Incorporate Make into the project to automate builds.
-
 Include image generation on VGA.
 
 Implement some sort of network protocol.
