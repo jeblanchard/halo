@@ -35,7 +35,7 @@ for full_filename in ${obj_dir}/*
 # (for IntelliJ)
 # shellcheck disable=SC2086
 kernel_entry_full_filename="${obj_dir}/${kernel_entry_filename}"
-kernel_tmp_filename="${out_dir}/kernel.tmp"
+kernel_tmp_filename="${obj_dir}/kernel.tmp.o"
 ld -T NUL -o ${kernel_tmp_filename} -Ttext 0x1000 ${kernel_entry_full_filename} ${o_files_to_link}
 
 # Take only the machine instruction binary from the kernel's
