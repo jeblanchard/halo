@@ -40,7 +40,7 @@ disk_error:
 
     jmp $
 
-%include "boot/utilities/print_hex_real_mode.asm"
+%include "source/boot/utilities/print_hex_real_mode.asm"
 
 ; Variables
 DISK_ERROR_MSG db "Disk read error!", 0

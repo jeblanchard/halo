@@ -1,10 +1,11 @@
+#include "drivers/screen.h"
+
 void start() {
 
-    // Create a pointer to a char, and point it to the first text cell of
-    // video memory (i.e. the top - left of the screen )
-    char* video_memory = (char*) 0xb8000;
+    // We do this to ensure a clean screen as well as a known cursor position
+    // for our kernel to work with.
+    clear_screen();
 
-    // At the address pointed to by video_memory, store the character ’X’
-    // (i.e. display ’X’ in the top - left of the screen ).
-    *video_memory = 'X';
+    char message[] = "Welcome to Halo.\nThe greatest OS ever created.";
+    print(message);
 }

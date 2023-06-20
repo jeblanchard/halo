@@ -1,0 +1,7 @@
+ENTRY(start)
+
+OUTPUT_FORMAT(binary)
+
+STARTUP(output/boot_sect_kernel_bootstrap.bin)
+
+OUTPUT(os-image.bin)

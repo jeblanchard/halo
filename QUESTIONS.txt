@@ -1,0 +1,6 @@
+Why do we have to tell the linker about the origin of our code? I understand
+that the hardware expects code to be in a certain area of memory, but I don't
+understand why the code needs to know where it exists. Is it because
+typically processes will have their own memory space?
+
+Revisit how C handles pointer dereferencing.

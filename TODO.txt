@@ -2,3 +2,18 @@ Add a script that replaces the boshrc file with the one created here.
 May need to handle OS privileges.
 
 Find a tool that formats the assembly code properly.
+
+Incorporate Make into the project to automate builds.
+
+Include image generation on VGA.
+
+Implement some sort of network protocol.
+
+Switch to an editor that supports C.
+
+Create a nice looking welcome screen once the kernel
+is loaded.
+
+Find better documentation on VGA programming.
+
+Learn about GAS inline assembly.

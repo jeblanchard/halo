@@ -19,11 +19,11 @@ call switch_to_pm               ; Switch to protected mode, from which
                                 ; we will not return
 jmp $
 
-%include "boot/utilities/print_string.asm"
-%include "boot/utilities/disk_load.asm"
-%include "boot/pm/gdt.asm"
-%include "boot/pm/print_string_pm.asm"
-%include "boot/pm/switch_to_pm.asm"
+%include "source/boot/utilities/print_string_rm.asm"
+%include "source/boot/utilities/disk_load.asm"
+%include "source/boot/protected-mode/gdt.asm"
+%include "source/boot/protected-mode/print_string_pm.asm"
+%include "source/boot/protected-mode/switch_to_pm.asm"
 
 [bits 16]
 
@@ -58,8 +58,8 @@ jmp $                               ; Hang.
 
 ; Global variables
 BOOT_DRIVE                   db 0
-MSG_REAL_MODE                db "Started in 16-bit Real Mode", 0
-MSG_PROT_MODE                db "Successfully landed in 32-bit Protected Mode", 0
+MSG_REAL_MODE                db "Started in 16-bit Real Mode.", 0
+MSG_PROT_MODE                db "Successfully landed in 32-bit Protected Mode.", 0
 DEBUG_SET_BOOT_DRIVE         db "Set up boot drive.", 0
 
 ; Boot sector padding
