@@ -9,9 +9,39 @@ Implement some sort of network protocol.
 
 Switch to an editor that supports C.
 
-Create a nice looking welcome screen once the kernel
-is loaded.
-
 Find better documentation on VGA programming.
 
 Learn about GAS inline assembly.
+
+Include a linker script as opposed to a bunch of command
+line options for ld / gcc / etc.
+
+Implement a keyboard driver.
+
+Implement processes.
+
+Convert all the drivers to C for easier maintainability /
+flexibility.
+
+Get the PIT working and incrementing a count. This is the (fully
+reachable) goal of 6/26.
+
+Make it to where new interrupts don't have to worry about
+fostering the environment for interrupts. This means
+not having to include start and return_from interrupt
+handler routines.
+
+Add to build script functionality to clear output directory
+before building.
+
+propose a change to the gcc compiler to have that command line
+option actually not pack structures at all.
+
+revisit GDT initialization issue. the limit is equal to the gdtr
+address provided, for some crazy reason. solving this really
+has sunk my time for a pretty minimal benefit at this point.
+
+figure out why my print int function can't print large
+ints.
+
+why does the new load_idt work?

@@ -1,6 +1,7 @@
 #include "screen.h"
 #include "../utils/low_level.h"
 #include "../utils/memory.h"
+#include "../utils/string.h"
 
 void set_cursor(int cell_offset) {
 
@@ -19,11 +20,11 @@ void set_cursor(int cell_offset) {
     //   reg 15: which is the low byte of the cursor’s offset
     // Once the internal register has been selected, we may read or
     // write a byte on the data register.
-    port_byte_out(REG_SCREEN_CTRL, 14);
-    port_byte_out(REG_SCREEN_DATA, high_byte);
+    port_byte_out(SCREEN_CTRL_REG, 14);
+    port_byte_out(SCREEN_DATA_REG, high_byte);
 
-    port_byte_out(REG_SCREEN_CTRL, 15);
-    port_byte_out(REG_SCREEN_DATA, low_byte);
+    port_byte_out(SCREEN_CTRL_REG, 15);
+    port_byte_out(SCREEN_DATA_REG, low_byte);
 }
 
 // Returns the memory offset for a particular
@@ -74,10 +75,10 @@ int get_cursor() {
     //   reg 15: which is the low byte of the cursor’s offset
     // Once the internal register has been selected, we may read or
     // write a byte on the data register.
-    port_byte_out(REG_SCREEN_CTRL, 14);
-    int offset = port_byte_in(REG_SCREEN_DATA) << 8;
-    port_byte_out(REG_SCREEN_CTRL, 15);
-    offset += port_byte_in(REG_SCREEN_DATA);
+    port_byte_out(SCREEN_CTRL_REG, 14);
+    int offset = port_byte_in(SCREEN_DATA_REG) << 8;
+    port_byte_out(SCREEN_CTRL_REG, 15);
+    offset += port_byte_in(SCREEN_DATA_REG);
 
     // Since the cursor offset reported by the VGA hardware is the
     // number of characters, we multiply by two to convert it to
@@ -163,6 +164,26 @@ void clear_screen() {
         }
     }
 
-    // Move the cursor back to the top left .
+    // Move the cursor back to the top left.
     set_cursor(get_screen_offset(0 , 0));
+}
+
+void print_int_ln(int val) {
+    char* string_repr = int_to_string(val, 10);
+    print_ln(string_repr);
+}
+
+void print_int_ln_hex(int val) {
+    char* int_str = int_to_string(val, 16);
+    char hex_prefix[] = "0x";
+
+    print(hex_prefix);
+    print_ln(int_str);
+}
+
+void print_ln(char* message) {
+    print(message);
+
+    char newline[] = "\n";
+    print(newline);
 }

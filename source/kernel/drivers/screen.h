@@ -6,12 +6,16 @@
 #define WHITE_ON_BLACK 0x0f
 
 // Screen device I/O ports
-#define REG_SCREEN_CTRL 0x3D4
-#define REG_SCREEN_DATA 0x3D5
+#define SCREEN_CTRL_REG 0x3D4
+#define SCREEN_DATA_REG 0x3D5
 
 // Prints a string at the current
 // cursor position.
 void print(char* message);
+
+// Same as print() but followed by a
+// newline.
+void print_ln(char* message);
 
 // Prints a character at the specified cell. If row or col is negative,
 // prints the char at the current cursor position. If the
@@ -28,3 +32,10 @@ void clear_screen();
 
 // Sets the cursor to the provided cell offset.
 void set_cursor(int cell_offset);
+
+// Prints the string representation of the
+// val provided (in base 10). Followed by
+// a newline.
+void print_int_ln(int val);
+
+void print_int_ln_hex(int val);

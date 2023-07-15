@@ -12,6 +12,7 @@ disk_load:
                                     ; after the boot sector)
 
     int 0x13                        ; BIOS interrupt
+
     jc disk_error                   ; Jump if error (i.e. carry flag set)
     pop dx                          ; Restore DX from the stack
 
@@ -40,8 +41,7 @@ disk_error:
 
     jmp $
 
-%include "source/boot/utilities/print_hex_real_mode.asm"
+%include "source/boot/utilities/print_hex_rm.asm"
 
 ; Variables
 DISK_ERROR_MSG db "Disk read error!", 0
-

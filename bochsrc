@@ -2,3 +2,4 @@
 # a floppy disk inserted into a computer at boot time.
 floppya : 1 _44=os-image.bin, status=inserted
 boot: a
+memory: guest=4000, host=32

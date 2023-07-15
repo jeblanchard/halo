@@ -4,3 +4,9 @@ understand why the code needs to know where it exists. Is it because
 typically processes will have their own memory space?
 
 Revisit how C handles pointer dereferencing.
+
+How does C's runtime work?
+
+What is the advantage of ternary computers? Or quantum computers?
+
+What controls the speed of CPUs?

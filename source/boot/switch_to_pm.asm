@@ -3,9 +3,9 @@
 ; Switch to protected mode
 switch_to_pm:
 
-    ; We must switch off interrupts until we have
-    ; set-up the protected mode interrupt vector
-    ; otherwise interrupts will run riot.
+    ; We must switch off hardware interrupts until we have
+    ; set-up the PM IDT, otherwise the PIT will
+    ; trigger a hardware interrupt.
     cli
 
     ; Load our global descriptor table, which defines
@@ -22,7 +22,6 @@ switch_to_pm:
     ; code. This also forces the CPU to flush its cache of
     ; pre-fetched and real-mode decoded instructions, which can
     ; cause problems.
-
     jmp CODE_SEG:init_pm
 
 [bits 32]
