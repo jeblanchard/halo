@@ -30,35 +30,35 @@ void set_cursor(int cell_offset) {
 // Returns the memory offset for a particular
 // col and row of the screen.
 int get_screen_offset(int col, int row) {
-    return (row * MAX_COLS + col) * 2;
+    return (row * NUM_COLS + col) * 2;
 }
 
 /* Advance the text cursor, scrolling the video buffer if necessary. */
 int handle_scrolling(int cursor_offset) {
 
     // If the cursor is within the screen, return it unmodified.
-    if (cursor_offset < MAX_ROWS * MAX_COLS * 2) {
+    if (cursor_offset < NUM_ROWS * NUM_COLS * 2) {
         return cursor_offset;
     }
 
     /* Shuffle the rows back one. */
     int i;
-    for (i = 1; i < MAX_ROWS; i++) {
+    for (i = 1; i < NUM_ROWS; i++) {
         memory_copy((char*)(get_screen_offset(0, i) + VIDEO_ADDRESS),
                     (char*)(get_screen_offset(0, i - 1) + VIDEO_ADDRESS),
-                    MAX_COLS * 2
+                    NUM_COLS * 2
         );
     }
 
     /* Blank the last line by setting all bytes to 0 */
-    char* last_line = (char*)(get_screen_offset(0, MAX_ROWS - 1) + VIDEO_ADDRESS);
-    for (i = 0; i < MAX_COLS * 2; i++) {
+    char* last_line = (char*)(get_screen_offset(0, NUM_ROWS - 1) + VIDEO_ADDRESS);
+    for (i = 0; i < NUM_COLS * 2; i++) {
         last_line[i] = 0;
     }
 
     // Move the offset back one row, such that it is now on the last
     // row, rather than off the edge of the screen.
-    cursor_offset -= 2 * MAX_COLS;
+    cursor_offset -= 2 * NUM_COLS;
 
     // Return the updated cursor position.
     return cursor_offset;
@@ -112,7 +112,7 @@ void print_char(char character, int col, int row, char attribute_byte) {
     // current row, so it will be advanced to the first col
     // of the next row.
     if (character == '\n') {
-        int rows = offset / (2 * MAX_COLS);
+        int rows = offset / (2 * NUM_COLS);
         offset = get_screen_offset(79, rows);
 
     // Otherwise, write the character and its attribute byte to
@@ -158,14 +158,19 @@ void clear_screen() {
     int col = 0;
 
     /* Loop through video memory and write blank characters . */
-    for (row = 0; row < MAX_ROWS; row++) {
-        for (col = 0; col < MAX_COLS; col++) {
+    for (row = 0; row < NUM_ROWS; row++) {
+        for (col = 0; col < NUM_COLS; col++) {
             print_char(' ', col, row, WHITE_ON_BLACK);
         }
     }
 
     // Move the cursor back to the top left.
     set_cursor(get_screen_offset(0 , 0));
+}
+
+void print_int(int val) {
+    char* string_repr = int_to_string(val, 10);
+    print(string_repr);
 }
 
 void print_int_ln(int val) {
@@ -186,4 +191,18 @@ void print_ln(char* message) {
 
     char newline[] = "\n";
     print(newline);
+}
+
+void print_int_bottom_left(int num) {
+    int og_cursor_loc = get_cursor();
+
+    int bottom_left_offset = \
+        get_screen_offset(0, NUM_ROWS - 1);
+
+    set_cursor(bottom_left_offset);
+
+    char* num_str = int_to_string(num, 10);
+    print(num_str);
+
+    set_cursor(og_cursor_loc);
 }

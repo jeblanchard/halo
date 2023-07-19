@@ -1,6 +1,6 @@
 #define VIDEO_ADDRESS 0xb8000
-#define MAX_ROWS 25
-#define MAX_COLS 80
+#define NUM_ROWS 25
+#define NUM_COLS 80
 
 // Attribute byte for our default color scheme.
 #define WHITE_ON_BLACK 0x0f
@@ -39,3 +39,8 @@ void set_cursor(int cell_offset);
 void print_int_ln(int val);
 
 void print_int_ln_hex(int val);
+
+// Prints num at the bottom left of the screen, then
+// returns the cursor back to where it was when the
+// call was made.
+void print_int_bottom_left(int num);

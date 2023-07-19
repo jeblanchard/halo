@@ -45,3 +45,11 @@ figure out why my print int function can't print large
 ints.
 
 why does the new load_idt work?
+
+learn what the .global thing does in nasm.
+
+find out why the PIT only interrupts a single time.
+
+make an API to seamlessly add an IRQ
+
+get rid of the comments in the keyboard handler.

@@ -163,8 +163,8 @@ void send_ocw2(unsigned char ocw2, unsigned char pic_num) {
 
 // Send End of Interrupt signal to
 // PIC [pic_num]
-void send_eoi() {
-    send_ocw2(EOI_COMMAND, 0);
+void send_eoi(char pic_num) {
+    send_ocw2(EOI_COMMAND, pic_num);
 }
 
 // Initializes PIC 0 and 1.

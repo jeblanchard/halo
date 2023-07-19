@@ -3,4 +3,4 @@ void initialize_pic();
 
 // Send End of Interrupt signal to
 // PIC [pic_num]
-void send_eoi();
+void send_eoi(char pic_num);

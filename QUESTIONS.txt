@@ -10,3 +10,12 @@ How does C's runtime work?
 What is the advantage of ternary computers? Or quantum computers?
 
 What controls the speed of CPUs?
+
+why did switching to two chars to represent the flags
+fix the GDT issue?
+
+including header files vs source files. how are values
+from source files available even though i only
+included a header file?
+
+why do we have to set the direction flag forward for C functions? (cld)

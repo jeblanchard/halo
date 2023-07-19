@@ -2,23 +2,35 @@
 #include "../idt.h"
 #include "screen.h"
 #include "pit.h"
+#include "../utils/string.h"
+#include "pic.h"
 
 // Global Tick count
-unsigned int pit_ticks = 0;
+static int pit_ticks = 0;
 
 void pit_irq_handler() {
-
-	// increment tick count
 	pit_ticks++;
 
-    char message[] = "Handled PIT interrupt.";
-    print(message);
+	print_int_bottom_left(pit_ticks);
 
-    // Stall
-    for (;;) {};
+    send_eoi(0);
+    send_eoi(1);
+//    char eoi_msg[] = "EOI sent to PIC.";
+//    print_ln(eoi_msg);
 
-	return_from_int_handler();
+//    char handler_finished_msg[] = "\nPIT handler finished.";
+//    print_ln(handler_finished_msg);
 }
+
+extern void pit_irq_handler_entry();
+
+__asm__ (".global _pit_irq_handler_entry\n"
+         "_pit_irq_handler_entry:\n\t"
+         "cld\n\t"                    // Set direction flag forward for C functions
+         "pusha\n\t"                  // Save all the registers
+         "call _pit_irq_handler\n\t"
+         "popa\n\t"                   // Restore all the registers
+         "iret");
 
 // Send command to the PIC.
 void pit_send_command(unsigned char cmd) {
@@ -76,7 +88,7 @@ void pit_set_counter(unsigned int freq, unsigned char ocw) {
 void initialize_pit() {
     unsigned char flags = 0x8e; // 1000 1110
     unsigned short segment_sel = 0x0008; // 0000 0000 0000 1000
-    unsigned int handler_address = (unsigned int) &pit_irq_handler;
+    unsigned int handler_address = (unsigned int) pit_irq_handler_entry;
 
     unsigned char ir_num = LAST_RESERVED_IR_NUM + 1 + PIT_IRQ_NUM;
 
@@ -85,8 +97,8 @@ void initialize_pit() {
                segment_sel,
                handler_address);
 
-    unsigned char ocw = 0x37; // 0011 0111
-    pit_set_counter(10, ocw);
+    unsigned char ocw = 0x36; // 0011 0110
+    pit_set_counter(50, ocw);
 
     char message[] = "PIT initialized.\n";
     print(message);

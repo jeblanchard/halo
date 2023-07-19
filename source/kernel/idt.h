@@ -18,17 +18,14 @@ void initialize_idt();
 void install_ir(unsigned char ir_num,
                 unsigned char flags,
                 unsigned short segment_sel,
-                unsigned int handler_address);
+                unsigned int handler_entry_address);
 
 #define MAX_IR_NUM 255
 
 #define LAST_RESERVED_IR_NUM 31
 
-// Returns from an Interrupt handler
-void return_from_int_handler();
-
 // Enables hardware interrupts
 void enable_hardware_interrupts();
 
 // Generate interrupt call
-void gen_interrupt(unsigned char int_num);
+void gen_interrupt();

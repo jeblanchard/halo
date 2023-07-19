@@ -1,0 +1,14 @@
+given some handler, install_ir will generate asm?
+
+maintain an array of interrupt handler addresses in order
+to ensure nothing gets overwritten
+
+create a file that has 256 interrupt handlers explicitly
+declared
+
+how do i generate the correct asm for each interrupt?
+
+do i force each device to generate its own asm? this seems
+to be the best option right now.
+
+

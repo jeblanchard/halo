@@ -3,6 +3,7 @@
 #include "drivers/pic.h"
 #include "idt.h"
 #include "gdt.h"
+#include "drivers/keyboard.h"
 
 // At this point, we have just entered PM. Hardware
 // interrupts have been disabled in order to allow us to
@@ -17,22 +18,25 @@ void start() {
     char reached_kernel_msg[] = "Reached kernel.\n";
     print(reached_kernel_msg);
 
+    initialize_gdt();
     initialize_idt();
     initialize_pic();
-
-//    enable_hardware_interrupts();
-
     initialize_pit();
+    initialize_keyboard();
 
     char init_msg[] = "Finished initialization.\n";
     print(init_msg);
 
-    char message[] = "Welcome to Halo.\nThe greatest OS ever created.";
+    char message[] = "\nWelcome to Halo.\nThe greatest OS ever created.";
     print(message);
 
-//    unsigned char pit_int_num = 10;
-//    gen_interrupt(pit_int_num);
+    enable_hardware_interrupts();
 
     // Infinite loop.
-    for (;;) {};
+    int i = 0;
+    for (; i < 100; i++) {
+        gen_interrupt();
+//        char loop_msg[] = "Looped.";
+//        print(loop_msg);
+    };
 }
