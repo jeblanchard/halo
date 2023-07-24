@@ -13,7 +13,7 @@ void start() {
     // We do this to ensure a clean screen as well
     // as a known cursor position for our kernel
     // to work with.
-    clear_screen();
+    initialize_screen();
 
     char reached_kernel_msg[] = "Reached kernel.\n";
     print(reached_kernel_msg);

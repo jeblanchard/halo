@@ -109,6 +109,91 @@ void default_handler_9_10() {
     for (;;) {};
 }
 
+extern void default_handler_11_20_entry();
+
+__asm__ (".global _default_handler_11_20_entry\n"
+         "_default_handler_11_20_entry:\n\t"
+         "cld\n\t"                    // Set direction flag forward for C functions
+         "pusha\n\t"                  // Save all the registers
+         "call _default_handler_11_20\n\t"
+         "popa\n\t"                   // Restore all the registers
+         "iret");
+
+void default_handler_11_20() {
+    char message[] = "Default handler 11 - 20 was triggered.";
+    print_ln(message);
+
+    for (;;) {};
+}
+
+extern void default_handler_21_26_entry();
+
+__asm__ (".global _default_handler_21_26_entry\n"
+         "_default_handler_21_26_entry:\n\t"
+         "cld\n\t"                    // Set direction flag forward for C functions
+         "pusha\n\t"                  // Save all the registers
+         "call _default_handler_21_26\n\t"
+         "popa\n\t"                   // Restore all the registers
+         "iret");
+
+void default_handler_21_26() {
+    char message[] = "Default handler 21 - 26 was triggered.";
+    print_ln(message);
+
+    for (;;) {};
+}
+
+extern void default_handler_27_29_entry();
+
+__asm__ (".global _default_handler_27_29_entry\n"
+         "_default_handler_27_29_entry:\n\t"
+         "cld\n\t"                    // Set direction flag forward for C functions
+         "pusha\n\t"                  // Save all the registers
+         "call _default_handler_27_29\n\t"
+         "popa\n\t"                   // Restore all the registers
+         "iret");
+
+void default_handler_27_29() {
+    char message[] = "Default handler 27 - 29 was triggered.";
+    print_ln(message);
+
+    for (;;) {};
+}
+
+extern void default_handler_30_31_entry();
+
+__asm__ (".global _default_handler_30_31_entry\n"
+         "_default_handler_30_31_entry:\n\t"
+         "cld\n\t"                    // Set direction flag forward for C functions
+         "pusha\n\t"                  // Save all the registers
+         "call _default_handler_30_31\n\t"
+         "popa\n\t"                   // Restore all the registers
+         "iret");
+
+void default_handler_30_31() {
+    char message[] = "Default handler 30 - 31 was triggered.";
+    print_ln(message);
+
+    for (;;) {};
+}
+
+extern void default_handler_32_entry();
+
+__asm__ (".global _default_handler_32_entry\n"
+         "_default_handler_32_entry:\n\t"
+         "cld\n\t"                    // Set direction flag forward for C functions
+         "pusha\n\t"                  // Save all the registers
+         "call _default_handler_32\n\t"
+         "popa\n\t"                   // Restore all the registers
+         "iret");
+
+void default_handler_32() {
+    char message[] = "Default handler 32 was triggered.";
+    print_ln(message);
+
+    for (;;) {};
+}
+
 extern void ir_6_handler_entry();
 
 __asm__ (".global _ir_6_handler_entry\n"
@@ -252,13 +337,51 @@ void initialize_idt() {
                    default_handler_9_10_address);
     }
 
-	unsigned int default_handler_address = (unsigned int) default_handler_entry;
-	for (unsigned short ir_num = 11; ir_num <= MAX_IR_NUM; ir_num++) {
+    unsigned int default_handler_11_20_address = (unsigned int) default_handler_11_20_entry;
+    for (unsigned short ir_num = 11; ir_num <= 20; ir_num++) {
+        install_ir(ir_num,
+                   flags,
+                   segment_sel,
+                   default_handler_11_20_address);
+    }
+
+    unsigned int default_handler_21_26_address = (unsigned int) default_handler_21_26_entry;
+    for (unsigned short ir_num = 21; ir_num <= 26; ir_num++) {
+        install_ir(ir_num,
+                   flags,
+                   segment_sel,
+                   default_handler_21_26_address);
+    }
+
+    unsigned int default_handler_27_29_address = (unsigned int) default_handler_27_29_entry;
+    for (unsigned short ir_num = 27; ir_num <= 29; ir_num++) {
+        install_ir(ir_num,
+                   flags,
+                   segment_sel,
+                   default_handler_27_29_address);
+    }
+
+    unsigned int default_handler_30_31_address = (unsigned int) default_handler_30_31_entry;
+    for (unsigned short ir_num = 30; ir_num <= 31; ir_num++) {
+        install_ir(ir_num,
+                   flags,
+                   segment_sel,
+                   default_handler_30_31_address);
+    }
+
+    unsigned int default_handler_32_address = (unsigned int) default_handler_32_entry;
+        install_ir(32,
+                   flags,
+                   segment_sel,
+                   default_handler_32_address);
+
+    unsigned int default_handler_address = (unsigned int) default_handler_entry;
+    for (unsigned short ir_num = 33; ir_num <= MAX_IR_NUM; ir_num++) {
         install_ir(ir_num,
                    flags,
                    segment_sel,
                    default_handler_address);
-	}
+    }
 
     unsigned short limit = (unsigned short) sizeof(idt) - 1;
     load_idt(&idt, limit);

@@ -35,3 +35,11 @@ void print_int_ln_hex(int val);
 // returns the cursor back to where it was when the
 // call was made.
 void print_int_bottom_left(int num);
+
+void hide_clock();
+
+void show_clock();
+
+void update_clock();
+
+void initialize_screen();

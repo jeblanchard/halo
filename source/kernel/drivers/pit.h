@@ -44,3 +44,5 @@ void pit_irq_handler();
 //   10: Counter 2
 //   11: Illegal value
 void pit_set_counter(unsigned int freq, unsigned char ocw);
+
+int get_tick_count();

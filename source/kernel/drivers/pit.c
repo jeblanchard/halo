@@ -9,43 +9,23 @@
 // Global Tick count
 static int pit_ticks = 0;
 
+int get_tick_count() {
+    return pit_ticks;
+}
+
 void pit_irq_handler() {
 	pit_ticks++;
-
-	print_int_bottom_left(pit_ticks);
-
-//    char primary_pic_imr_bef_msg[] = "Primary PIC IMR before EOI instruction: ";
-//    print(primary_pic_imr_bef_msg);
-//    unsigned char primary_pic_imr = read_pic_imr(0);
-//    print_int_ln_hex(primary_pic_imr);
-//
-//    char secondary_pic_imr_bef_msg[] = "Secondary PIC IMR before EOI instruction: ";
-//    print(secondary_pic_imr_bef_msg);
-//    unsigned char secondary_pic_imr = read_pic_imr(1);
-//    print_int_ln_hex(secondary_pic_imr);
-
-//    char primary_pic_imr_after_msg[] = "Primary PIC IMR after EOI instruction: ";
-//    print(primary_pic_imr_after_msg);
-//    primary_pic_imr = read_pic_imr(0);
-//    print_int_ln_hex(primary_pic_imr);
-//
-//    char secondary_pic_imr_after_msg[] = "Secondary PIC IMR after EOI instruction: ";
-//    print(secondary_pic_imr_after_msg);
-//    secondary_pic_imr = read_pic_imr(1);
-//    print_int_ln_hex(secondary_pic_imr);
-
-//    char handler_finished_msg[] = "PIT handler finished.";
-//    print_ln(handler_finished_msg);
+	update_clock();
 }
 
 extern void pit_irq_handler_entry();
 
 __asm__ (".global _pit_irq_handler_entry\n"
          "_pit_irq_handler_entry:\n\t"
-         "cld\n\t"                    // Set direction flag forward for C functions
-         "pusha\n\t"                  // Save all the registers
+         "cld\n\t"
+         "pusha\n\t"
          "call _pit_irq_handler\n\t"
-         "popa\n\t"                   // Restore all the registers
+         "popa\n\t"
          "iret");
 
 // Send command to the PIC.

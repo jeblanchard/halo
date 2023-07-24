@@ -1,11 +1,11 @@
 #include "../utils/low_level.h"
 #include "../utils/memory.h"
 #include "../utils/string.h"
+#include "../utils/standard.h"
+#include "pit.h"
+#include "screen.h"
 
 #define VIDEO_ADDRESS 0xb8000
-
-static char NUM_ROWS = 25;
-static char NUM_COLS = 80;
 
 // Attribute byte for our default color scheme.
 #define WHITE_ON_BLACK 0x0f
@@ -38,44 +38,132 @@ void set_cursor(int cell_offset) {
     port_byte_out(SCREEN_DATA_REG, low_byte);
 }
 
+#define NUM_ROWS 25
+#define NUM_COLS 80
+
 // Returns the memory offset for a particular
 // col and row of the screen.
 int get_screen_offset(int col, int row) {
     return (row * NUM_COLS + col) * 2;
 }
 
-static char MAX_WRITEABLE_ROW = NUM_ROWS - 1;
-static char MAX_WRITEABLE_COL = NUM_COLS - 1;
+void clear_row(char row_num) {
 
-/* Advance the text cursor, scrolling the video buffer if necessary. */
+    // We set all bytes to 0
+    char* line = (char*) (get_screen_offset(0, row_num) + VIDEO_ADDRESS);
+    for (int i = 0; i < NUM_COLS * 2; i++) {
+        line[i] = 0;
+    }
+}
+
+static char NUM_WRITEABLE_ROWS;
+static char NUM_WRITEABLE_COLS;
+
+static bool SCROLLING_IS_ENABLED;
+
+// Advances the text cursor, scrolling the video buffer if necessary
 int handle_scrolling(int cursor_offset) {
 
-    // If the cursor is within the screen, return it unmodified.
-    if (cursor_offset < NUM_ROWS * NUM_COLS * 2) {
+    if (SCROLLING_IS_ENABLED) {
+        // continue
+    } else {
         return cursor_offset;
     }
 
-    /* Shuffle the rows back one. */
-    int i;
-    for (i = 1; i < NUM_ROWS; i++) {
+    // If the cursor is within the screen, return it unmodified
+    if (cursor_offset < NUM_WRITEABLE_ROWS * NUM_WRITEABLE_COLS * 2) {
+        return cursor_offset;
+    }
+
+    // Shuffle the rows back one
+    for (int i = 1; i < NUM_WRITEABLE_ROWS; i++) {
         memory_copy((char*) (get_screen_offset(0, i) + VIDEO_ADDRESS),
                     (char*) (get_screen_offset(0, i - 1) + VIDEO_ADDRESS),
-                    NUM_COLS * 2
+                    NUM_WRITEABLE_COLS * 2
         );
     }
 
-    /* Blank the last line by setting all bytes to 0 */
-    char* last_line = (char*) (get_screen_offset(0, NUM_ROWS - 1) + VIDEO_ADDRESS);
-    for (i = 0; i < NUM_COLS * 2; i++) {
-        last_line[i] = 0;
-    }
+    // Clear the last line
+    char last_writeable_row = NUM_WRITEABLE_ROWS - 1;
+    clear_row(last_writeable_row);
 
     // Move the offset back one row, such that it is now on the last
     // row, rather than off the edge of the screen.
-    cursor_offset -= 2 * NUM_COLS;
+    cursor_offset -= 2 * NUM_WRITEABLE_COLS;
 
-    // Return the updated cursor position.
+    // Return the updated cursor position
     return cursor_offset;
+}
+
+//int handle_scrolling(int cursor_offset) {
+//
+//    // If the cursor is within the screen, return it unmodified.
+//    if (cursor_offset < NUM_ROWS * NUM_COLS * 2) {
+//        return cursor_offset;
+//    }
+//
+//    /* Shuffle the rows back one. */
+//    int i;
+//    for (i = 1; i < NUM_ROWS; i++) {
+//        memory_copy((char*) (get_screen_offset(0, i) + VIDEO_ADDRESS),
+//                    (char*) (get_screen_offset(0, i - 1) + VIDEO_ADDRESS),
+//                    NUM_COLS * 2
+//        );
+//    }
+//
+//    /* Blank the last line by setting all bytes to 0 */
+//    char* last_line = (char*) (get_screen_offset(0, NUM_ROWS - 1) + VIDEO_ADDRESS);
+//    for (i = 0; i < NUM_COLS * 2; i++) {
+//        last_line[i] = 0;
+//    }
+//
+//    // Move the offset back one row, such that it is now on the last
+//    // row, rather than off the edge of the screen.
+//    cursor_offset -= 2 * NUM_COLS;
+//
+//    // Return the updated cursor position.
+//    return cursor_offset;
+//}
+
+static bool CLOCK_IS_VISIBLE;
+static short TIMER_ROW;
+
+void hide_clock() {
+    CLOCK_IS_VISIBLE = false;
+    NUM_WRITEABLE_ROWS = NUM_ROWS;
+
+    for (int r = TIMER_ROW; r < NUM_ROWS; r++) {
+        clear_row(r);
+    }
+}
+
+void show_clock() {
+    CLOCK_IS_VISIBLE = true;
+    NUM_WRITEABLE_ROWS = TIMER_ROW - 1;
+
+    update_clock();
+}
+
+void print_clock() {
+    bool og_scrolling_is_enabled = SCROLLING_IS_ENABLED;
+
+    SCROLLING_IS_ENABLED = false;
+
+    int tick_count = get_tick_count();
+    print_int_bottom_left(tick_count);
+
+    SCROLLING_IS_ENABLED = og_scrolling_is_enabled;
+}
+
+void update_clock() {
+    if (CLOCK_IS_VISIBLE) {
+        print_clock();
+    }
+}
+
+void initialize_clock() {
+    CLOCK_IS_VISIBLE = false;
+    TIMER_ROW = NUM_ROWS - 1;
 }
 
 // Returns the memory offset for the cursor
@@ -103,7 +191,7 @@ int get_cursor() {
 void print_char(char character, int col, int row, char attribute_byte) {
 
     /* Create a byte (char) pointer to the start of video memory */
-    unsigned char *vidmem = (unsigned char*) VIDEO_ADDRESS;
+    unsigned char *vid_memory = (unsigned char*) VIDEO_ADDRESS;
 
     /* If attribute byte is zero, assume the default style. */
     if (!attribute_byte) {
@@ -132,16 +220,14 @@ void print_char(char character, int col, int row, char attribute_byte) {
     // Otherwise, write the character and its attribute byte to
     // video memory at our calculated offset.
     } else {
-        vidmem[offset] = character;
-        vidmem[offset+1] = attribute_byte;
+        vid_memory[offset] = character;
+        vid_memory[offset+1] = attribute_byte;
     }
 
     // Update the offset to the next character cell, which is
     // two bytes ahead of the current cell.
     offset += 2;
 
-    // Make scrolling adjustment, for when we reach the bottom
-    // of the screen.
     offset = handle_scrolling(offset);
 
     // Update the cursor position on the screen device.
@@ -219,4 +305,16 @@ void print_int_bottom_left(int num) {
     print(num_str);
 
     set_cursor(og_cursor_loc);
+}
+
+void initialize_screen() {
+    clear_screen();
+
+    SCROLLING_IS_ENABLED = true;
+
+    NUM_WRITEABLE_ROWS = NUM_ROWS;
+    NUM_WRITEABLE_COLS = NUM_COLS;
+
+    initialize_clock();
+    show_clock();
 }

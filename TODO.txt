@@ -63,3 +63,8 @@ why send_eoi doesn't work?
 
 Read a little more about how the PIC handles race conditions between
 interrupts.
+
+include a logo in the top right that is always
+there (maybe a halo image?)
+
+how to better initialize static variables in C
