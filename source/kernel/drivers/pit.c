@@ -95,7 +95,4 @@ void initialize_pit() {
 
     unsigned char ocw = 0x36; // 0011 0110
     pit_set_counter(50, ocw);
-
-    char message[] = "PIT initialized.\n";
-    print(message);
 }

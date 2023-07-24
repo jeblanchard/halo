@@ -244,7 +244,4 @@ void initialize_pic() {
 	// Null out the data registers
 	pic_send_data(0, 0);
 	pic_send_data(0, 1);
-
-    char message[] = "PIC finished initializing.\n";
-    print(message);
 }

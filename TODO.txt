@@ -68,3 +68,6 @@ include a logo in the top right that is always
 there (maybe a halo image?)
 
 how to better initialize static variables in C
+
+figure out why the keyboard needs those initialization
+messages to function properly

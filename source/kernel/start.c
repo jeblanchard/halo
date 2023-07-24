@@ -4,19 +4,10 @@
 #include "idt.h"
 #include "gdt.h"
 #include "drivers/keyboard.h"
+#include "cmd-line/main.h"
 
-// At this point, we have just entered PM. Hardware
-// interrupts have been disabled in order to allow us to
-// initialize our PM environment.
-void start() {
-
-    // We do this to ensure a clean screen as well
-    // as a known cursor position for our kernel
-    // to work with.
+void initialize_kernel() {
     initialize_screen();
-
-    char reached_kernel_msg[] = "Reached kernel.\n";
-    print(reached_kernel_msg);
 
     initialize_gdt();
     initialize_idt();
@@ -25,13 +16,13 @@ void start() {
     initialize_pit();
     initialize_keyboard();
 
-    char init_msg[] = "Finished initialization.";
-    print_ln(init_msg);
-
-    char message[] = "Welcome to Halo.\nThe greatest OS ever created.";
-    print_ln(message);
-
     enable_hardware_interrupts();
+}
 
-    for (;;) {};
+/* At this point, we have just entered PM. Hardware
+ * interrupts have been disabled in order to allow us to
+ * initialize our PM environment. */
+void start() {
+    initialize_kernel();
+    start_cmd_line();
 }

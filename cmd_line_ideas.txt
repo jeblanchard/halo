@@ -1,0 +1,10 @@
+save keyboard input
+
+once the user presses enter, compare the input against
+saved commands
+
+if there's a match, execute that command
+
+i need to learn more about user spaces and stuff like that
+
+should it represent a POSIX terminal?

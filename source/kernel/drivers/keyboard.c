@@ -52,7 +52,8 @@ unsigned char read_keyboard_controller_status() {
 
 bool keyboard_controller_is_ready_for_cmd() {
     unsigned char input_buffer_full = 2;
-    unsigned char is_input_buffer_full = read_keyboard_controller_status() & input_buffer_full;
+    unsigned char is_input_buffer_full = \
+        read_keyboard_controller_status() & input_buffer_full;
 
     if (is_input_buffer_full) {
         return false;
@@ -170,21 +171,14 @@ unsigned char read_keyboard_encoder_buf() {
 }
 
 // Handles the keyboard interrupt
-void keyboard_irq_handler() {
-//    char got_to_msg[] = "Got to keyboard IRQ handler.\n";
-//    print(got_to_msg);
+void keyboard_irq_handler() {;
 
     // Read from the keyboard's data buffer
     unsigned char scancode = read_keyboard_encoder_buf();
 
-//    char read_buf_msg[] = "Read keyboard encoder buffer.\n";
-//    print(read_buf_msg);
-
     // If the top bit of the byte we read from the keyboard is
     // set, that means that a key has just been released
     if (scancode & 0x80) {
-//        char released_key_msg[] = "Key was just released.";
-//        print_ln(released_key_msg);
 
         // Currently does not handle SHIFT, ALT, etc.
         // keys getting released.
@@ -202,27 +196,9 @@ void keyboard_irq_handler() {
         *  'shift' being held. If shift is held using the larger
         *  lookup table, you would add 128 to the scancode when
         *  you look for it */
-
-//        char pressed_key_msg[] = "Key was just pressed.";
-
-//        unsigned char key = keyboard_us[scancode];
         unsigned char key = keyboard_us[scancode];
-//        print_int(scancode);
-//        print_int(key);
         print_char(key, -1, -1, 0);
-
-
-//        char print_key_msg[] = "Printed key.";
-//        print_ln(print_key_msg);
     }
-
-//    send_eoi(0);
-
-//    char sent_eoi_msg[] = "Sent EOI.";
-//    print_ln(sent_eoi_msg);
-
-//    char handler_finished_msg[] = "Keyboard handler finished.";
-//    print_ln(handler_finished_msg);
 }
 
 extern void keyboard_handler_entry();
