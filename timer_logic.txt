@@ -1,0 +1,52 @@
+maybe i can add a function that changes
+the mode of the screen?
+
+there can be timer mode and default mode
+
+timer mode would display a timer at the
+bottom of the screen and not let anything
+get in its way
+
+default mode would be the default screen
+
+would having a screen object be best for
+this? the screen object is something
+that can be referenced by the functions
+that rely on it.
+
+all the print functions would need
+to know about the state the screen is
+in
+
+that feels like a lot to think about
+each time we want to add a screen method
+
+we could just have a variable that represents
+the screen mode
+
+we can have variables for printable rows
+(and printable columns) that can be updated
+with a function call
+
+we can have a function that sets the maximum
+row we can write to
+
+we can add a function that says include
+system timer
+    - this function will set the cursor
+      limit before it scrolls
+          - how will this affect the print_bottom_left function though?
+    - turn on the timer
+
+i really like the idea of having screen modes that
+we can select from.
+
+we can have DEFAULT_MODE
+we can have TIMER_MODE
+and can expand to other modes
+
+adding the logic to each of the screen printing functions
+may be cumbersome. is there a way to do this
+without having to go through and make one-by-one edits?
+
+have functions that enable and disable the timer.

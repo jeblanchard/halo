@@ -1,7 +1,18 @@
-#include "screen.h"
 #include "../utils/low_level.h"
 #include "../utils/memory.h"
 #include "../utils/string.h"
+
+#define VIDEO_ADDRESS 0xb8000
+
+static char NUM_ROWS = 25;
+static char NUM_COLS = 80;
+
+// Attribute byte for our default color scheme.
+#define WHITE_ON_BLACK 0x0f
+
+// Screen device I/O ports
+#define SCREEN_CTRL_REG 0x3D4
+#define SCREEN_DATA_REG 0x3D5
 
 void set_cursor(int cell_offset) {
 
@@ -33,6 +44,9 @@ int get_screen_offset(int col, int row) {
     return (row * NUM_COLS + col) * 2;
 }
 
+static char MAX_WRITEABLE_ROW = NUM_ROWS - 1;
+static char MAX_WRITEABLE_COL = NUM_COLS - 1;
+
 /* Advance the text cursor, scrolling the video buffer if necessary. */
 int handle_scrolling(int cursor_offset) {
 
@@ -44,14 +58,14 @@ int handle_scrolling(int cursor_offset) {
     /* Shuffle the rows back one. */
     int i;
     for (i = 1; i < NUM_ROWS; i++) {
-        memory_copy((char*)(get_screen_offset(0, i) + VIDEO_ADDRESS),
-                    (char*)(get_screen_offset(0, i - 1) + VIDEO_ADDRESS),
+        memory_copy((char*) (get_screen_offset(0, i) + VIDEO_ADDRESS),
+                    (char*) (get_screen_offset(0, i - 1) + VIDEO_ADDRESS),
                     NUM_COLS * 2
         );
     }
 
     /* Blank the last line by setting all bytes to 0 */
-    char* last_line = (char*)(get_screen_offset(0, NUM_ROWS - 1) + VIDEO_ADDRESS);
+    char* last_line = (char*) (get_screen_offset(0, NUM_ROWS - 1) + VIDEO_ADDRESS);
     for (i = 0; i < NUM_COLS * 2; i++) {
         last_line[i] = 0;
     }

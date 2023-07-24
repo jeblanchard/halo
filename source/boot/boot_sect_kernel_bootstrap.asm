@@ -21,7 +21,7 @@ call print_string
 ; the boot sector) from the boot disk (i.e. our
 ; kernel code) to address KERNEL_OFFSET
 mov bx, KERNEL_OFFSET
-mov dh, 15
+mov dh, 22
 mov dl, [BOOT_DRIVE]
 
 call disk_load

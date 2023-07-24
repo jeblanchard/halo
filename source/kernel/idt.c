@@ -92,17 +92,168 @@ void default_handler() {
     for (;;) {};
 }
 
+extern void default_handler_9_10_entry();
+
+__asm__ (".global _default_handler_9_10_entry\n"
+         "_default_handler_9_10_entry:\n\t"
+         "cld\n\t"                    // Set direction flag forward for C functions
+         "pusha\n\t"                  // Save all the registers
+         "call _default_handler_9_10\n\t"
+         "popa\n\t"                   // Restore all the registers
+         "iret");
+
+void default_handler_9_10() {
+    char message[] = "Default handler 9 - 10 was triggered.";
+    print_ln(message);
+
+    for (;;) {};
+}
+
+extern void ir_6_handler_entry();
+
+__asm__ (".global _ir_6_handler_entry\n"
+         "_ir_6_handler_entry:\n\t"
+         "cld\n\t"
+         "pusha\n\t"
+         "call _handle_undefined_op_code\n\t"
+         "popa\n\t"
+         "iret");
+
+void handle_undefined_op_code() {
+    char msg[] = "Undefined Operation Code (OP Code) instruction.";
+    print_ln(msg);
+
+    for (;;) {};
+}
+
+extern void ir_7_handler_entry();
+
+__asm__ (".global _ir_7_handler_entry\n"
+         "_ir_7_handler_entry:\n\t"
+         "cld\n\t"
+         "pusha\n\t"
+         "call _handle_no_coprocessor\n\t"
+         "popa\n\t"
+         "iret");
+
+void handle_no_coprocessor() {
+    char msg[] = "No coprocessor.";
+    print_ln(msg);
+
+    for (;;) {};
+}
+
+extern void ir_8_handler_entry();
+
+__asm__ (".global _ir_8_handler_entry\n"
+         "_ir_8_handler_entry:\n\t"
+         "cld\n\t"
+         "pusha\n\t"
+         "call _handle_double_fault\n\t"
+         "popa\n\t"
+         "iret");
+
+void handle_double_fault() {
+    char msg[] = "Double fault.";
+    print_ln(msg);
+
+    for (;;) {};
+}
+
+extern void default_handler_0_5_entry();
+
+__asm__ (".global _default_handler_0_5_entry\n"
+         "_default_handler_0_5_entry:\n\t"
+         "cld\n\t"                    // Set direction flag forward for C functions
+         "pusha\n\t"                  // Save all the registers
+         "call _default_handler_0_5\n\t"
+         "popa\n\t"                   // Restore all the registers
+         "iret");
+
+void default_handler_0_5() {
+    char message[] = "Default handler 0 - 5 was triggered.";
+    print_ln(message);
+
+    for (;;) {};
+}
+
+void divide_by_zero_handler() {
+    char msg[] = "Divide by zero.";
+    print_ln(msg);
+
+    for (;;) {};
+}
+
+void debugger_single_step() {
+    char msg[] = "Debugger single step.";
+    print_ln(msg);
+
+    for (;;) {};
+}
+
+void nmi_pin() {
+    char msg[] = "Non Maskable Interrupt Pin.";
+    print_ln(msg);
+
+    for (;;) {};
+}
+
+void debugger_breakpoint() {
+    char msg[] = "Debugger breakpoint.";
+    print_ln(msg);
+
+    for (;;) {};
+}
+
+void overflow() {
+    char msg[] = "Overflow.";
+    print_ln(msg);
+
+    for (;;) {};
+}
+
+void bounds_check() {
+    char msg[] = "Bounds check.";
+    print_ln(msg);
+
+    for (;;) {};
+}
+
+
 // Initialize IDT
 void initialize_idt() {
 	clear_idt();
-    char clear_idt_msg[] = "Just cleared IDT.\n";
-    print(clear_idt_msg);
 
 	// Set each entry to the default handler
 	unsigned char flags = 0x8e;       // 1000 1110
 	unsigned short segment_sel = 0x8; // 0000 0000 0000 1000
+	unsigned int default_handler_0_5_address = (unsigned int) default_handler_0_5_entry;
+    for (unsigned short ir_num = 0; ir_num <= 5; ir_num++) {
+        install_ir(ir_num,
+                   flags,
+                   segment_sel,
+                   default_handler_0_5_address);
+    }
+
+    unsigned int ir_6_handler_address = (unsigned int) ir_6_handler_entry;
+    install_ir(6, flags, segment_sel, ir_6_handler_address);
+
+    unsigned int ir_7_handler_address = (unsigned int) ir_7_handler_entry;
+    install_ir(7, flags, segment_sel, ir_7_handler_address);
+
+    unsigned int ir_8_handler_address = (unsigned int) ir_8_handler_entry;
+    install_ir(8, flags, segment_sel, ir_8_handler_address);
+
+    unsigned int default_handler_9_10_address = (unsigned int) default_handler_9_10_entry;
+    for (unsigned short ir_num = 9; ir_num <= 10; ir_num++) {
+        install_ir(ir_num,
+                   flags,
+                   segment_sel,
+                   default_handler_9_10_address);
+    }
+
 	unsigned int default_handler_address = (unsigned int) default_handler_entry;
-	for (unsigned short ir_num = 0; ir_num <= MAX_IR_NUM; ir_num++) {
+	for (unsigned short ir_num = 11; ir_num <= MAX_IR_NUM; ir_num++) {
         install_ir(ir_num,
                    flags,
                    segment_sel,
@@ -111,9 +262,6 @@ void initialize_idt() {
 
     unsigned short limit = (unsigned short) sizeof(idt) - 1;
     load_idt(&idt, limit);
-
-    char load_idt_msg[] = "Loaded IDT.\n";
-    print(load_idt_msg);
 }
 
 void install_ir(unsigned char ir_num,
@@ -134,5 +282,5 @@ void install_ir(unsigned char ir_num,
 
 // Generate interrupt call
 void gen_interrupt() {
-    asm volatile ("int $32" : : );
+    asm volatile ("int $33" : : );
 }

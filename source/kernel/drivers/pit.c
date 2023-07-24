@@ -4,6 +4,7 @@
 #include "pit.h"
 #include "../utils/string.h"
 #include "pic.h"
+#include "../utils/standard.h"
 
 // Global Tick count
 static int pit_ticks = 0;
@@ -13,12 +14,27 @@ void pit_irq_handler() {
 
 	print_int_bottom_left(pit_ticks);
 
-    send_eoi(0);
-    send_eoi(1);
-//    char eoi_msg[] = "EOI sent to PIC.";
-//    print_ln(eoi_msg);
+//    char primary_pic_imr_bef_msg[] = "Primary PIC IMR before EOI instruction: ";
+//    print(primary_pic_imr_bef_msg);
+//    unsigned char primary_pic_imr = read_pic_imr(0);
+//    print_int_ln_hex(primary_pic_imr);
+//
+//    char secondary_pic_imr_bef_msg[] = "Secondary PIC IMR before EOI instruction: ";
+//    print(secondary_pic_imr_bef_msg);
+//    unsigned char secondary_pic_imr = read_pic_imr(1);
+//    print_int_ln_hex(secondary_pic_imr);
 
-//    char handler_finished_msg[] = "\nPIT handler finished.";
+//    char primary_pic_imr_after_msg[] = "Primary PIC IMR after EOI instruction: ";
+//    print(primary_pic_imr_after_msg);
+//    primary_pic_imr = read_pic_imr(0);
+//    print_int_ln_hex(primary_pic_imr);
+//
+//    char secondary_pic_imr_after_msg[] = "Secondary PIC IMR after EOI instruction: ";
+//    print(secondary_pic_imr_after_msg);
+//    secondary_pic_imr = read_pic_imr(1);
+//    print_int_ln_hex(secondary_pic_imr);
+
+//    char handler_finished_msg[] = "PIT handler finished.";
 //    print_ln(handler_finished_msg);
 }
 

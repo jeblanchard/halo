@@ -21,22 +21,17 @@ void start() {
     initialize_gdt();
     initialize_idt();
     initialize_pic();
+
     initialize_pit();
     initialize_keyboard();
 
-    char init_msg[] = "Finished initialization.\n";
-    print(init_msg);
+    char init_msg[] = "Finished initialization.";
+    print_ln(init_msg);
 
-    char message[] = "\nWelcome to Halo.\nThe greatest OS ever created.";
-    print(message);
+    char message[] = "Welcome to Halo.\nThe greatest OS ever created.";
+    print_ln(message);
 
     enable_hardware_interrupts();
 
-    // Infinite loop.
-    int i = 0;
-    for (; i < 100; i++) {
-        gen_interrupt();
-//        char loop_msg[] = "Looped.";
-//        print(loop_msg);
-    };
+    for (;;) {};
 }

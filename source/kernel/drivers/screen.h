@@ -1,14 +1,3 @@
-#define VIDEO_ADDRESS 0xb8000
-#define NUM_ROWS 25
-#define NUM_COLS 80
-
-// Attribute byte for our default color scheme.
-#define WHITE_ON_BLACK 0x0f
-
-// Screen device I/O ports
-#define SCREEN_CTRL_REG 0x3D4
-#define SCREEN_DATA_REG 0x3D5
-
 // Prints a string at the current
 // cursor position.
 void print(char* message);
@@ -37,6 +26,8 @@ void set_cursor(int cell_offset);
 // val provided (in base 10). Followed by
 // a newline.
 void print_int_ln(int val);
+
+void print_int(int val);
 
 void print_int_ln_hex(int val);
 

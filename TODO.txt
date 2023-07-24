@@ -53,3 +53,13 @@ find out why the PIT only interrupts a single time.
 make an API to seamlessly add an IRQ
 
 get rid of the comments in the keyboard handler.
+
+add debug logging functionality.
+
+find out why the undefined op code exception keeps
+coming up.
+
+why send_eoi doesn't work?
+
+Read a little more about how the PIC handles race conditions between
+interrupts.

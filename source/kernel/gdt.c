@@ -95,8 +95,6 @@ void set_gdt_null_descriptor() {
 // Initialize our GDT
 void initialize_gdt() {
     clear_gdt();
-    char clear_gdt_msg[] = "Just cleared GDT.\n";
-    print(clear_gdt_msg);
 
     set_gdt_null_descriptor();
 
@@ -112,7 +110,4 @@ void initialize_gdt() {
 
     unsigned short limit = (unsigned short) sizeof(gdt) - 1;
     load_gdt(&gdt, limit);
-
-    char load_gdt_msg[] = "Loaded GDT.\n";
-    print(load_gdt_msg);
 }
