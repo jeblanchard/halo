@@ -22,3 +22,7 @@ why do we have to set the direction flag forward for C functions? (cld)
 
 why would the order of the functions declared near the asm of the handler
 entry point have an effect on whether or not an int 6 is fired?
+
+advantages / disadvantages of the inline keyword?
+
+when do for loops reevaluate the conditional if it is a function?

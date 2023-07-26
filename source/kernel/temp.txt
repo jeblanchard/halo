@@ -1,0 +1,8 @@
+to handle errors, i can have a simple
+function that is called whenever
+a function encounters an error
+condition
+
+this function can then just
+halt the program and display an
+error message

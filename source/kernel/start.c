@@ -22,7 +22,7 @@ void initialize_kernel() {
 /* At this point, we have just entered PM. Hardware
  * interrupts have been disabled in order to allow us to
  * initialize our PM environment. */
-void start() {
+void start(multiboot_info* bootinfo) {
     initialize_kernel();
     start_cmd_line();
 }

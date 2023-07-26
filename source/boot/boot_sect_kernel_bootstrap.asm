@@ -45,6 +45,14 @@ BEGIN_PM:
 mov ebx, MSG_PROT_MODE              ; Use our 32-bit print routine to
 call print_string_pm                ; announce we are in protected mode
 
+mov	eax, 0x2BADB002		            ; Multiboot specs say eax should be this
+mov	ebx, 0
+mov	edx, [ImageSize]
+
+push dword boot_info
+call ebp               	            ; Execute Kernel
+add	esp, 4
+
 call KERNEL_OFFSET                  ; Now jump to the address of our loaded
                                     ; kernel code, assume the brace position,
                                     ; and cross your fingers. Here we go!

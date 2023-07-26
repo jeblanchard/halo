@@ -71,3 +71,7 @@ how to better initialize static variables in C
 
 figure out why the keyboard needs those initialization
 messages to function properly
+
+refactor boot sector
+
+look at throwing errors in C, specifically in the offset
