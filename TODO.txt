@@ -75,3 +75,7 @@ messages to function properly
 refactor boot sector
 
 look at throwing errors in C, specifically in the offset
+
+conform my bootloader to the multiboot standard
+
+setup some sort of environment variable system for compiling / linker / build options.

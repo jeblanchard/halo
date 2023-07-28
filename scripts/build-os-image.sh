@@ -9,8 +9,8 @@ out_dir=./output
 obj_dir="${out_dir}/object-files"
 
 # Compile kernel entry ASM to an object file
-kernel_entry_asm_filename="./source/boot/kernel_entry.asm"
-kernel_entry_obj_filename="kernel_entry.o"
+kernel_entry_asm_filename="./source/boot/multiboot2.asm"
+kernel_entry_obj_filename="multiboot2.o"
 kernel_entry_obj_full_filename="${obj_dir}/${kernel_entry_obj_filename}"
 nasm -f elf ${kernel_entry_asm_filename} -o ${kernel_entry_obj_full_filename}
 
@@ -53,8 +53,8 @@ kernel_bin_name="${bin_dir}/kernel.bin"
 objcopy -O binary -j .text ${kernel_tmp_full_filename} ${kernel_bin_name}
 
 # Compile bootsector ASM to binary file
-boot_sect_asm_filename="./source/boot/boot_sect_kernel_bootstrap.asm"
-boot_sector_bin_filename="${bin_dir}/boot_sect_kernel_bootstrap.bin"
+boot_sect_asm_filename="./source/boot/boot_sector.asm"
+boot_sector_bin_filename="${bin_dir}/boot_sector.bin"
 nasm ${boot_sect_asm_filename} -f bin -o ${boot_sector_bin_filename}
 
 # Include the boot sector and finalize the OS image

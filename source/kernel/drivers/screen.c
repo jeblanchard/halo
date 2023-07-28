@@ -95,38 +95,13 @@ int handle_scrolling(int cursor_offset) {
     return cursor_offset;
 }
 
-//int handle_scrolling(int cursor_offset) {
-//
-//    // If the cursor is within the screen, return it unmodified.
-//    if (cursor_offset < NUM_ROWS * NUM_COLS * 2) {
-//        return cursor_offset;
-//    }
-//
-//    /* Shuffle the rows back one. */
-//    int i;
-//    for (i = 1; i < NUM_ROWS; i++) {
-//        memory_copy((char*) (get_screen_offset(0, i) + VIDEO_ADDRESS),
-//                    (char*) (get_screen_offset(0, i - 1) + VIDEO_ADDRESS),
-//                    NUM_COLS * 2
-//        );
-//    }
-//
-//    /* Blank the last line by setting all bytes to 0 */
-//    char* last_line = (char*) (get_screen_offset(0, NUM_ROWS - 1) + VIDEO_ADDRESS);
-//    for (i = 0; i < NUM_COLS * 2; i++) {
-//        last_line[i] = 0;
-//    }
-//
-//    // Move the offset back one row, such that it is now on the last
-//    // row, rather than off the edge of the screen.
-//    cursor_offset -= 2 * NUM_COLS;
-//
-//    // Return the updated cursor position.
-//    return cursor_offset;
-//}
-
 static bool CLOCK_IS_VISIBLE;
 static short TIMER_ROW;
+
+void initialize_clock() {
+    CLOCK_IS_VISIBLE = false;
+    TIMER_ROW = NUM_ROWS - 1;
+}
 
 void hide_clock() {
     CLOCK_IS_VISIBLE = false;
@@ -142,28 +117,6 @@ void show_clock() {
     NUM_WRITEABLE_ROWS = TIMER_ROW - 1;
 
     update_clock();
-}
-
-void print_clock() {
-    bool og_scrolling_is_enabled = SCROLLING_IS_ENABLED;
-
-    SCROLLING_IS_ENABLED = false;
-
-    int tick_count = get_tick_count();
-    print_int_bottom_left(tick_count);
-
-    SCROLLING_IS_ENABLED = og_scrolling_is_enabled;
-}
-
-void update_clock() {
-    if (CLOCK_IS_VISIBLE) {
-        print_clock();
-    }
-}
-
-void initialize_clock() {
-    CLOCK_IS_VISIBLE = false;
-    TIMER_ROW = NUM_ROWS - 1;
 }
 
 // Returns the memory offset for the cursor
@@ -186,6 +139,37 @@ int get_cursor() {
     // number of characters, we multiply by two to convert it to
     // a character cell offset.
     return offset * 2;
+}
+
+void print_int_bottom_left(int num) {
+    int og_cursor_loc = get_cursor();
+
+    int bottom_left_offset = \
+        get_screen_offset(0, NUM_ROWS - 1);
+
+    set_cursor(bottom_left_offset);
+
+    char* num_str = int_to_string(num, 10);
+    print(num_str);
+
+    set_cursor(og_cursor_loc);
+}
+
+void print_clock() {
+    bool og_scrolling_is_enabled = SCROLLING_IS_ENABLED;
+
+    SCROLLING_IS_ENABLED = false;
+
+    int tick_count = get_tick_count();
+    print_int_bottom_left(tick_count);
+
+    SCROLLING_IS_ENABLED = og_scrolling_is_enabled;
+}
+
+void update_clock() {
+    if (CLOCK_IS_VISIBLE) {
+        print_clock();
+    }
 }
 
 void print_char(char character, int col, int row, char attribute_byte) {
@@ -291,20 +275,6 @@ void print_ln(char* message) {
 
     char newline[] = "\n";
     print(newline);
-}
-
-void print_int_bottom_left(int num) {
-    int og_cursor_loc = get_cursor();
-
-    int bottom_left_offset = \
-        get_screen_offset(0, NUM_ROWS - 1);
-
-    set_cursor(bottom_left_offset);
-
-    char* num_str = int_to_string(num, 10);
-    print(num_str);
-
-    set_cursor(og_cursor_loc);
 }
 
 void initialize_screen() {

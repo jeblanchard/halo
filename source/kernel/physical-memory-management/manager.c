@@ -1,4 +1,6 @@
 #include "../utils/errors.h"
+#include "../utils/standard.h"
+#include "../utils/memory.h"
 
 // Block alignment
 #define BLOCK_ALIGNMENT	MEMORY_BLOCK_SIZE
@@ -25,23 +27,23 @@ unsigned int get_memory_map_section_offset_mask(unsigned int block_num) {
     return block_mask;
 }
 
-inline void set_memory_block(unsigned int block_num) {
+void set_memory_block(unsigned int block_num) {
     unsigned int block_section = get_memory_map_section(block_num);
-    unsigned int block_mask = get_memory_map_section_offset_mask;
+    unsigned int block_mask = get_memory_map_section_offset_mask(block_num);
 
     memory_map[block_section] |= block_mask;
 }
 
-inline void clear_memory_block(unsigned int block_num) {
+void clear_memory_block(unsigned int block_num) {
     unsigned int block_section = get_memory_map_section(block_num);
-    unsigned int block_mask = get_memory_map_section_offset_mask;
+    unsigned int block_mask = get_memory_map_section_offset_mask(block_num);
 
     memory_map[block_section] &= ~ block_mask;
 }
 
-inline bool block_is_set(unsigned int block_num) {
+bool block_is_set(unsigned int block_num) {
     unsigned int block_section = get_memory_map_section(block_num);
-    unsigned int block_mask = get_memory_map_section_offset_mask;
+    unsigned int block_mask = get_memory_map_section_offset_mask(block_num);
 
     unsigned int result = memory_map[block_section] & block_mask;
 
@@ -52,7 +54,7 @@ inline bool block_is_set(unsigned int block_num) {
     return false;
 }
 
-typedef physical_address unsigned int;
+typedef unsigned int physical_address;
 
 // 8 blocks per byte
 #define BLOCKS_PER_BYTE 8
@@ -83,14 +85,20 @@ bool offset_in_section_is_free(unsigned int section_num, unsigned int offset) {
 unsigned int get_offset_of_first_free_block_in_memory_map_section(unsigned int section_num) {
 
     unsigned int o = 0;
+    bool could_not_find_offset = true;
     for (; o < BITS_PER_MEMORY_MAP_SECTION; o++) {
         if (offset_in_section_is_free(section_num, o)) {
-            return o;
+            could_not_find_offset = false;
+            break;
         }
     }
 
-    char error_msg[] = "Could not find offset of first free block in\nmemory map section.";
-    halt_and_display_error_msg(error_msg);
+    if (could_not_find_offset) {
+        char error_msg[] = "Could not find offset of first free block in\nmemory map section.";
+        halt_and_display_error_msg(error_msg);
+    }
+
+    return o;
 }
 
 unsigned int get_first_free_block_num() {
@@ -111,7 +119,7 @@ unsigned int get_first_free_block_num() {
 
 	if (!block_found) {
 	    char error_msg[] = "Could not find free memory block.";
-        halt_and_display_error_msg(error_msg)
+        halt_and_display_error_msg(error_msg);
 	}
 
     unsigned int block_num = section_num * BITS_PER_MEMORY_MAP_SECTION + section_offset;
@@ -122,19 +130,21 @@ unsigned int get_first_free_block_num() {
 #define MEMORY_BLOCK_SIZE 4096
 
 // Size of physical memory
-static unsigned int memory_size;
+static unsigned int memory_size_;
 
 unsigned int get_num_kb_in_memory() {
+    return 0;
     // do nothing for now
 }
 
 unsigned int get_block_count() {
     // do nothing rn
+    return 0;
 }
 
 void initialize_manager(unsigned int memory_size, physical_address bitmap_address) {
 
-	memory_size	= memory_size;
+	memory_size_ = memory_size;
 	memory_map = (unsigned int*) bitmap_address;
 	num_memory_blocks =	(get_num_kb_in_memory() * 1024) / MEMORY_BLOCK_SIZE;
 	num_blocks_in_use	= num_memory_blocks;
@@ -152,7 +162,7 @@ void* allocate_block() {
 
 	if (get_num_free_blocks() <= 0) {
 	    char error_msg[] = "No free memory blocks.";
-	    halt_and_display_error_msg(error_msg)
+	    halt_and_display_error_msg(error_msg);
 	}
 
 	int block_num = get_first_free_block_num();

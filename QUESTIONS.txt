@@ -26,3 +26,11 @@ entry point have an effect on whether or not an int 6 is fired?
 advantages / disadvantages of the inline keyword?
 
 when do for loops reevaluate the conditional if it is a function?
+
+why set stack to 0x9000?
+
+why are GPUs better at a bunch of computations?
+
+what is the standard of having object files in repos?
+i think they should not be tracked by git because they
+can be generated

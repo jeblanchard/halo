@@ -1,3 +1,5 @@
+[bits 16]
+
 ; Prints the string pointed to by BX to BIOS output.
 ; Follows each string with a space.
 print_string:

@@ -5,6 +5,7 @@
 #include "gdt.h"
 #include "drivers/keyboard.h"
 #include "cmd-line/main.h"
+#include "boot.h"
 
 void initialize_kernel() {
     initialize_screen();
@@ -22,7 +23,14 @@ void initialize_kernel() {
 /* At this point, we have just entered PM. Hardware
  * interrupts have been disabled in order to allow us to
  * initialize our PM environment. */
-void start(multiboot_info* bootinfo) {
+void start(struct multiboot2_info* boot_info) {
     initialize_kernel();
+
+    char boot_info_msg[] = "Total size of boot info: ";
+    print(boot_info_msg);
+    print_int_ln(boot_info -> total_size);
+
+    for (;;) {}
+
     start_cmd_line();
 }

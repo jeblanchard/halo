@@ -4,7 +4,7 @@
 
 // A GDT descriptor defines the properties of a specific
 // memory block and its permissions.
-#pragma pack(push,1)
+#pragma pack(push, 1)
 struct gdt_descriptor {
 
 	// Bits 0-15, bits 0-15 of segment limit
