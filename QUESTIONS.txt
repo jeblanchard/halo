@@ -34,3 +34,5 @@ why are GPUs better at a bunch of computations?
 what is the standard of having object files in repos?
 i think they should not be tracked by git because they
 can be generated
+
+learn more about setting up the stack.

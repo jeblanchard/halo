@@ -28,7 +28,7 @@ void start(struct multiboot2_info* boot_info) {
 
     char boot_info_msg[] = "Total size of boot info: ";
     print(boot_info_msg);
-    print_int_ln(boot_info -> total_size);
+    print_int_ln(boot_info -> mem_map_num_entries);
 
     for (;;) {}
 

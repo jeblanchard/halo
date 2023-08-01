@@ -1,44 +1,37 @@
-; Load DH sectors to ES:BX from drive DL
+; Load disk sectors to ES:BX from
+; the specified drive.
+;
+; Input:
+;   AL = number of sectors to read
+;   DL = the boot drive number
 disk_load:
-    push dx                         ; Store DX on stack so later we can recall
-                                    ; how many sectors were request to be read,
-                                    ; even if it is altered in the meantime
+    pusha
 
-    mov ah, 0x02                    ; BIOS read sector function
-    mov al, dh                      ; Read DH sectors
-    mov ch, 0x00                    ; Select cylinder 0
-    mov dh, 0x00                    ; Select head 0
+    mov ah, 0x02                    ; Function selection: DISK - READ SECTOR(S)
+                                    ; INTO MEMORY
+    mov ch, 0x00                    ; Low eight bits of cylinder number
     mov cl, 0x02                    ; Start reading from second sector (i.e.
                                     ; after the boot sector)
+    mov dh, 0x00                    ; Select head 0
 
     int 0x13                        ; BIOS interrupt
+    jc disk_error                   ; Jump if error (i.e. carry flag was set)
 
-    jc disk_error                   ; Jump if error (i.e. carry flag set)
-    pop dx                          ; Restore DX from the stack
-
-    cmp dh, al                      ; if AL (sectors read) !=
-                                    ; DH (sectors expected)
-    jne disk_error
-
+    popa
     ret
 
 disk_error:
+    pusha
+
     mov bx, DISK_ERROR_MSG
     call print_string
 
-    pusha
-
-    ; clear low bits of ax so we can easily pass
-    ; ax to our 16-bit print_hex function
-    ; ah will contain the disk read status
-    ; code
-    mov al, 0x00
-
+    ; Print the disk read status and number of sectors
+    ; transferred by the BIOS.
     mov dx, ax
     call print_hex
 
     popa
-
     jmp $
 
 %include "source/boot/utilities/print_hex_rm.asm"

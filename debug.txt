@@ -1,54 +1,20 @@
-What if i remove the GDT initalization using C
-in its entirety?
+OUTPUT BEFORE NEXT ENTRY INT
+<bochs:7> reg
+rax: 00000000_0000e820
+rbx: 00000000_00001289
+rcx: 00000000_00000018
+rdx: 00000000_534d4150
+rsp: 00000000_00008fec
+rbp: 00000000_00000001
+rsi: 00000000_000e0000
+rdi: 00000000_0000ffc4
+r8 : 00000000_00000000
+r9 : 00000000_00000000
+r10: 00000000_00000000
+r11: 00000000_00000000
+r12: 00000000_00000000
+r13: 00000000_00000000
+r14: 00000000_00000000
+r15: 00000000_00000000
+rip: 00000000_0000118d
 
-If i get the same result i will know it's not
-because of a GDT issue, at least the issue
-is not triggered by the GDT
-- we get seemingly the exact same issue
-  without initalizing the gdt in C, so the
-  issue is very likely starting from the IDT
-
-it seems we're using the IDT just fine, but the
-actual segment descriptor is not accurate for some
-reason
-
-is my IDTR okay? toyed with my IDTR and got the same result.
-
-using a totally over the top segment selector (0xffff).
-we got the same result.
-
-after using the bochs debugger i can see that the GDT is
-set correctly when using the ASM method, but when using C
-it gets super fucked up. something about how my C is
-getting compiled is really fucking up.
-
-the IDT is larger after initialization, all the way up to
-index ff. however, the entries seem to be exactly the
-same up to index 7f.
-
-is the LIDT instruction even being called? that asm block
-is definitely being called because the interrupt
-instruction i added there definitely runs.
-
-why was the idt cleared?
-
-does the fucked up stuff happen when i initialize the GDT? yes.
-the gdt turns into this behemoth with a size of 65368.
-
-what if i point the struct from assembly? i'm not sure if the
-pointer is the problem here, or if it's the structures themselves
-that's the problem.
-
-fuck it. i'm going to copy another implementation
-word for word and see what happens.
-
-i'm going to try adding the attributes and stuff like that
-before i fully copy another implementation.
-
-it seems the command line option for packing structures does not
-do the trick, but adding that attribute at the source code level
-does seem to do the right thing. does the gdt load properly
-with this adjustment?
-
-the base address for the gdt seems way too large for the current
-memory availability.
