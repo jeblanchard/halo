@@ -141,7 +141,7 @@ int get_cursor() {
     return offset * 2;
 }
 
-void print_int_bottom_left(int num) {
+void print_int_bottom_left(unsigned int num) {
     int og_cursor_loc = get_cursor();
 
     int bottom_left_offset = \
@@ -252,17 +252,17 @@ void clear_screen() {
     set_cursor(get_screen_offset(0 , 0));
 }
 
-void print_int(int val) {
+void print_int(unsigned int val) {
     char* string_repr = int_to_string(val, 10);
     print(string_repr);
 }
 
-void print_int_ln(int val) {
+void print_int_ln(unsigned int val) {
     char* string_repr = int_to_string(val, 10);
     print_ln(string_repr);
 }
 
-void print_int_ln_hex(int val) {
+void print_int_ln_hex(unsigned int val) {
     char* int_str = int_to_string(val, 16);
     char hex_prefix[] = "0x";
 

@@ -94,14 +94,16 @@ struc memory_map_entry
 	.base_addr	    resq	1   ; Base address of address range.
 	.length		    resq	1	; Length of address range in bytes.
 	.type		    resd	1	; Type of address range.
-	.reserved	    resd	1	; Reserved.
 endstruc
 
 ; Get memory map from BIOS
 ;
+; Inputs:
+;     ES:DI = base of entry list
+;
 ; Returns:
 ;     BP = entry count
-;     ES:DI = base pointer of map
+;     ES:DI = base of last entry in map
 get_memory_map_from_bios:
 
     mov bx, BEG_MEM_MAP
@@ -113,24 +115,33 @@ get_memory_map_from_bios:
 	mov	edx, 0x534d4150	                   ; 'SMAP'
 	mov	ecx, memory_map_entry_size		   ; memory map entry struct is 24 bytes
 
-;	mov bx, BEFORE_MEM_MAP_INT
-;    call print_string
-
     xor	ebx, ebx                           ; set ebx to 0 to start at the beginning of the map
+
+    pusha
+    mov dx, es
+    call print_hex
+    popa
+
+    pusha
+    mov dx, di
+    call print_hex
+    popa
+
 	int	0x15			    ; get first entry
 	jc .error
 
-;	mov bx, AFTER_MEM_MAP_INT
-;    call print_string
+;	pusha
+;	mov dx, cx
+;	call print_hex
+;	popa
+;
+;	jmp $
 
 	cmp	eax, 0x534d4150     ; BIOS returns SMAP in eax
 	jne	.error
 
 	test ebx, ebx		    ; if ebx is still 0, our memory map has only one entry
 	je .error
-
-;    mov bx, BEFORE_START
-;    call print_string
 
 	jmp	.start
 
@@ -139,14 +150,9 @@ get_memory_map_from_bios:
         mov	ecx, memory_map_entry_size
         mov	eax, 0x0000e820
 
-;        mov bx, BEF_NEXT_ENTRY_INT
-;        call print_string
-
         int	0x15			    ; get next entry (ebx has already been set by the
                                 ; previous call)
 
-;        mov bx, AFTER_NEXT_ENTRY_INT
-;        call print_string
 
     .start:
         jcxz .skip_entry		; if actual length is bytes is 0, skip entry
@@ -166,7 +172,68 @@ get_memory_map_from_bios:
 
     .good_entry:
         inc	ebp			    ; increment entry count
-        add	di, 24			; point di to next entry in buffer
+
+        pusha
+        mov dx, es
+        call print_hex
+        popa
+
+        pusha
+        mov dx, di
+        call print_hex
+        popa
+
+;        pusha
+;        mov dx, [es:di + memory_map_entry.base_addr]
+;        call print_hex
+;        popa
+;
+;        pusha
+;        mov dx, [es:di + memory_map_entry.base_addr + 2]
+;        call print_hex
+;        popa
+;
+;        pusha
+;        mov dx, [es:di + memory_map_entry.base_addr + 4]
+;        call print_hex
+;        popa
+;
+;        pusha
+;        mov dx, [es:di + memory_map_entry.base_addr + 6]
+;        call print_hex
+;        popa
+
+;        pusha
+;        mov dx, [es:di + memory_map_entry.type]
+;        call print_hex
+;        popa
+;
+;        pusha
+;        mov dx, [es:di + memory_map_entry.type + 2]
+;        call print_hex
+;        popa
+
+;        pusha
+;        mov dx, [es:di + memory_map_entry.length]
+;        call print_hex
+;        popa
+;
+;        pusha
+;        mov dx, [es:di + memory_map_entry.length + 2]
+;        call print_hex
+;        popa
+;
+;        pusha
+;        mov dx, [es:di + memory_map_entry.length + 4]
+;        call print_hex
+;        popa
+;
+;        pusha
+;        mov dx, [es:di + memory_map_entry.length + 6]
+;        call print_hex
+;        popa
+
+        add	di, memory_map_entry_size			; point di to next entry in buffer
 
         pusha
         mov bx, GOOD_ENTRY
@@ -189,7 +256,11 @@ get_memory_map_from_bios:
         call print_string
         popa
 
+;        jmp $
+
         ret
+
+;%include "source/boot/utilities/print_hex_rm.asm"
 
 BEFORE_MEMORY_SIZE db "Before memory size.", 0
 AFTER_MEMORY_SIZE db "After memory size.", 0

@@ -1,0 +1,20 @@
+create an array that can handle the full amount of referencable
+memory (4 GB i believe)
+    - this is not the most optimal, but it is clean
+
+create a variable sized bitmap
+    - allocating the right amount
+      of memory seems a little
+      more tedious than what is
+      worth it for this
+
+allocate the memory during bootup
+then reference that from within
+the kernel
+    - this feels nonlinear
+
+
+how do i make sure there's free space for the bitmap?
+    - i need to explicitly allocate it somehow
+
+

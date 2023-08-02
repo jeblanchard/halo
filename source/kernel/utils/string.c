@@ -1,6 +1,6 @@
 #include "../drivers/screen.h"
 
-char* int_to_string(int val, int base) {
+char* int_to_string(unsigned int val, unsigned int base) {
     static char buf[32] = {0};
     for (int i = 0; i <= 30; i++) {
         buf[i] = '0';

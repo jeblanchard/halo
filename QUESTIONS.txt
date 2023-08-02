@@ -36,3 +36,6 @@ i think they should not be tracked by git because they
 can be generated
 
 learn more about setting up the stack.
+
+what happens when casting to an enum value that doesn't
+exist

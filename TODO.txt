@@ -79,3 +79,11 @@ look at throwing errors in C, specifically in the offset
 conform my bootloader to the multiboot standard
 
 setup some sort of environment variable system for compiling / linker / build options.
+
+figure out the weirdness with the PIC
+
+deal with the order in which we clear blocks on the physical memory manager.
+for example, one address range's blocks need to be closed; then an address range
+with an overlapping block is then opened.
+
+add unit testing to the physical memory management package

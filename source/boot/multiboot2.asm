@@ -5,25 +5,29 @@
 multiboot2:
 
     struc multiboot2_info
-        .total_size             resd    1
-        .reserved               resd    1
+        .total_size                         resd    1
+        .reserved                           resd    1
 
-        .mem_info_type          resd    1
-        .mem_info_size          resd    1
-        .num_kb_in_mem	        resd	1
+        .mem_info_type                      resd    1
+        .mem_info_size                      resd    1
+        .num_kb_in_mem	                    resd	1
 
-        .mem_map_info_type      resd    1
-        .mem_map_info_size      resd    1
-        .entry_size             resd    1
-        .entry_version          resd    1
-        .mem_map_base_addr      resd    1
-        .mem_map_num_entries    resd    1
+        .mem_map_info_type                  resd    1
+        .mem_map_info_size                  resd    1
+        .entry_size                         resd    1
+        .entry_version                      resd    1
+        .mem_map_entry_list_base_addr       resd    1
+        .mem_map_num_entries                resd    1
 
-        .terminating_tag_type   resd    1
-        .terminating_tag_size   resd    1
+        .terminating_tag_type               resd    1
+        .terminating_tag_size               resd    1
     endstruc
 
     multiboot2_info_instance: resb multiboot2_info_size
+
+    memory_map_entries: resb 10 * memory_map_entry_size
+
+    after_memory_map:
 
     fill_multiboot2_fixed_part:
         mov dword [multiboot2_info_instance + multiboot2_info.total_size], multiboot2_info_size
@@ -49,14 +53,35 @@ multiboot2:
         mov dword [multiboot2_info_instance + multiboot2_info.entry_size], 24
         mov dword [multiboot2_info_instance + multiboot2_info.entry_version], 0
 
+;        mov dword es:di, memory_map_entries
+        mov word di, memory_map_entries
+
+;        mov dx, memory_map_entries
+;        call print_hex
+
+;        mov dx, [memory_map_entries]
+;        call print_hex
+
+;        mov dx, [memory_map_entries + 10]
+;        call print_hex
+
+;        jmp $
+
         call get_memory_map_from_bios
 
-        mov bx, AFTER_MEM_MAP_BIOS
-        call print_string
+;        mov bx, AFTER_MEM_MAP_BIOS
+;        call print_string
+;
+;        mov dx, memory_map_entries
+;        call print_hex
+;
+;        mov dx, after_memory_map
+;        call print_hex
 
-        mov eax, es:di
-        mov dword [multiboot2_info_instance + multiboot2_info.mem_map_base_addr], eax
+        mov dword [multiboot2_info_instance + multiboot2_info.mem_map_entry_list_base_addr], memory_map_entries
+;        mov dword [multiboot2_info_instance + multiboot2_info.mem_map_entry_list_base_addr], 0x34
         mov dword [multiboot2_info_instance + multiboot2_info.mem_map_num_entries], ebp
+;        mov dword [multiboot2_info_instance + multiboot2_info.mem_map_num_entries], 7
 
     fill_terminating_tag_type:
         mov dword [multiboot2_info_instance + multiboot2_info.terminating_tag_type], 0
@@ -70,6 +95,7 @@ multiboot2:
 
 %include "source/boot/memory_size.asm"
 %include "source/boot/utilities/print_string_rm.asm"
+%include "source/boot/utilities/print_hex_rm.asm"
 
 BEFORE_NUM_KB db "Before number of KBs.", 0
 AFTER_NUM_KB db "After number of KBs.", 0

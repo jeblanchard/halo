@@ -25,16 +25,16 @@ void set_cursor(int cell_offset);
 // Prints the string representation of the
 // val provided (in base 10). Followed by
 // a newline.
-void print_int_ln(int val);
+void print_int_ln(unsigned int val);
 
-void print_int(int val);
+void print_int(unsigned int val);
 
-void print_int_ln_hex(int val);
+void print_int_ln_hex(unsigned int val);
 
 // Prints num at the bottom left of the screen, then
 // returns the cursor back to where it was when the
 // call was made.
-void print_int_bottom_left(int num);
+void print_int_bottom_left(unsigned int num);
 
 void hide_clock();
 

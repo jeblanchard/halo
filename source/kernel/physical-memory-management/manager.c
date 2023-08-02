@@ -1,22 +1,29 @@
 #include "../utils/errors.h"
 #include "../utils/standard.h"
 #include "../utils/memory.h"
+#include "../boot.h"
+#include "../drivers/screen.h"
 
 // Block alignment
-#define BLOCK_ALIGNMENT	MEMORY_BLOCK_SIZE
+#define BLOCK_ALIGNMENT	BYTES_PER_MEMORY_BLOCK
 
-// Pointer to memory map bit array. Each represents a
-// memory block
-static unsigned int* memory_map;
+// 4 GB
+#define MAX_MEMORY_32_BIT_IN_BYTES 0x40000000
+
+#define BYTES_PER_MEMORY_BLOCK 4096
+
+#define NUM_MEMORY_BLOCKS MAX_MEMORY_32_BIT_IN_BYTES / BYTES_PER_MEMORY_BLOCK
 
 #define BITS_PER_MEMORY_MAP_SECTION 32
 
-// Number of memory blocks
-static unsigned int num_memory_blocks;
+#define NUM_MEMORY_MAP_SECTIONS NUM_MEMORY_BLOCKS / BITS_PER_MEMORY_MAP_SECTION
 
-unsigned int get_num_memory_map_sections() {
-    return num_memory_blocks / BITS_PER_MEMORY_MAP_SECTION;
-}
+unsigned int memory_map[NUM_MEMORY_MAP_SECTIONS];
+
+#define BYTES_PER_KB 1024
+
+// Number of memory blocks
+static unsigned int num_accessible_memory_blocks;
 
 unsigned int get_memory_map_section(unsigned int block_num) {
     return block_num / BITS_PER_MEMORY_MAP_SECTION;
@@ -27,6 +34,32 @@ unsigned int get_memory_map_section_offset_mask(unsigned int block_num) {
     return block_mask;
 }
 
+void clear_memory_block(unsigned int block_num) {
+    unsigned int block_section = get_memory_map_section(block_num);
+    unsigned int block_mask = get_memory_map_section_offset_mask(block_num);
+
+    memory_map[block_section] &= ~ block_mask;
+}
+
+// Number of blocks currently in use
+static unsigned int num_blocks_in_use;
+
+typedef unsigned int physical_address;
+
+void free_memory_blocks_of_address_range(physical_address base_addr,
+                                         unsigned int range_length) {
+
+    unsigned int end_addr = base_addr + range_length;
+
+	unsigned int start_block_num = base_addr / BYTES_PER_MEMORY_BLOCK;
+	unsigned int end_block_num = end_addr / BYTES_PER_MEMORY_BLOCK + 1;
+
+    for (unsigned int b = start_block_num; b <= end_block_num; b++) {
+        clear_memory_block(b);
+        num_blocks_in_use--;
+    }
+}
+
 void set_memory_block(unsigned int block_num) {
     unsigned int block_section = get_memory_map_section(block_num);
     unsigned int block_mask = get_memory_map_section_offset_mask(block_num);
@@ -34,11 +67,118 @@ void set_memory_block(unsigned int block_num) {
     memory_map[block_section] |= block_mask;
 }
 
-void clear_memory_block(unsigned int block_num) {
-    unsigned int block_section = get_memory_map_section(block_num);
-    unsigned int block_mask = get_memory_map_section_offset_mask(block_num);
+void set_memory_blocks_of_address_range(physical_address base_addr,
+                                        unsigned int range_length) {
 
-    memory_map[block_section] &= ~ block_mask;
+    unsigned int end_addr = base_addr + range_length;
+
+	unsigned int start_block_num = base_addr / BYTES_PER_MEMORY_BLOCK;
+	unsigned int end_block_num = end_addr / BYTES_PER_MEMORY_BLOCK + 1;
+
+    for (unsigned int b = start_block_num; b <= end_block_num; b++) {
+        set_memory_block(b);
+        num_blocks_in_use++;
+    }
+}
+
+void allocate_memory_for_memory_map_entry(struct memory_map_entry* entry) {
+    unsigned int entry_base_addr = entry -> base_addr_low;
+    unsigned int region_length = entry -> length_low;
+
+    memory_range_type entry_type = entry -> type;
+
+    if (entry_type == AVAILABLE_RAM) {
+        free_memory_blocks_of_address_range(entry_base_addr, region_length);
+    } else {
+        set_memory_blocks_of_address_range(entry_base_addr, region_length);
+    }
+
+}
+
+void reserve_bios_memory(struct multiboot2_info* boot_info) {
+
+    unsigned int num_mem_map_entries = boot_info -> mem_map_num_entries;
+
+    struct memory_map_entry* mem_map_entry_list_base_addr = boot_info -> mem_map_entry_list_base_addr;
+
+//    unsigned int mem_map_entry_size = sizeof(struct memory_map_entry);
+//    print_int_ln(mem_map_entry_size);
+
+//    print_int_ln_hex(mem_map_entry_list_base_addr);
+//
+//
+//    char first_entry_msg[] = "First entry:";
+//    print_ln(first_entry_msg);
+//
+//    struct memory_map_entry* first_entry = (struct memory_map_entry*) mem_map_entry_list_base_addr;
+//    print_int_ln_hex((unsigned int) first_entry);
+//
+//    print_int_ln_hex(first_entry -> base_addr_low);
+//    print_int_ln_hex(first_entry -> base_addr_high);
+//    print_int_ln_hex(first_entry -> length_low);
+//    print_int_ln_hex(first_entry -> length_high);
+//
+//    char second_entry_msg[] = "Second entry:";
+//    print_ln(second_entry_msg);
+//
+////    struct memory_map_entry* second_entry = (struct memory_map_entry*) mem_map_entry_list_base_addr + 20;
+//    unsigned int second_entry_addr = mem_map_entry_list_base_addr + 20;
+//    print_int_ln_hex(second_entry_addr);
+//    print_int_ln_hex((unsigned int) second_entry);
+//
+//    print_int_ln_hex(second_entry -> base_addr_low);
+//    print_int_ln_hex(second_entry -> base_addr_high);
+//    print_int_ln_hex(second_entry -> length_low);
+//    print_int_ln_hex(second_entry -> length_high);
+
+//    for (;;) {};
+
+    for (unsigned int i = 0; i < num_mem_map_entries; i++) {
+        struct memory_map_entry* entry = mem_map_entry_list_base_addr + i;
+
+//        print_int_ln(mem_map_entry_size);
+
+//        char base_addr_msg[] = "Entry base address:";
+//        print(base_addr_msg);
+//        print_int_ln_hex((unsigned int) entry);
+//
+        char entry_msg[] = "number: ";
+        print(entry_msg);
+        print_int_ln(i);
+
+//        char type_msg[] = "type: ";
+//        print(type_msg);
+//        print_int_ln(entry -> type);
+//
+//        print_int_ln_hex(entry -> base_addr_low);
+//        print_int_ln_hex(entry -> base_addr_high);
+        print_int_ln_hex(entry -> length_low);
+        print_int_ln_hex(entry -> length_high);
+
+        allocate_memory_for_memory_map_entry(entry);
+    }
+}
+
+void set_all_memory_blocks() {
+    void* memory_map_base_address = &memory_map[0];
+    unsigned int num_bytes_to_null_out = sizeof(memory_map);
+    set_memory(memory_map_base_address, 0xff, num_bytes_to_null_out);
+}
+
+void initialize_physical_mem_manager(struct multiboot2_info* boot_info) {
+
+	unsigned int num_kb_in_memory = boot_info -> num_kb_in_mem;
+	num_accessible_memory_blocks = (num_kb_in_memory * BYTES_PER_KB) / BYTES_PER_MEMORY_BLOCK;
+
+    // To start, all of memory is in use
+    num_blocks_in_use = num_accessible_memory_blocks;
+    set_all_memory_blocks();
+
+	reserve_bios_memory(boot_info);
+}
+
+unsigned int get_num_memory_map_sections() {
+    return num_accessible_memory_blocks / BITS_PER_MEMORY_MAP_SECTION;
 }
 
 bool block_is_set(unsigned int block_num) {
@@ -54,13 +194,8 @@ bool block_is_set(unsigned int block_num) {
     return false;
 }
 
-typedef unsigned int physical_address;
-
 // 8 blocks per byte
 #define BLOCKS_PER_BYTE 8
-
-// Number of blocks currently in use
-static unsigned int num_blocks_in_use;
 
 #define MEMORY_MAP_SECTION_MAX_VALUE 0xffffffff
 
@@ -126,36 +261,8 @@ unsigned int get_first_free_block_num() {
 	return block_num;
 }
 
-// In bytes
-#define MEMORY_BLOCK_SIZE 4096
-
-// Size of physical memory
-static unsigned int memory_size_;
-
-unsigned int get_num_kb_in_memory() {
-    return 0;
-    // do nothing for now
-}
-
-unsigned int get_block_count() {
-    // do nothing rn
-    return 0;
-}
-
-void initialize_manager(unsigned int memory_size, physical_address bitmap_address) {
-
-	memory_size_ = memory_size;
-	memory_map = (unsigned int*) bitmap_address;
-	num_memory_blocks =	(get_num_kb_in_memory() * 1024) / MEMORY_BLOCK_SIZE;
-	num_blocks_in_use	= num_memory_blocks;
-
-	// To start, all of memory is in use
-	unsigned int num_bytes_to_fill = get_block_count() / BLOCKS_PER_BYTE;
-	set_memory(memory_map, 0xff, num_bytes_to_fill);
-}
-
 unsigned int get_num_free_blocks() {
-    return num_memory_blocks - num_blocks_in_use;
+    return num_accessible_memory_blocks - num_blocks_in_use;
 }
 
 void* allocate_block() {
@@ -169,16 +276,9 @@ void* allocate_block() {
 
 	set_memory_block(block_num);
 
-	physical_address block_address = block_num * MEMORY_BLOCK_SIZE;
+	physical_address block_address = block_num * BYTES_PER_MEMORY_BLOCK;
 
 	num_blocks_in_use++;
 
 	return (void*) block_address;
-}
-
-void free_memory_block_of_address(physical_address address) {
-	unsigned int block_num = address / MEMORY_BLOCK_SIZE;
-
-	clear_memory_block(block_num);
-	num_blocks_in_use--;
 }
