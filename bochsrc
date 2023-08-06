@@ -3,3 +3,4 @@
 floppya : 1 _44=os-image.bin, status=inserted
 boot: a
 memory: guest=4000, host=32
+ne2k: ioaddr=0x300, irq=3, mac=b0:c4:20:00:00:00, ethmod=win32, ethdev=\Device\NPF_{A70A35C5-A8C3-4D1D-BB80-6AEF0EBAFF06}

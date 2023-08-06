@@ -101,59 +101,8 @@ void reserve_bios_memory(struct multiboot2_info* boot_info) {
 
     struct memory_map_entry* mem_map_entry_list_base_addr = boot_info -> mem_map_entry_list_base_addr;
 
-//    unsigned int mem_map_entry_size = sizeof(struct memory_map_entry);
-//    print_int_ln(mem_map_entry_size);
-
-//    print_int_ln_hex(mem_map_entry_list_base_addr);
-//
-//
-//    char first_entry_msg[] = "First entry:";
-//    print_ln(first_entry_msg);
-//
-//    struct memory_map_entry* first_entry = (struct memory_map_entry*) mem_map_entry_list_base_addr;
-//    print_int_ln_hex((unsigned int) first_entry);
-//
-//    print_int_ln_hex(first_entry -> base_addr_low);
-//    print_int_ln_hex(first_entry -> base_addr_high);
-//    print_int_ln_hex(first_entry -> length_low);
-//    print_int_ln_hex(first_entry -> length_high);
-//
-//    char second_entry_msg[] = "Second entry:";
-//    print_ln(second_entry_msg);
-//
-////    struct memory_map_entry* second_entry = (struct memory_map_entry*) mem_map_entry_list_base_addr + 20;
-//    unsigned int second_entry_addr = mem_map_entry_list_base_addr + 20;
-//    print_int_ln_hex(second_entry_addr);
-//    print_int_ln_hex((unsigned int) second_entry);
-//
-//    print_int_ln_hex(second_entry -> base_addr_low);
-//    print_int_ln_hex(second_entry -> base_addr_high);
-//    print_int_ln_hex(second_entry -> length_low);
-//    print_int_ln_hex(second_entry -> length_high);
-
-//    for (;;) {};
-
     for (unsigned int i = 0; i < num_mem_map_entries; i++) {
         struct memory_map_entry* entry = mem_map_entry_list_base_addr + i;
-
-//        print_int_ln(mem_map_entry_size);
-
-//        char base_addr_msg[] = "Entry base address:";
-//        print(base_addr_msg);
-//        print_int_ln_hex((unsigned int) entry);
-//
-        char entry_msg[] = "number: ";
-        print(entry_msg);
-        print_int_ln(i);
-
-//        char type_msg[] = "type: ";
-//        print(type_msg);
-//        print_int_ln(entry -> type);
-//
-//        print_int_ln_hex(entry -> base_addr_low);
-//        print_int_ln_hex(entry -> base_addr_high);
-        print_int_ln_hex(entry -> length_low);
-        print_int_ln_hex(entry -> length_high);
 
         allocate_memory_for_memory_map_entry(entry);
     }

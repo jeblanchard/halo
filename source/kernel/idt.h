@@ -1,20 +1,9 @@
 // Initialize IDT
 void initialize_idt();
 
-// Adds an interrupt routine to our IDT
-//
-// flags:
-//  Bits 0-2, must be 0, 1, 1
-//  Bit 3, size of gate (1 = 32 bits, 0 = 16
-//  bits)
-//  Bit 4, must be 0
-//  Bits 5-6, descriptor privilege level
-//  Bit 7, segment present flag
-//
-// segment_sel:
-//  Bits 0-1, requested privilege level
-//  Bit 2, table indicator flag (0 for GDT, 1 for LDT)
-//  Bits 3-15, index in table
+//// Adds an interrupt routine to our IDT
+//void install_ir(unsigned char ir_num, unsigned int handler_entry_address);
+
 void install_ir(unsigned char ir_num,
                 unsigned char flags,
                 unsigned short segment_sel,

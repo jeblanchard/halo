@@ -13,6 +13,7 @@ void initialize_kernel(struct multiboot2_info* boot_info) {
 
     initialize_gdt();
     initialize_idt();
+
     initialize_pic();
 
     initialize_pit();
@@ -20,7 +21,7 @@ void initialize_kernel(struct multiboot2_info* boot_info) {
 
     enable_hardware_interrupts();
 
-    initialize_physical_mem_manager(boot_info);
+    print_int_ln((unsigned int) boot_info);
 }
 
 /* At this point, we have just entered PM. Hardware
@@ -28,10 +29,6 @@ void initialize_kernel(struct multiboot2_info* boot_info) {
  * initialize our PM environment. */
 void start(struct multiboot2_info* boot_info) {
     initialize_kernel(boot_info);
-
-    char boot_info_msg[] = "Number of memory map entries: ";
-    print(boot_info_msg);
-    print_int_ln(boot_info -> mem_map_num_entries);
 
     for (;;) {}
 

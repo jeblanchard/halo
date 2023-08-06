@@ -23,9 +23,6 @@ Implement processes.
 Convert all the drivers to C for easier maintainability /
 flexibility.
 
-Get the PIT working and incrementing a count. This is the (fully
-reachable) goal of 6/26.
-
 Make it to where new interrupts don't have to worry about
 fostering the environment for interrupts. This means
 not having to include start and return_from interrupt
@@ -80,10 +77,22 @@ conform my bootloader to the multiboot standard
 
 setup some sort of environment variable system for compiling / linker / build options.
 
-figure out the weirdness with the PIC
+figure out the weirdness with the PIC / PIT
 
 deal with the order in which we clear blocks on the physical memory manager.
 for example, one address range's blocks need to be closed; then an address range
 with an overlapping block is then opened.
 
 add unit testing to the physical memory management package
+
+link the GDT and IDT code together, to rid of separate hardcoded segment
+selectors.
+
+make an array of all the system handlers so that initializing the
+IDT doesn't look so aids.
+
+add an easier way to install interrupt handlers. there can be interrupt
+entry function, the core logic of the interrupt, and the end of interupt
+function
+    - fix up the IDT since the GDT would be corrupted for some weird
+      reason

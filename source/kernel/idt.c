@@ -1,8 +1,10 @@
 #include "./drivers/screen.h"
-#include "idt.h"
 #include "./utils/memory.h"
 #include "./drivers/pic.h"
 #include "./utils/string.h"
+#include "./utils/standard.h"
+#include "./utils/errors.h"
+#include "idt.h"
 
 #pragma pack(push,1)
 struct idt_descriptor {
@@ -304,6 +306,130 @@ void bounds_check() {
     for (;;) {};
 }
 
+/* flags:
+ *  Bits 0-2, must be 0, 1, 1
+ *  Bit 3, size of gate (1 = 32 bits, 0 = 16
+ *  bits)
+ *  Bit 4, must be 0
+ *  Bits 5-6, descriptor privilege level
+ *  Bit 7, segment present flag
+ *
+ * segment_sel:
+ *  Bits 0-1, requested privilege level
+ *  Bit 2, table indicator flag (0 for GDT, 1 for LDT)
+ *  Bits 3-15, index in table */
+//void add_handler_to_idt(unsigned char ir_num,
+//                        unsigned char flags,
+//                        unsigned short segment_sel,
+//                        unsigned int handler_address) {
+//
+//	unsigned short handler_address_low = (unsigned short) handler_address & 0xffff;
+//	unsigned short handler_address_high = (unsigned short) (handler_address >> 16) & 0xffff;
+//
+//	idt[ir_num].handler_address_low = handler_address_low;
+//	idt[ir_num].handler_address_high = handler_address_high;
+//	idt[ir_num].reserved = 0;
+//	idt[ir_num].flags = flags;
+//	idt[ir_num].segment_sel = segment_sel;
+//}
+
+//static bool non_default_ir_table[MAX_IR_NUM + 1];
+
+//#define DEFAULT_FLAGS 0x8e
+//#define DEFAULT_SEGMENT_SEL 0x8
+
+//void install_default_ir(unsigned char ir_num, unsigned int handler_address) {
+//
+//    unsigned char default_flags = 0x8e;
+//    unsigned short default_segment_sel = 0x8;
+//    add_handler_to_idt(ir_num, default_flags, default_segment_sel, handler_address);
+//
+//    non_default_ir_table[ir_num] = false;
+//}
+
+//// Initialize IDT
+//void initialize_idt() {
+//	clear_idt();
+//
+////    char before_init_msg[] = "Before initializing IDT.";
+////    print_ln(before_init_msg);
+////    for (;;) {};
+//
+//	unsigned int default_handler_0_5_address = (unsigned int) default_handler_0_5_entry;
+//    for (unsigned short ir_num = 0; ir_num <= 5; ir_num++) {
+//        if (ir_num == 3) {
+//            install_default_ir(ir_num, default_handler_0_5_address);
+//            char first_handler_msg[] = "After adding first default handler.";
+//            print_ln(first_handler_msg);
+//            for (;;) {};
+//        }
+//    }
+//
+//    char one_eigth_of_init_msg[] = "One eighth of initializing IDT.";
+//    print_ln(one_eigth_of_init_msg);
+//    for (;;) {};
+//
+//    unsigned int ir_6_handler_address = (unsigned int) ir_6_handler_entry;
+//    install_default_ir(6, ir_6_handler_address);
+//
+//    unsigned int ir_7_handler_address = (unsigned int) ir_7_handler_entry;
+//    install_default_ir(7, ir_7_handler_address);
+//
+//    char one_quarter_of_init_msg[] = "One quarter of initializing IDT.";
+//    print_ln(one_quarter_of_init_msg);
+//    for (;;) {};
+//
+//    unsigned int ir_8_handler_address = (unsigned int) ir_8_handler_entry;
+//    install_default_ir(8, ir_8_handler_address);
+//
+//    unsigned int default_handler_9_10_address = (unsigned int) default_handler_9_10_entry;
+//    for (unsigned short ir_num = 9; ir_num <= 10; ir_num++) {
+//        install_default_ir(ir_num, default_handler_9_10_address);
+//    }
+//
+//    unsigned int default_handler_11_20_address = (unsigned int) default_handler_11_20_entry;
+//    for (unsigned short ir_num = 11; ir_num <= 20; ir_num++) {
+//        install_default_ir(ir_num, default_handler_11_20_address);
+//    }
+//
+//    char middle_of_init_msg[] = "Middle of initializing IDT.";
+//    print_ln(middle_of_init_msg);
+//    for (;;) {};
+//
+//    unsigned int default_handler_21_26_address = (unsigned int) default_handler_21_26_entry;
+//    for (unsigned short ir_num = 21; ir_num <= 26; ir_num++) {
+//        install_default_ir(ir_num, default_handler_21_26_address);
+//    }
+//
+//    unsigned int default_handler_27_29_address = (unsigned int) default_handler_27_29_entry;
+//    for (unsigned short ir_num = 27; ir_num <= 29; ir_num++) {
+//        install_default_ir(ir_num, default_handler_27_29_address);
+//    }
+//
+//    unsigned int default_handler_30_31_address = (unsigned int) default_handler_30_31_entry;
+//    for (unsigned short ir_num = 30; ir_num <= 31; ir_num++) {
+//        install_default_ir(ir_num, default_handler_30_31_address);
+//    }
+//
+//    unsigned int default_handler_32_address = (unsigned int) default_handler_32_entry;
+//        install_default_ir(32, default_handler_32_address);
+//
+//    unsigned int default_handler_address = (unsigned int) default_handler_entry;
+//    for (unsigned short ir_num = 33; ir_num <= MAX_IR_NUM; ir_num++) {
+//        install_default_ir(ir_num, default_handler_address);
+//    }
+//
+//    char before_idt_msg[] = "Before loading IDT.";
+//    print_ln(before_idt_msg);
+//    for (;;) {};
+//
+//    unsigned short limit = (unsigned short) sizeof(idt) - 1;
+//    load_idt(&idt, limit);
+//
+//    char after_idt_msg[] = "Loaded IDT.";
+//    print_ln(after_idt_msg);
+//    for (;;) {};
+//}
 
 // Initialize IDT
 void initialize_idt() {
@@ -387,6 +513,12 @@ void initialize_idt() {
     load_idt(&idt, limit);
 }
 
+
+
+//bool ir_num_is_already_taken(unsigned char ir_num) {
+//    return non_default_ir_table[ir_num];
+//}
+
 void install_ir(unsigned char ir_num,
                 unsigned char flags,
                 unsigned short segment_sel,
@@ -402,6 +534,18 @@ void install_ir(unsigned char ir_num,
 	idt[ir_num].flags = flags;
 	idt[ir_num].segment_sel = segment_sel;
 }
+
+//void install_ir(unsigned char ir_num, unsigned int handler_address) {
+//
+//    if (ir_num_is_already_taken(ir_num)) {
+//        char err_msg[] = "IR number is already taken.";
+//        halt_and_display_error_msg(err_msg);
+//    }
+//
+//    add_handler_to_idt(ir_num, DEFAULT_FLAGS, DEFAULT_SEGMENT_SEL, handler_address);
+//
+//    non_default_ir_table[ir_num] = true;
+//}
 
 // Generate interrupt call
 void gen_interrupt() {

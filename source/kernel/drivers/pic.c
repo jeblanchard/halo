@@ -1,11 +1,44 @@
-#include "pic.h"
 #include "../utils/low_level.h"
 #include "../idt.h"
 #include "screen.h"
 #include "../utils/standard.h"
+#include "../utils/errors.h"
 
 #define PRIMARY_PIC_COMMAND_REG 0x20
 #define SECONDARY_PIC_COMMAND_REG 0xa0
+
+#define NUMBER_OF_IRQS 16
+
+static bool irq_in_use_table[NUMBER_OF_IRQS];
+
+void initialize_irq_in_use_table() {
+    for (int i = 0; i < NUMBER_OF_IRQS; i++) {
+        irq_in_use_table[i] = false;
+    }
+}
+
+bool irq_is_already_taken(unsigned char irq_num) {
+    return irq_in_use_table[irq_num];
+}
+
+void install_irq(unsigned short irq_num,
+                 unsigned int handler_entry_address) {
+
+    print_int_ln(irq_in_use_table[0]);
+    print_int_ln(irq_num);
+
+    if (irq_is_already_taken(irq_num)) {
+        char err_msg[] = "IRQ number is already taken.";
+        halt_and_display_error_msg(err_msg);
+    }
+
+    unsigned char ir_num = LAST_RESERVED_IR_NUM + 1 + irq_num;
+    unsigned char flags = 0x8e;
+    unsigned short segment_sel = 0x8;
+    install_ir(ir_num, flags, segment_sel, handler_entry_address);
+
+    irq_in_use_table[irq_num] = true;
+}
 
 // Sends a command to PIC 0 or 1
 void pic_send_command(unsigned char cmd, unsigned char pic_num) {
@@ -244,4 +277,9 @@ void initialize_pic() {
 	// Null out the data registers
 	pic_send_data(0, 0);
 	pic_send_data(0, 1);
+
+	initialize_irq_in_use_table();
+//	char init_msg[] = "At PIC init: ";
+//	print(init_msg);
+//	print_int_ln(irq_in_use_table[0]);
 }

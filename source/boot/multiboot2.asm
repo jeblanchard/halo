@@ -53,35 +53,12 @@ multiboot2:
         mov dword [multiboot2_info_instance + multiboot2_info.entry_size], 24
         mov dword [multiboot2_info_instance + multiboot2_info.entry_version], 0
 
-;        mov dword es:di, memory_map_entries
         mov word di, memory_map_entries
-
-;        mov dx, memory_map_entries
-;        call print_hex
-
-;        mov dx, [memory_map_entries]
-;        call print_hex
-
-;        mov dx, [memory_map_entries + 10]
-;        call print_hex
-
-;        jmp $
 
         call get_memory_map_from_bios
 
-;        mov bx, AFTER_MEM_MAP_BIOS
-;        call print_string
-;
-;        mov dx, memory_map_entries
-;        call print_hex
-;
-;        mov dx, after_memory_map
-;        call print_hex
-
         mov dword [multiboot2_info_instance + multiboot2_info.mem_map_entry_list_base_addr], memory_map_entries
-;        mov dword [multiboot2_info_instance + multiboot2_info.mem_map_entry_list_base_addr], 0x34
         mov dword [multiboot2_info_instance + multiboot2_info.mem_map_num_entries], ebp
-;        mov dword [multiboot2_info_instance + multiboot2_info.mem_map_num_entries], 7
 
     fill_terminating_tag_type:
         mov dword [multiboot2_info_instance + multiboot2_info.terminating_tag_type], 0

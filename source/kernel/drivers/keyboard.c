@@ -4,6 +4,7 @@
 #include "../idt.h"
 #include "../utils/standard.h"
 #include "pic.h"
+#include "../utils/errors.h"
 
 #define KEYBOARD_CONTROLLER_STATUS_PORT 0x64
 
@@ -230,7 +231,7 @@ void send_cmd_to_keyboard_controller(unsigned char cmd) {
 #define BAT_PASSED_STATUS 0x55
 
 // Runs Basic Assurance Test (BAT)
-bool bat_was_successful() {
+bool bat_failed() {
      char start_msg[] = "BAT starting.\n";
      print(start_msg);
 
@@ -241,10 +242,10 @@ bool bat_was_successful() {
     unsigned char bat_status = read_keyboard_encoder_buf();
 
     if (bat_status == BAT_PASSED_STATUS) {
-        return true;
+        return false;
     }
 
-    return false;
+    return true;
 }
 
 #define ENABLE_KEYBOARD_CMD 0xf4
@@ -260,26 +261,20 @@ void initialize_keyboard() {
     char start_msg[] = "Starting keyboard initialization.\n";
     print(start_msg);
 
-	// Install our interrupt handler
-    unsigned char ir_num = LAST_RESERVED_IR_NUM + 1 + KEYBOARD_IRQ_NUM;
-    unsigned char flags = 0x8e; // 1000 1110
-    unsigned short segment_sel = 0x0008; // 0000 0000 0000 1000
     unsigned int handler_entry_address = (unsigned int) keyboard_handler_entry;
-    install_ir(ir_num, flags, segment_sel, handler_entry_address);
+
+    install_irq(KEYBOARD_IRQ_NUM, handler_entry_address);
 
     char ir_msg[] = "Installed keyboard IR.\n";
     print(ir_msg);
 
-    if (bat_was_successful()) {
-        // do nothing
-    } else {
-        char bat_fail_msg[] = "Keyboard BAT failed.\n";
-        print(bat_fail_msg);
-        for (;;) {};
+    if (bat_failed()) {
+        char bat_fail_msg[] = "Keyboard BAT failed.";
+        halt_and_display_error_msg(bat_fail_msg);
     }
 
-    char bat_msg[] = "BAT passed.\n";
-    print(bat_msg);
+    char bat_msg[] = "BAT passed.";
+    print_ln(bat_msg);
 
 	// Set lock keys and LED lights to starting value
 	set_keyboard_leds(false, false, false);

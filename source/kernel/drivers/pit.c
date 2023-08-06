@@ -82,16 +82,9 @@ void pit_set_counter(unsigned int freq, unsigned char ocw) {
 
 // Initialize PIT
 void initialize_pit() {
-    unsigned char flags = 0x8e; // 1000 1110
-    unsigned short segment_sel = 0x0008; // 0000 0000 0000 1000
     unsigned int handler_address = (unsigned int) pit_irq_handler_entry;
 
-    unsigned char ir_num = LAST_RESERVED_IR_NUM + 1 + PIT_IRQ_NUM;
-
-    install_ir(ir_num,
-               flags,
-               segment_sel,
-               handler_address);
+    install_irq(PIT_IRQ_NUM, handler_address);
 
     unsigned char ocw = 0x36; // 0011 0110
     pit_set_counter(50, ocw);
