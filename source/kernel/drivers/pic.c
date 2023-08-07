@@ -24,9 +24,6 @@ bool irq_is_already_taken(unsigned char irq_num) {
 void install_irq(unsigned short irq_num,
                  unsigned int handler_entry_address) {
 
-    print_int_ln(irq_in_use_table[0]);
-    print_int_ln(irq_num);
-
     if (irq_is_already_taken(irq_num)) {
         char err_msg[] = "IRQ number is already taken.";
         halt_and_display_error_msg(err_msg);
@@ -279,7 +276,4 @@ void initialize_pic() {
 	pic_send_data(0, 1);
 
 	initialize_irq_in_use_table();
-//	char init_msg[] = "At PIC init: ";
-//	print(init_msg);
-//	print_int_ln(irq_in_use_table[0]);
 }

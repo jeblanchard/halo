@@ -1,0 +1,4 @@
+read all base registers from each slot
+
+assign a driver to each slot
+
