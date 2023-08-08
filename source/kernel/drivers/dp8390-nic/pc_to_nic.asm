@@ -28,7 +28,7 @@ global pc_to_nic:
     mov dx, REMOTE_START_ADDRESS_1
     mov al, ah                            ; set as hi address
     out dx, al
-    mov dx, COMMAND
+    mov dx, COMMAND_REG
     mov al, 0x12                          ; write and start
     out dx, al
     mov dx, IO_PORT

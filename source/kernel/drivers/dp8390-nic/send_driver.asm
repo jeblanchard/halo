@@ -1,6 +1,6 @@
 ; ***********************************************************************
 ; Either transmits a packet passed to it or queues up the
-; packet if the transmitter is busy (COMMAND register = 0x26).
+; packet if the transmitter is busy (COMMAND_REG register = 0x26).
 ; Routine is called from higher level software.
 ;
 ; Input:
@@ -16,8 +16,8 @@ global send_or_queue_packet:
 
     cli                                  ; disable interrupts
 
-    mov dx, COMMAND
-    in al, dx                            ; read NIC command register
+    mov dx, COMMAND_REG
+    in al, dx                            ; read NIC COMMAND_REG register
 
     cmp al, CURRENTLY_TRANSMITTING_CODE  ; check if NIC is currently
                                          ; transmitting
@@ -42,9 +42,9 @@ global send_or_queue_packet:
     mov al, ch
     out dx, al                           ; set transmit byte count 1 on NIC
 
-    mov dx, COMMAND
+    mov dx, COMMAND_REG
     mov al, 0x26
-    out dx, al                           ; issue transmit to COMMAND register
+    out dx, al                           ; issue transmit to COMMAND_REG register
 
     jmp .finished
 

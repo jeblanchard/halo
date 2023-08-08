@@ -31,7 +31,7 @@ global nic_to_pic:
     mov dx, REMOTE_START_ADDRESS_1
     mov al, ah
     out dx, al                          ; set as high address
-    mov dx, COMMAND
+    mov dx, COMMAND_REG
     mov al, 0x0a                        ; read and start
     out dx, al
     mov dx, IO_PORT

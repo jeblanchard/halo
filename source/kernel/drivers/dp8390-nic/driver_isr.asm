@@ -59,7 +59,7 @@ global nic_isr:
     jmp pkt_tx_rt
 
 .exit_isr:
-    mov dx, INTERRUPT_MASK                 ; disabling NIC's interrupt
+    mov dx, INTERRUPT_MASK_REG                 ; disabling NIC's interrupt
     mov al, 0
     out dx, al
 
@@ -73,7 +73,7 @@ global nic_isr:
 
     sti                                    ; re-enable hardware interrupts
 
-    mov dx, INTERRUPT_MASK       ; NOTE: interrupts from the NIC
+    mov dx, INTERRUPT_MASK_REG       ; NOTE: interrupts from the NIC
     mov al, imr                  ; are enabled at this point so
     out dx, al                   ; that the 8259 interrupt
                                  ; controller does not miss any
@@ -117,16 +117,16 @@ packet_received_routine:
 
 ; Checks to see if receive buffer ring is empty
 check_ring:
-    mov dx, BOUNDARY
+    mov dx, BOUNDARY_REG
     in al, dx
-    mov ah, al               ; save BOUNDARY in ah
-    mov dx, COMMAND
+    mov ah, al               ; save BOUNDARY_REG in ah
+    mov dx, COMMAND_REG
     mov al, 0x62
     out dx, al               ; switched to pg 1 of NIC
     mov dx, CURRENT
     in al, dx
     mov bh, al               ; bh 4 CURRENT PAGE register
-    mov dx, COMMAND
+    mov dx, COMMAND_REG
     mov al, 0x22
     out dx, al               ; switched back to pg 0
     cmp ah, bh               ; recv buff ring empty?
@@ -141,7 +141,7 @@ check_ring:
 ;***********************************************************************
 
 ring_overflow:
-    mov dx, COMMAND
+    mov dx, COMMAND_REG
     mov al, 0x21
     out dx, al                   ; put NIC in stop mode
 
@@ -160,10 +160,10 @@ wait_for_stop:
     loop wait_for_stop          ; if we fall thru this loop, the RST bit may not get
                                 ; set because the NIC was currently transmitting
 
-    mov dx, TRANSMIT_CONFIGURATION
+    mov dx, TRANSMIT_CONFIG_REG
     mov al, 2
     out dx, al                  ; into loopback mode 1
-    mov dx, COMMAND
+    mov dx, COMMAND_REG
     mov al, 0x22
     out dx, al                  ; into stop mode
 
@@ -177,7 +177,7 @@ wait_for_stop:
     mov al, 0x10
     out dx, al                  ; clear Overflow bit
 
-    mov dx, TRANSMIT_CONFIGURATION
+    mov dx, TRANSMIT_CONFIG_REG
     mov al, tcr
     out dx, al                  ; put TCR back to normal mode
     jmp check_ring
