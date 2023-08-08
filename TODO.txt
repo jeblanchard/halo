@@ -96,3 +96,4 @@ entry function, the core logic of the interrupt, and the end of interupt
 function
     - fix up the IDT since the GDT would be corrupted for some weird
       reason
+    - i can use the C interfacing functionality that NASM provides

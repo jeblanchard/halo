@@ -1,0 +1,5 @@
+the driver is written in assembly for me
+already. i think the easiest thing for
+me to do is to have all the assembly
+files, then have a C interface to
+those things

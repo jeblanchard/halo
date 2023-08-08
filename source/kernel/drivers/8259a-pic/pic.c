@@ -3,6 +3,7 @@
 #include "screen.h"
 #include "../utils/standard.h"
 #include "../utils/errors.h"
+#include "ports.h"
 
 #define PRIMARY_PIC_COMMAND_REG 0x20
 #define SECONDARY_PIC_COMMAND_REG 0xa0
@@ -93,9 +94,6 @@ char pic_isr_is_clear(char pic_num) {
 
     return false;
 }
-
-#define PRIMARY_PIC_INT_MASK_REG     0x21
-#define SECONDARY_PIC_INT_MASK_REG   0xa1
 
 // Reads from the data register of PIC [pic_num]
 unsigned char read_pic_imr(unsigned char pic_num) {
