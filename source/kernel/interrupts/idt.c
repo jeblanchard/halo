@@ -77,6 +77,8 @@ void enable_hardware_interrupts() {
 // Make C extern declarations of the ISR entry points
 extern void default_handler_entry();
 
+extern void _execute_interrupt_handler(unsigned int handler_address);
+
 // Define an ISR stub that makes a call to a C function
 __asm__ (".global _default_handler_entry\n"
          "_default_handler_entry:\n\t"
@@ -85,6 +87,8 @@ __asm__ (".global _default_handler_entry\n"
          "call _default_handler\n\t"
          "popa\n\t"                   // Restore all the registers
          "iret");
+
+
 
 // Default handler to catch unhandled system interrupts
 void default_handler() {
