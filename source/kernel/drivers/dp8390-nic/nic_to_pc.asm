@@ -17,11 +17,11 @@ global nic_to_pic:
     inc cx                              ; make even
     and cx, 0x0fffe
 
-    mov dx, REMOTE_BYTE_COUNT_0
+    mov dx, REMOTE_BYTE_COUNT_0_REG
     mov al, cl
     out dx, al
 
-    mov dx, REMOTE_BYTE_COUNT_1
+    mov dx, REMOTE_BYTE_COUNT_1_REG
     mov al, ch
     out dx, al
 
@@ -41,7 +41,7 @@ global nic_to_pic:
     in ax, dx
     stosw                               ; read word and store in es:di
     loop reading_word
-    mov dx, INTERRUPT_STATUS
+    mov dx, INTERRUPT_STATUS_REG
 
 .check_dma:
     in al, dx

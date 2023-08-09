@@ -260,7 +260,7 @@ get_memory_map_from_bios:
 
         ret
 
-;%include "source/boot/utilities/print_hex_rm.asm"
+;%include "source/boot/utils/print_hex_rm.asm"
 
 BEFORE_MEMORY_SIZE db "Before memory size.", 0
 AFTER_MEMORY_SIZE db "After memory size.", 0
