@@ -35,10 +35,12 @@ void store_all_predefined_core_handlers() {
     assign_core_handler_address(19, handle_simd_floating_point_exception);
     assign_core_handler_address(20, handle_virtualization_exception);
     assign_core_handler_address(21, handle_control_protection_exception);
+    assign_core_handler_address(22, handle_reserved_vectors_22_thru_31);
 
-    for (int i = 22; i <= 31; i++) {
-        assign_core_handler_address(i, handle_reserved_vectors_22_thru_31);
-    }
+// why does this break things?
+//    for (int i = 22; i <= 31; i++) {
+//        assign_core_handler_address(i, handle_reserved_vectors_22_thru_31);
+//    }
 
 
     for (int i = 32; i <= MAX_IR_NUM; i++) {

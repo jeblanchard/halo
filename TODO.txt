@@ -16,17 +16,7 @@ Learn about GAS inline assembly.
 Include a linker script as opposed to a bunch of command
 line options for ld / gcc / etc.
 
-Implement a keyboard driver.
-
 Implement processes.
-
-Convert all the drivers to C for easier maintainability /
-flexibility.
-
-Make it to where new interrupts don't have to worry about
-fostering the environment for interrupts. This means
-not having to include start and return_from interrupt
-handler routines.
 
 Add to build script functionality to clear output directory
 before building.
@@ -34,27 +24,11 @@ before building.
 propose a change to the gcc compiler to have that command line
 option actually not pack structures at all.
 
-revisit GDT initialization issue. the limit is equal to the gdtr
-address provided, for some crazy reason. solving this really
-has sunk my time for a pretty minimal benefit at this point.
-
-figure out why my print int function can't print large
-ints.
-
 why does the new load_idt work?
-
-learn what the .global thing does in nasm.
-
-find out why the PIT only interrupts a single time.
-
-make an API to seamlessly add an IRQ
 
 get rid of the comments in the keyboard handler.
 
 add debug logging functionality.
-
-find out why the undefined op code exception keeps
-coming up.
 
 why send_eoi doesn't work?
 
@@ -73,11 +47,7 @@ refactor boot sector
 
 look at throwing errors in C, specifically in the offset
 
-conform my bootloader to the multiboot standard
-
 setup some sort of environment variable system for compiling / linker / build options.
-
-figure out the weirdness with the PIC / PIT
 
 deal with the order in which we clear blocks on the physical memory manager.
 for example, one address range's blocks need to be closed; then an address range
@@ -88,12 +58,5 @@ add unit testing to the physical memory management package
 link the GDT and IDT code together, to rid of separate hardcoded segment
 selectors.
 
-make an array of all the system handlers so that initializing the
-IDT doesn't look so aids.
-
-add an easier way to install interrupt handlers. there can be interrupt
-entry function, the core logic of the interrupt, and the end of interupt
-function
-    - fix up the IDT since the GDT would be corrupted for some weird
-      reason
-    - i can use the C interfacing functionality that NASM provides
+figure out why that for loop in the assign predefined handlers
+section breaks things
