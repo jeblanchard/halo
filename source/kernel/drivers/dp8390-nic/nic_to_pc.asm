@@ -40,7 +40,7 @@ global nic_to_pic:
 .writing_word:                          ; because of word-wide transfers
     in ax, dx
     stosw                               ; read word and store in es:di
-    loop reading_word
+;    loop reading_word
     mov dx, INTERRUPT_STATUS_REG
 
 .check_dma:

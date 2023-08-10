@@ -19,7 +19,7 @@ load_kernel_from_drive:
 
     mov bx, MULTIBOOT2_OFFSET           ; The destination base address in
                                         ; memory.
-    mov al, 22                          ; Number of sectors we will load.
+    mov al, 35                          ; Number of sectors we will load.
     mov dl, [BOOT_DRIVE]                ; Populate DL with the boot drive number.
     call disk_load
 
@@ -36,7 +36,7 @@ jmp MULTIBOOT2_OFFSET          ; Jump to the address of our
 jmp $                           ; We should never arrive here,
                                 ; but we'll hang if so.
 
-%include "source/boot/utilities/print_string_rm.asm"
+%include "source/boot/utils/print_string_rm.asm"
 %include "source/boot/disk_load.asm"
 
 ; Global variables

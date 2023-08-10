@@ -22,7 +22,7 @@ global send_or_queue_packet:
     push cx                              ; store byte count
     mov ah, TRANSMIT_BUFFER
     xor al, al                           ; set page that will receive the packet
-    call pc_to_nic                       ; transfer packet to NIC buffer RAM
+;    call pc_to_nic                       ; transfer packet to NIC buffer RAM
 
     mov dx, TRANSMIT_PAGE_START_REG
     mov al, TRANSMIT_BUFFER
@@ -45,7 +45,7 @@ global send_or_queue_packet:
     jmp .finished
 
 .queue_packet:
-    call queue_packet
+;    call queue_packet
 
 .finished:                               ; enable interrupts
     sti

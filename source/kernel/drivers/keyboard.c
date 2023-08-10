@@ -1,9 +1,9 @@
 #include "../utils/low_level.h"
 #include "keyboard.h"
 #include "screen.h"
-#include "../idt.h"
+#include "../interrupts/idt.h"
 #include "../utils/standard.h"
-#include "pic.h"
+#include "8259a-pic/pic.h"
 #include "../utils/errors.h"
 
 #define KEYBOARD_CONTROLLER_STATUS_PORT 0x64
@@ -202,16 +202,6 @@ void keyboard_irq_handler() {;
     }
 }
 
-extern void keyboard_handler_entry();
-
-__asm__ (".global _keyboard_handler_entry\n"
-         "_keyboard_handler_entry:\n\t"
-         "cld\n\t"
-         "pusha\n\t"
-         "call _keyboard_irq_handler\n\t"
-         "popa\n\t"
-         "iret");
-
 #define KEYBOARD_CONTROLLER_CMD_PORT 0x64
 
 // Send command byte to keyboard controller
@@ -261,9 +251,7 @@ void initialize_keyboard() {
     char start_msg[] = "Starting keyboard initialization.\n";
     print(start_msg);
 
-    unsigned int handler_entry_address = (unsigned int) keyboard_handler_entry;
-
-    install_irq(KEYBOARD_IRQ_NUM, handler_entry_address);
+    install_irq(KEYBOARD_IRQ_NUM, keyboard_irq_handler);
 
     char ir_msg[] = "Installed keyboard IR.\n";
     print(ir_msg);

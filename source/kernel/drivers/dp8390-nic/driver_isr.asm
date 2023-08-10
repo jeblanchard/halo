@@ -106,10 +106,10 @@ global nic_isr:
     mov al, 1                            ; reset PRX bit in ISR
     out dx, al
 
-    mov ax, next_packet
-    mov cx, packet_length
-    mov es, seq_recv_pc_buff
-    mov di, offset recv_pc_buff
+;    mov ax, next_packet
+;    mov cx, packet_length
+;    mov es, seq_recv_pc_buff
+;    mov di, offset recv_pc_buff
 
 ;***********************************************************************
 ;
@@ -166,8 +166,8 @@ global nic_isr:
     mov ax, next_packet
     mov cx, packet_length
     mov es, seg recv_pc_buff
-    mov di, offset recv_pc_buff
-    NICtoPC
+;    mov di, offset recv_pc_buff
+;    NICtoPC
 
     mov dx, INTERRUPT_STATUS_REG
     mov al, 0x10

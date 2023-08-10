@@ -17,5 +17,4 @@ unsigned char read_pic_isr(char pic_num);
 
 char pic_isr_is_clear(char pic_num);
 
-void install_irq(unsigned short irq_num,
-                 unsigned int handler_entry_address);
+void install_irq(unsigned short irq_num, void* handler_entry_address);

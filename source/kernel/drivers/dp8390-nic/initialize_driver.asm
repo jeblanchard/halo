@@ -36,10 +36,10 @@ global initialize_driver:
     out dx, al
 
     mov dx, REMOTE_BYTE_COUNT_0_REG
-    out dx, INITIAL_REMOTE_BYTE_COUNT_LOWER_8_BITS
+;    out dx, INITIAL_REMOTE_BYTE_COUNT_LOWER_8_BITS
 
     mov dx, REMOTE_BYTE_COUNT_1_REG
-    out dx, INITIAL_REMOTE_BYTE_COUNT_UPPER_8_BITS
+;    out dx, INITIAL_REMOTE_BYTE_COUNT_UPPER_8_BITS
 
     mov al, CLEARED_RCR
     mov dx, RECEIVE_CONFIG_REG

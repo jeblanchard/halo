@@ -33,7 +33,7 @@ global pc_to_nic:
 .writing_word:                         ; because of word-wide transfers
     lodsw                              ; load word from ds:si
     out dx, ax                            ; write to IO_PORT on NIC board
-    loop Writing_Word
+;    loop Writing_Word
     mov cx, 0
     mov dx, INTERRUPT_STATUS_REG
 

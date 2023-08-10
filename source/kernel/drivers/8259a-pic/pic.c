@@ -1,8 +1,8 @@
-#include "../utils/low_level.h"
-#include "../idt.h"
-#include "screen.h"
-#include "../utils/standard.h"
-#include "../utils/errors.h"
+#include "../../utils/low_level.h"
+#include "../../interrupts/idt.h"
+#include "../screen.h"
+#include "../../utils/standard.h"
+#include "../../utils/errors.h"
 #include "ports.h"
 
 #define PRIMARY_PIC_COMMAND_REG 0x20
@@ -23,7 +23,7 @@ bool irq_is_already_taken(unsigned char irq_num) {
 }
 
 void install_irq(unsigned short irq_num,
-                 unsigned int handler_entry_address) {
+                 void* handler_address) {
 
     if (irq_is_already_taken(irq_num)) {
         char err_msg[] = "IRQ number is already taken.";
@@ -31,9 +31,7 @@ void install_irq(unsigned short irq_num,
     }
 
     unsigned char ir_num = LAST_RESERVED_IR_NUM + 1 + irq_num;
-    unsigned char flags = 0x8e;
-    unsigned short segment_sel = 0x8;
-    install_ir(ir_num, flags, segment_sel, handler_entry_address);
+    install_ir(ir_num, handler_address);
 
     irq_in_use_table[irq_num] = true;
 }

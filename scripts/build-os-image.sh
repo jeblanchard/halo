@@ -1,9 +1,9 @@
-# Compile all C source files to object files
 gcc_command="gcc -ffreestanding -o {}.o -c -Werror -Wextra -Wall -nostdlib -lgcc {}"
+nasm_command="nasm -f elf {} -o {}.o"
 
-# (for IntelliJ)
-# shellcheck disable=SC2086
-find source -type f -name "*.c" -exec $gcc_command \;
+# Compile all of the kernel's source files to object files.
+find source/kernel -type f -name "*.c" -exec $gcc_command \;
+find source/kernel -type f -name "*.asm" -exec $nasm_command \;
 
 out_dir=./output
 obj_dir="${out_dir}/object-files"
@@ -14,7 +14,7 @@ kernel_entry_obj_filename="multiboot2.o"
 kernel_entry_obj_full_filename="${obj_dir}/${kernel_entry_obj_filename}"
 nasm -f elf ${kernel_entry_asm_filename} -o ${kernel_entry_obj_full_filename}
 
-# Move all object files to out_dir
+# Move all object files to output directory
 mv_command="mv {} ${obj_dir}"
 
 # shellcheck disable=SC2086

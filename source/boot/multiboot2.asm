@@ -71,8 +71,8 @@ multiboot2:
     jmp switch_to_pm
 
 %include "source/boot/memory_size.asm"
-%include "source/boot/utilities/print_string_rm.asm"
-%include "source/boot/utilities/print_hex_rm.asm"
+%include "source/boot/utils/print_string_rm.asm"
+%include "source/boot/utils/print_hex_rm.asm"
 
 BEFORE_NUM_KB db "Before number of KBs.", 0
 AFTER_NUM_KB db "After number of KBs.", 0
@@ -158,5 +158,5 @@ begin_pm:
     jmp $                               ; Hang forever when we return from the kernel
                                         ; (which we shouldn't).
 
-%include "source/boot/utilities/print_string_pm.asm"
+%include "source/boot/utils/print_string_pm.asm"
 LANDED_IN_PM db "Landed in PM.", 0

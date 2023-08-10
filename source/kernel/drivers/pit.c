@@ -1,9 +1,9 @@
 #include "../utils/low_level.h"
-#include "../idt.h"
+#include "../interrupts/idt.h"
 #include "screen.h"
 #include "pit.h"
 #include "../utils/string.h"
-#include "pic.h"
+#include "8259a-pic/pic.h"
 #include "../utils/standard.h"
 
 // Global Tick count
@@ -17,16 +17,6 @@ void pit_irq_handler() {
 	pit_ticks++;
 	update_clock();
 }
-
-extern void pit_irq_handler_entry();
-
-__asm__ (".global _pit_irq_handler_entry\n"
-         "_pit_irq_handler_entry:\n\t"
-         "cld\n\t"
-         "pusha\n\t"
-         "call _pit_irq_handler\n\t"
-         "popa\n\t"
-         "iret");
 
 // Send command to the PIC.
 void pit_send_command(unsigned char cmd) {
@@ -82,9 +72,8 @@ void pit_set_counter(unsigned int freq, unsigned char ocw) {
 
 // Initialize PIT
 void initialize_pit() {
-    unsigned int handler_address = (unsigned int) pit_irq_handler_entry;
 
-    install_irq(PIT_IRQ_NUM, handler_address);
+    install_irq(PIT_IRQ_NUM, pit_irq_handler);
 
     unsigned char ocw = 0x36; // 0011 0110
     pit_set_counter(50, ocw);

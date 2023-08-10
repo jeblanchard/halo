@@ -34,7 +34,7 @@ disk_error:
     popa
     jmp $
 
-%include "source/boot/utilities/print_hex_rm.asm"
+%include "source/boot/utils/print_hex_rm.asm"
 
 ; Variables
 DISK_ERROR_MSG db "Disk read error!", 0
