@@ -19,7 +19,7 @@ load_kernel_from_drive:
 
     mov bx, MULTIBOOT2_OFFSET           ; The destination base address in
                                         ; memory.
-    mov al, 35                          ; Number of sectors we will load.
+    mov al, 50                          ; Number of sectors we will load.
     mov dl, [BOOT_DRIVE]                ; Populate DL with the boot drive number.
     call disk_load
 

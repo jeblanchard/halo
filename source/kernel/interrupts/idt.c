@@ -82,15 +82,16 @@ void enable_hardware_interrupts() {
  *  bits)
  *  Bit 4, must be 0
  *  Bits 5-6, descriptor privilege level
- *  Bit 7, segment present flag
- *
- * segment_sel:
+ *  Bit 7, segment present flag */
+#define DEFAULT_FLAGS 0x8e
+
+/* segment_sel:
  *  Bits 0-1, requested privilege level
  *  Bit 2, table indicator flag (0 for GDT, 1 for LDT)
  *  Bits 3-15, index in table */
+#define DEFAULT_SEG_SELECTOR 0x8
+
 void add_handler_to_idt(unsigned char ir_num,
-                        unsigned char flags,
-                        unsigned short segment_sel,
                         void* handler_address) {
 
     unsigned int handler_address_int = (unsigned int) handler_address;
@@ -101,15 +102,12 @@ void add_handler_to_idt(unsigned char ir_num,
 	idt[ir_num].handler_address_low = handler_address_low;
 	idt[ir_num].handler_address_high = handler_address_high;
 	idt[ir_num].reserved = 0;
-	idt[ir_num].flags = flags;
-	idt[ir_num].segment_sel = segment_sel;
+	idt[ir_num].flags = DEFAULT_FLAGS;
+	idt[ir_num].segment_sel = DEFAULT_SEG_SELECTOR;
 }
 
-#define DEFAULT_FLAGS 0x8e
-#define DEFAULT_SEG_SELECTOR 0x8
-
 void install_ir(unsigned char ir_num, void* handler_address) {
-    add_handler_to_idt(ir_num, DEFAULT_FLAGS, DEFAULT_SEG_SELECTOR, handler_address);
+    assign_core_handler_address(ir_num, handler_address);
 }
 
 // Initialize IDT
@@ -124,5 +122,5 @@ void initialize_idt() {
 
 // Generate interrupt call
 void gen_interrupt() {
-    asm volatile ("int $33" : : );
+    asm volatile ("int $32" : : );
 }

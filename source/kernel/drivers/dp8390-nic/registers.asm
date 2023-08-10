@@ -1,3 +1,5 @@
+[bits 32]
+
 COMMAND_REG                    equ 0x300
 
 PAGE_START_REG                 equ COMMAND_REG + 1

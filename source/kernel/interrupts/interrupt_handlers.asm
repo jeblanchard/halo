@@ -1,5 +1,7 @@
 [bits 32]
 
+%include "source/boot/utils/print_string_pm.asm"
+
 extern _get_core_vector_handler_address
 
 ; Gets the address of the core handler C function
@@ -16,7 +18,6 @@ get_handler_address:
     add esp, byte 2                           ; remove parameter from the stack
 
     ret                                       ; eax holds the C function address
-
 
 global _handle_vector_0
 
@@ -88,12 +89,17 @@ global _handle_vector_6
 
 _handle_vector_6:
 
+    mov ebx, GOT_HERE_MSG
+    call print_string_pm
+
     mov ax, 6
     call get_handler_address
 
     call eax                                  ; call handler that was provided
 
     iret
+
+GOT_HERE_MSG db "Got to beginning of vector 6.", 0
 
 global _handle_vector_7
 
@@ -374,12 +380,27 @@ global _handle_vector_32
 
 _handle_vector_32:
 
+;    mov ebx, START_OF_VECTOR_32_MSG
+;    call print_string_pm
+
+;    jmp $
+;
     mov ax, 32
     call get_handler_address
-
+;
+;    cld
+;
+;    pusha
     call eax                                  ; call handler that was provided
+;    popa
+
+;    mov ebx, END_OF_VECTOR_32_MSG
+;    call print_string_pm
 
     iret
+
+END_OF_VECTOR_32_MSG db "Got to end of vector 32.", 0
+START_OF_VECTOR_32_MSG db "At start of vector 32.", 0
 
 global _handle_vector_33
 
