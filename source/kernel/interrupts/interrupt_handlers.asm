@@ -380,27 +380,12 @@ global _handle_vector_32
 
 _handle_vector_32:
 
-;    mov ebx, START_OF_VECTOR_32_MSG
-;    call print_string_pm
-
-;    jmp $
-;
     mov ax, 32
     call get_handler_address
-;
-;    cld
-;
-;    pusha
-    call eax                                  ; call handler that was provided
-;    popa
 
-;    mov ebx, END_OF_VECTOR_32_MSG
-;    call print_string_pm
+    call eax                                  ; call handler that was provided
 
     iret
-
-END_OF_VECTOR_32_MSG db "Got to end of vector 32.", 0
-START_OF_VECTOR_32_MSG db "At start of vector 32.", 0
 
 global _handle_vector_33
 

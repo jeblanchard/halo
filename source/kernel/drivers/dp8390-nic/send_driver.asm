@@ -1,7 +1,5 @@
 %include "source/kernel/drivers/dp8390-nic/registers.asm"
 
-%define CURRENTLY_TRANSMITTING 0x26
-
 ; Transmits the packet passed in or queues up the
 ; packet if the transmitter is busy.
 ;
@@ -15,6 +13,8 @@ global send_or_queue_packet:
     mov dx, COMMAND_REG
     in al, dx                            ; read NIC COMMAND_REG register
 
+    %define CURRENTLY_TRANSMITTING 0x26
+
     cmp al, CURRENTLY_TRANSMITTING       ; check if NIC is currently
                                          ; transmitting
     je .queue_packet                     ; if so, queue packet
@@ -22,7 +22,7 @@ global send_or_queue_packet:
     push cx                              ; store byte count
     mov ah, TRANSMIT_BUFFER
     xor al, al                           ; set page that will receive the packet
-;    call pc_to_nic                       ; transfer packet to NIC buffer RAM
+    call load_packet_from_host                       ; transfer packet to NIC buffer RAM
 
     mov dx, TRANSMIT_PAGE_START_REG
     mov al, TRANSMIT_BUFFER
@@ -44,8 +44,9 @@ global send_or_queue_packet:
 
     jmp .finished
 
+extern _queue_packet
 .queue_packet:
-;    call queue_packet
+    call queue_packet
 
 .finished:                               ; enable interrupts
     sti

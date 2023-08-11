@@ -93,6 +93,7 @@ global nic_isr:
     iret
 
 %define RING_OVERFLOW 0x10
+extern _handle_received_packet
 
 ; Clears out all good packets in local receive buffer ring.
 ; Bad packets are ignored.
@@ -106,16 +107,19 @@ global nic_isr:
     mov al, 1                            ; reset PRX bit in ISR
     out dx, al
 
-;    mov ax, next_packet
-;    mov cx, packet_length
-;    mov es, seq_recv_pc_buff
-;    mov di, offset recv_pc_buff
+    mov ax, next_packet
+    mov cx, packet_length
+    mov es, seq_recv_pc_buff
+    mov di, offset recv_pc_buff
+
+    call nic_to_pc
 
 ;***********************************************************************
 ;
 ; Inform upper layer software of a received packet to be processed
 ;
 ;***********************************************************************
+
 
 ; Checks to see if receive buffer ring is empty.
 .check_ring:
@@ -159,6 +163,7 @@ global nic_isr:
     mov dx, TRANSMIT_CONFIG_REG
     mov al, 2
     out dx, al                  ; into loopback mode 1
+
     mov dx, COMMAND_REG
     mov al, 0x22
     out dx, al                  ; into stop mode
@@ -166,8 +171,8 @@ global nic_isr:
     mov ax, next_packet
     mov cx, packet_length
     mov es, seg recv_pc_buff
-;    mov di, offset recv_pc_buff
-;    NICtoPC
+    mov di, offset recv_pc_buff
+    call nic_to_pic
 
     mov dx, INTERRUPT_STATUS_REG
     mov al, 0x10
@@ -176,7 +181,7 @@ global nic_isr:
     mov dx, TRANSMIT_CONFIG_REG
     mov al, tcr
     out dx, al                  ; put TCR back to normal mode
-    jmp check_ring
+    jmp .check_ring
 
 
 ; Determines status of transmitted packet then
@@ -211,5 +216,5 @@ global nic_isr:
                                 ; assume Check Queue will a non-zero
     cmp cx, 0                   ; value in cx and pointer to the
     je poll                     ; packet in DS:SI if packet is
-    call DriverSend             ; available. Returns cx = 0 otherwise
+    call send_or_queue_packet             ; available. Returns cx = 0 otherwise
     jmp poll

@@ -1,3 +1,5 @@
+[bits 32]
+
 ; Initializes the NIC for a typical network system.
 
 %include "source/kernel/drivers/dp8390-nic/registers.asm"
@@ -36,10 +38,12 @@ global initialize_driver:
     out dx, al
 
     mov dx, REMOTE_BYTE_COUNT_0_REG
-;    out dx, INITIAL_REMOTE_BYTE_COUNT_LOWER_8_BITS
+    mov al, INITIAL_REMOTE_BYTE_COUNT_LOWER_8_BITS
+    out dx, al
 
     mov dx, REMOTE_BYTE_COUNT_1_REG
-;    out dx, INITIAL_REMOTE_BYTE_COUNT_UPPER_8_BITS
+    mov al, INITIAL_REMOTE_BYTE_COUNT_UPPER_8_BITS
+    out dx, al
 
     mov al, CLEARED_RCR
     mov dx, RECEIVE_CONFIG_REG
