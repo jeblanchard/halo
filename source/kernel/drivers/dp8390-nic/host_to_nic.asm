@@ -40,7 +40,8 @@ load_packet_from_host:
     shr cx, 1                                 ; need to loop half as many times
 
 .load_word_from_host:                  ; because of word-wide transfers
-    lodsw                              ; load word from ds:si
+    lodsw                              ; load word from ds:si to ax
+                                       ; decrement cx (byte count)
     out dx, ax                         ; write to IO_PORT on NIC board
     loop .load_word_from_host
 
@@ -48,6 +49,7 @@ load_packet_from_host:
 
     mov dx, INTERRUPT_STATUS_REG
     %define REMOTE_DMA_COMPLETE 0x40
+
 .check_dma:
     in al, dx
     test al, REMOTE_DMA_COMPLETE       ; Check if DMA has completed
@@ -61,4 +63,3 @@ load_packet_from_host:
 
     clc
     ret
-

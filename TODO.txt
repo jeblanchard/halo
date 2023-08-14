@@ -26,8 +26,6 @@ option actually not pack structures at all.
 
 why does the new load_idt work?
 
-get rid of the comments in the keyboard handler.
-
 add debug logging functionality.
 
 why send_eoi doesn't work?
@@ -62,3 +60,6 @@ figure out why that for loop in the assign predefined handlers
 section breaks things
 
 refactor interrupt package
+
+abstract PIC logic from hardware devices. they don't need to know
+exactly how their interrupt needs to be handled.

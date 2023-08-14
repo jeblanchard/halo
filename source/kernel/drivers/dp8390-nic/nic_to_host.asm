@@ -3,13 +3,13 @@
 %include "source/kernel/drivers/dp8390-nic/registers.asm"
 
 ; This routine will transfer a packet from the RAM
-; on the NIC card to the RAM in the PC.
+; on the NIC card to the RAM in the host.
 ;
 ; Input:
-;   es:di = packet to be transferred
+;   es:edi = packet to be transferred
 ;   cx = byte count
 ;   ax = NIC buffer page to transfer from
-global nic_to_pc:
+global nic_to_host:
 
     push ax                             ; save buffer page
 
@@ -25,6 +25,7 @@ global nic_to_pc:
     out dx, al
 
     pop ax                                   ; get our page back
+    
     mov dx, REMOTE_START_ADDRESS_0
     out dx, al                               ; set as low address
 
@@ -38,21 +39,25 @@ global nic_to_pc:
     mov al, START_MODE_REMOTE_READ           ; read and start
     out dx, al
 
-    mov dx, IO_PORT
     shr cx, 1                                ; only need to loop half as many times
 
-.reading_word:                          ; because of word-wide transfers
+    mov dx, IO_PORT
+.read_word:                             ; because of word-wide transfers
     in ax, dx
     stosw                               ; read word and store in es:di
-    loop .reading_word
-    mov dx, INTERRUPT_STATUS_REG
+    loop .read_word
 
+    mov dx, INTERRUPT_STATUS_REG
 .check_dma:
     in al, dx
-    test al, 0x40
-    jnz .read_end
+    
+    %define REMOTE_DMA_COMPLETE 0x40
+    test al, REMOTE_DMA_COMPLETE
+
+    jnz .finished
     jmp .check_dma
 
-.read_end:
-    out dx, al                            ; clear RDMA bit in NIC ISR
+.finished:
+    out dx, al                            ; ensure Remote DMA bit of the ISR
+                                          ; is clear (set to 1)
     ret

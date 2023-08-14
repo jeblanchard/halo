@@ -45,8 +45,7 @@
  *       set.
  * Bit 7:
  *   0: OK flag, no error
- *   1: Parity error with last byte
- */
+ *   1: Parity error with last byte */
 unsigned char read_keyboard_controller_status() {
 	return port_byte_in(KEYBOARD_CONTROLLER_STATUS_PORT);
 }
@@ -93,8 +92,7 @@ void set_keyboard_leds(bool num_lock, bool caps_lock, bool scroll) {
      *   1: on
      * Bit 2: Caps lock LED
      *   0: off
-     *   1: on
-     */
+     *   1: on */
 	unsigned char led_options = 0;
 
 	if (num_lock) {

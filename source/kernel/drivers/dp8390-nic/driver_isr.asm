@@ -13,7 +13,7 @@
 ; register) produced from the NIC. Upon transmit interrupts, the upper
 ; layer software is informed of successful or erroneous transmissions;
 ; upon receive interrupts, packets are removed from the Receive Buffer
-; Ring (in local memory) and transferred to the PC.
+; Ring (in local memory) and transferred to the host.
 global nic_isr:
     cli
 
@@ -67,9 +67,10 @@ global nic_isr:
     xor al, NIC_IRQ_NUM
     out PRIMARY_PIC_INT_MASK_REG, al
 
-    mov al, 0x60 ; 0101 0011                ; send EOI command for the NIC's IRQ
+    #define ROTATE_ON_NON_SPECIFIC_EOI 0x60
+    mov al, ROTATE_ON_NON_SPECIFIC_EOI          ; build EOI command for the NIC's IRQ
     or al, NIC_IRQ_NUM
-    out PRIMARY_PIC_COMMAND_REG, al
+    out PRIMARY_PIC_COMMAND_REG, al             ; send out EOI command
 
     sti                                     ; re-enable hardware interrupts
 
@@ -110,36 +111,38 @@ extern _handle_received_packet
     mov ax, next_packet
     mov cx, packet_length
     mov es, seq_recv_pc_buff
-    mov di, offset recv_pc_buff
+    mov edi, offset recv_pc_buff
 
-    call nic_to_pc
+    call nic_to_host
 
-;***********************************************************************
-;
-; Inform upper layer software of a received packet to be processed
-;
-;***********************************************************************
-
+    ; Inform upper layer software of a received packet to
+    ; be processed
+    extern _notify_of_received_packet_to_be_processed
+    call _notify_of_received_packet_to_be_processed
 
 ; Checks to see if receive buffer ring is empty.
 .check_ring:
     mov dx, BOUNDARY_REG
     in al, dx
     mov ah, al                        ; save BOUNDARY_REG in ah
+
+    %define START_MODE_COMPLETE_DMA_PAGE_1 0x62
     mov dx, COMMAND_REG
-    mov al, 0x62
-    out dx, al                        ; switched to pg 1 of NIC
+    mov al, START_MODE_COMPLETE_DMA_PAGE_1
+    out dx, al                                 ; switch to page 1 of the NIC
+
+    %define START_MODE_COMPLETE_REMOTE_DMA 0x22;
     mov dx, CURRENT_PAGE_REG
     in al, dx
-    mov bh, al                        ; bh 4 CURRENT PAGE register
+    mov bh, al                        ; bh = CURRENT PAGE register
     mov dx, COMMAND_REG
-    mov al, 0x22
+    mov al, START_MODE_COMPLETE_REMOTE_DMA
     out dx, al                        ; switched back to pg 0
+
     cmp ah, bh                        ; recv buff ring empty?
     jne .handle_received_packet
     jmp .poll
 
-; Handles a ring overflow.
 .handle_ring_overflow:
     mov dx, COMMAND_REG
     mov al, 0x21
@@ -154,25 +157,30 @@ extern _handle_received_packet
     mov dx, INTERRUPT_STATUS_REG
     mov cx, 0x7fff              ; load time out counter
 
-.wait_for_stop:
+.wait_for_reset:
     in al, dx
-    test al, 0x80               ; look for RST bit to be set
-    loop wait_for_stop          ; if we fall thru this loop, the RST bit may not get
-                                ; set because the NIC was currently transmitting
 
+    %define RESET_STATUS 0x80
+    test al, RESET_STATUS           ; test if RST bit has been set
+    loop .wait_for_reset            ; if we fall through this loop,
+                                    ; the RST bit may not get set
+                                    ; because the NIC was currently
+                                    ; transmitting
+
+    %define INTERNAL_LOOPBACK_MODE_1 0x2
     mov dx, TRANSMIT_CONFIG_REG
-    mov al, 2
-    out dx, al                  ; into loopback mode 1
+    mov al, INTERNAL_LOOPBACK_MODE_1
+    out dx, al                      ; go into loopback mode 1
 
     mov dx, COMMAND_REG
-    mov al, 0x22
-    out dx, al                  ; into stop mode
+    mov al, START_MODE_COMPLETE_REMOTE_DMA
+    out dx, al                      ; back into start mode
 
     mov ax, next_packet
     mov cx, packet_length
     mov es, seg recv_pc_buff
-    mov di, offset recv_pc_buff
-    call nic_to_pic
+    mov edi, offset recv_pc_buff
+    call nic_to_host
 
     mov dx, INTERRUPT_STATUS_REG
     mov al, 0x10
@@ -197,24 +205,24 @@ extern _handle_received_packet
     test al, 0x38                  ; is FU, CRS, or ABT bits set in TSR
     jnz .handle_bad_transmission
 
-;***********************************************************************
-; Inform upper layer software of successful transmission
-;***********************************************************************
+    extern _notify_of_successful_transmission
+    call _notify_of_successful_transmission
 
     jmp check_transmission_queue
 
 .handle_bad_transmission:
-
-;***********************************************************************
-;
-; Inform upper layer software of erroneous transmission
-;
-;***********************************************************************
+    extern _notify_of_erroneous_transmission
+    call _notify_of_erroneous_transmission
 
 .check_transmission_queue:
-    call Check_Queue            ; see if a packet is in queue
-                                ; assume Check Queue will a non-zero
-    cmp cx, 0                   ; value in cx and pointer to the
-    je poll                     ; packet in DS:SI if packet is
-    call send_or_queue_packet             ; available. Returns cx = 0 otherwise
-    jmp poll
+    call check_queue
+
+    cmp cx, 0
+    je .poll
+
+    call send_or_queue_packet
+    jmp .poll
+
+%include "source/kernel/drivers/dp8390-nic/send_or_queue_packet.asm"
+%include "source/kernel/drivers/dp8390-nic/check_queue.asm"
+%include "source/kernel/drivers/dp8390-nic/nic_to_host.asm"

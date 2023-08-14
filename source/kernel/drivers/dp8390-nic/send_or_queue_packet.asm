@@ -4,7 +4,7 @@
 ; packet if the transmitter is busy.
 ;
 ; Input:
-;     ds:si = packet to be transmitted
+;     ds:esi = pointer to packet to be transmitted
 ;     cx = byte count of packet
 global send_or_queue_packet:
 
@@ -20,9 +20,10 @@ global send_or_queue_packet:
     je .queue_packet                     ; if so, queue packet
 
     push cx                              ; store byte count
+
     mov ah, TRANSMIT_BUFFER
     xor al, al                           ; set page that will receive the packet
-    call load_packet_from_host                       ; transfer packet to NIC buffer RAM
+    call load_packet_from_host           ; transfer packet to NIC buffer RAM
 
     mov dx, TRANSMIT_PAGE_START_REG
     mov al, TRANSMIT_BUFFER
@@ -39,15 +40,15 @@ global send_or_queue_packet:
     out dx, al                           ; set transmit byte count 1 on NIC
 
     mov dx, COMMAND_REG
-    mov al, 0x26
+    mov al, CURRENTLY_TRANSMITTING
     out dx, al                           ; issue transmit to COMMAND_REG register
 
     jmp .finished
 
-extern _queue_packet
 .queue_packet:
-    call queue_packet
+    extern _load_packet_to_queue_buffer
+    call load_packet_to_queue_buffer
 
-.finished:                               ; enable interrupts
-    sti
+.finished:
+    sti                                 ; enable interrupts
     ret
