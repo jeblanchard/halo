@@ -1,0 +1,2 @@
+#define DP8390_VENDOR_ID
+#define DP8390_DEVICE_ID

@@ -7,6 +7,8 @@
 #include "cmd-line/main.h"
 #include "boot.h"
 #include "physical-memory-management/manager.h"
+#include "drivers/pci/functions.h"
+
 
 void initialize_kernel(struct multiboot2_info* boot_info) {
     initialize_screen();
@@ -18,6 +20,8 @@ void initialize_kernel(struct multiboot2_info* boot_info) {
 
     initialize_pit();
     initialize_keyboard();
+
+    initialize_pci();
 
     enable_hardware_interrupts();
 

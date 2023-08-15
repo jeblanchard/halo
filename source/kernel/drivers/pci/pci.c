@@ -1,10 +1,69 @@
 #include "../utils/low_level.h"
 #include "../utils/standard.h"
 #include "../utils/errors.h"
+#include "../dp8390-nic/functions.h"
 
 void initialize_pci() {
+    initialize_device_function_address_table();
 
+    initialize_all_present_devices();
+}
 
+#define NUM_DEVICE_SLOTS 5
+#define VENDOR_ID_CONFIG_SPACE_OFFSET 0x0
+
+unsigned short read_vendor_id(unsigned char device_slot) {
+    return pci_config_read_register(0, d, 0, VENDOR_ID_CONFIG_SPACE_OFFSET);
+}
+
+struct device_initializer {
+    unsigned short vendor_id;
+    unsigned short device_id;
+
+    void* initialization_function_address;
+};
+
+#define KNOWN_NUMBER_OF_PCI_DEVICES 1
+static struct device_initializer all_device_initializers[KNOWN_NUMBER_OF_PCI_DEVICES]
+
+void initialize_device_function_address_table() {
+    dp8390_initializer = all_device_initializers[0];
+    dp8390_initializer.vendor_id = DP8390_VENDOR_ID;
+    dp8390_initializer.device_id = DP8390_DEVICE_ID
+    dp8390_initializer.initialization_function_address = initialize_dp8390;
+}
+
+void* get_initialization_address(unsigned short vendor_id, unsigned short device_id) {
+    for (int i = 0; i < KNOWN_NUMBER_OF_PCI_DEVICES; i++) {
+        struct device_initializer d = all_device_initializers[i];
+        if (d.vendor_id == vendor_id && d.device_id == device_id) {
+            return d.initialization_function_address;
+        }
+    }
+
+    char msg[] = "Could not find PCI device.";
+    halt_and_display_error_msg(msg);
+
+    // We should never get here.
+    return;
+}
+
+#define DEVICE_NOT_PRESENT_VENDOR_ID 0xffff
+
+void initialize_device(unsigned short vendor_id, unsigned short device_id) {
+    if (vendor_id == DEVICE_NOT_PRESENT_VENDOR_ID) {
+        return;
+    }
+
+    void* initialization_function_address = get_initialization_address(vendor_id, device_id);
+    call_function_at_address(initialization_function_address);
+}
+
+void initialize_all_present_devices() {
+    for (char d = 0; d < NUM_DEVICE_SLOTS; d++) {
+        unsigned short vendor_id = read_vendor_id(d);
+        initialize_device(vendor_id);
+    }
 }
 
 #define CONFIG_ADDRESS 0xcf8

@@ -12,4 +12,10 @@ other drivers.
 
 to do this i will need to tidy up
 how the PIC and IDT handle adding
-interrupt handlers
+interrupt handlers - done
+
+use the pci to allow interrupts
+from the NIC
+
+
+
