@@ -1,1 +1,1 @@
-Where machine executable binaries once created.
+Where machine executable binaries go once created.
