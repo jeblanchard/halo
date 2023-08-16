@@ -1,0 +1,15 @@
+have a small buffer specifically for
+packets that are actively being received
+from the nic?
+
+maybe include a boolean that signifies
+if a packet is actively being moved from
+the nic to the host?
+
+maybe the method that the ASM calls includes
+a parameter for which byte the transfer is on?
+
+have a start_byte_loading signal method
+load all bytes into the host buffer
+then send an end signal -> which would then transfer the
+packet to the received bytes buffer

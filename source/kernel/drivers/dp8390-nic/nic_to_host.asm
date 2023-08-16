@@ -6,15 +6,15 @@
 ; on the NIC card to the RAM in the host.
 ;
 ; Input:
-;   es:edi = packet to be transferred
-;   cx = byte count
+;   edi = address where packet will be stored
+;   ecx = byte count
 ;   ax = NIC buffer page to transfer from
 global nic_to_host:
 
-    push ax                             ; save buffer page
+    push ax                              ; save buffer page
 
-    inc cx                              ; make even
-    and cx, 0x0fffe
+    inc ecx                               ; make even
+    and ecx, 0xfffffffe
 
     mov dx, REMOTE_BYTE_COUNT_0_REG
     mov al, cl
@@ -24,7 +24,7 @@ global nic_to_host:
     mov al, ch
     out dx, al
 
-    pop ax                                   ; get our page back
+    pop ax                                  ; get our page back
     
     mov dx, REMOTE_START_ADDRESS_0
     out dx, al                               ; set as low address
@@ -39,13 +39,26 @@ global nic_to_host:
     mov al, START_MODE_REMOTE_READ           ; read and start
     out dx, al
 
-    shr cx, 1                                ; only need to loop half as many times
+    shr ecx, 1                               ; only need to loop half as many times because
+                                             ; we will be transferring words to the host
 
     mov dx, IO_PORT
-.read_word:                             ; because of word-wide transfers
+
+    extern _start_packet_transfer_from_nic
+    call _start_packet_transfer_from_nic
+.read_word:                              ; because of word-wide transfers
     in ax, dx
-    stosw                               ; read word and store in es:di
+
+    extern _transfer_word_from_nic_to_nic_receive_buffer
+
+    push ax
+    call _transfer_word_from_nic_to_nic_receive_buffer
+    add esp, byte 2
+
     loop .read_word
+
+    extern _end_packet_transfer_from_nic
+    call _end_packet_transfer_from_nic
 
     mov dx, INTERRUPT_STATUS_REG
 .check_dma:

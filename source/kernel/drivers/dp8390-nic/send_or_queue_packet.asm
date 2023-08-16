@@ -4,8 +4,8 @@
 ; packet if the transmitter is busy.
 ;
 ; Input:
-;     ds:esi = pointer to packet to be transmitted
-;     cx = byte count of packet
+;     esi = pointer to packet to be transmitted
+;     ecx = byte count of packet
 global send_or_queue_packet:
 
     cli                                  ; disable interrupts
@@ -19,7 +19,7 @@ global send_or_queue_packet:
                                          ; transmitting
     je .queue_packet                     ; if so, queue packet
 
-    push cx                              ; store byte count
+    push ecx                              ; store byte count
 
     mov ah, TRANSMIT_BUFFER
     xor al, al                           ; set page that will receive the packet
@@ -29,7 +29,7 @@ global send_or_queue_packet:
     mov al, TRANSMIT_BUFFER
     out dx, al                           ; set NIC transmit page
 
-    pop cx                               ; get byte count back
+    pop ecx                              ; get byte count back
 
     mov dx, TRANSMIT_BYTE_COUNT_0
     mov al, cl

@@ -27,7 +27,7 @@
 %define INITIAL_REMOTE_BYTE_COUNT_LOWER_8_BITS 0
 %define INITIAL_REMOTE_BYTE_COUNT_UPPER_8_BITS 0
 
-global initialize_driver:
+global initialize_nic:
 
     mov al, STOP_MODE_ABORT_PAGE_0_CMD_CODE
     mov dx, COMMAND_REG
