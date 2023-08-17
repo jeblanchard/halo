@@ -224,7 +224,7 @@ void add_byte_to_transmission_data_buffer(unsigned char byte) {
 
 // Returns the start index of the packet's data.
 unsigned short add_packet_data_to_transmission_data_buffer(unsigned int packet_address,
-                                         unsigned short byte_count) {
+                                                           unsigned short byte_count) {
 
     unsigned char* pointer_to_packet = (unsigned char*) packet_address;
     unsigned short og_index_of_next_transmission_byte_to_store = \
@@ -249,7 +249,6 @@ unsigned int view_byte_count_of_next_packet_to_transmit() {
     return next_trans_packet.byte_count;
 }
 
-// make sure this isn't used to manually go through data buffer
 unsigned char* view_address_of_next_byte_to_transmit() {
     return &packet_data_buffer[index_of_next_transmission_byte_to_store];
 }

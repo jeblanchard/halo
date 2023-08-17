@@ -6,7 +6,6 @@
 ; to the local RAM on the NIC card.
 ;
 ; Input:
-;   esi = address of packet to be transferred
 ;   ecx = byte count
 ;   ax = NIC buffer page to transfer to
 load_packet_from_host:
@@ -27,10 +26,10 @@ load_packet_from_host:
     pop ax                                    ; get our page back
 
     mov dx, REMOTE_START_ADDRESS_0
-    out dx, al                                ; set as lo address
+    out dx, al                                ; set as low address
 
     mov dx, REMOTE_START_ADDRESS_1
-    mov al, ah                                ; set as hi address
+    mov al, ah                                ; set as high address
     out dx, al
 
     %define START_MODE_REMOTE_WRITE 0x12
@@ -52,12 +51,12 @@ load_packet_from_host:
 
     call _process_next_transmission_word
 
-    out dx, ax                         ; write to IO_PORT on NIC board
+    out dx, ax                                ; write to IO_PORT on NIC board
 
-    loop .load_word_from_host          ; decrement ecx (byte count) and
-                                       ; check if ecx = 0 (which would
-                                       ; mean we've loaded all words from
-                                       ; the host)
+    loop .load_word_from_host                 ; decrement ecx (byte count) and
+                                              ; check if ecx = 0 (which would
+                                              ; mean we've loaded all words from
+                                              ; the host)
 
     extern _end_packet_transfer_to_nic
     call _end_packet_transfer_to_nic

@@ -2,13 +2,12 @@
 
 %include "source/kernel/drivers/dp8390-nic/registers.asm"
 
-; Transmits the packet passed in or queues up the
-; packet if the transmitter is busy.
+; Transmits the next packet in the queue if the
+; NIC is not busy.
 ;
 ; Input:
-;     esi = pointer to packet to be transmitted
 ;     ecx = byte count of packet
-global send_or_queue_packet:
+send_or_queue_packet:
 
     cli                                  ; disable interrupts
 
@@ -19,7 +18,8 @@ global send_or_queue_packet:
 
     cmp al, CURRENTLY_TRANSMITTING       ; check if NIC is currently
                                          ; transmitting
-    je .queue_packet                     ; if so, queue packet
+    je .finished                         ; if so, we do nothing (we leave the
+                                         ; packet in the queue)
 
     push ecx                             ; store byte count
 
@@ -45,16 +45,6 @@ global send_or_queue_packet:
     mov al, CURRENTLY_TRANSMITTING
     out dx, al                           ; issue transmit to COMMAND_REG register
 
-    jmp .finished
-
-.queue_packet:
-    extern _queue_packet_for_transmission
-
-    push ecx                                ; push C function parameters
-    push esi
-    call _queue_packet_for_transmission
-    add esp, byte 4
-
 .finished:
-    sti                                     ; enable interrupts
+    sti                                         ; enable interrupts
     ret

@@ -27,8 +27,6 @@
 %define INITIAL_REMOTE_BYTE_COUNT_LOWER_8_BITS 0
 %define INITIAL_REMOTE_BYTE_COUNT_UPPER_8_BITS 0
 
-next_pkt db 1
-
 global initialize_nic:
 
     mov al, STOP_MODE_ABORT_PAGE_0_CMD_CODE
@@ -74,11 +72,8 @@ global initialize_nic:
     out dx, al
 
     mov al, RECEIVE_BUFFER_RING_START_UPPER_8_BITS
-    inc al, 1
     mov dx, CURRENT_PAGE_REG
     out dx, al
-
-    mov next_pkt, al
 
     mov al, START_MODE_ABORT_PAGE_0_CMD_CODE
     mov dx, COMMAND_REG

@@ -3,9 +3,6 @@
 %include "source/kernel/drivers/dp8390-nic/registers.asm"
 %include "source/kernel/drivers/8259a-pic/ports.h"
 
-;byte_count dw    ?
-;byte_count dw    0
-
 %define NIC_IRQ_NUM 3
 
 ; This interrupt service routine responds to transmissions, transmission errors, and
@@ -51,7 +48,7 @@ global nic_isr:
 
 .exit:
 
-    mov dx, INTERRUPT_MASK_REG              ; save IMR value
+    mov dx, INTERRUPT_MASK_REG              ; save original IMR value
     in al, dx
 
     og_imr_value: resb 1
@@ -67,7 +64,7 @@ global nic_isr:
     xor al, NIC_IRQ_NUM
     out PRIMARY_PIC_INT_MASK_REG, al
 
-    #define ROTATE_ON_NON_SPECIFIC_EOI 0x60
+    %define ROTATE_ON_NON_SPECIFIC_EOI 0x60
     mov al, ROTATE_ON_NON_SPECIFIC_EOI          ; build EOI command for the NIC's IRQ
     or al, NIC_IRQ_NUM
     out PRIMARY_PIC_COMMAND_REG, al             ; send out EOI command
@@ -105,17 +102,14 @@ extern _handle_received_packet
     test al, RING_OVERFLOW               ; test for ring overflow
     jnz .handle_ring_overflow
 
-    mov al, 1                            ; reset PRX bit in ISR
+    %define PACKET_RECEIVED_BIT 1
+    mov al, PACKET_RECEIVED_BIT
     out dx, al
 
-    mov ax, next_packet
-    mov ecx, packet_length
     call nic_to_host
 
-    mov next_packet,
-
-    ; Inform upper layer software of a received packet to
-    ; be processed
+    ; Inform upper layer software that packet has been
+    ; been moved to host
     extern _notify_of_received_packet_to_be_processed
     call _notify_of_received_packet_to_be_processed
 
@@ -123,29 +117,29 @@ extern _handle_received_packet
 .check_ring:
     mov dx, BOUNDARY_REG
     in al, dx
-    mov ah, al                        ; save BOUNDARY_REG in ah
+    mov ah, al                                       ; save BOUNDARY_REG in ah
 
     %define START_MODE_COMPLETE_DMA_PAGE_1 0x62
     mov dx, COMMAND_REG
     mov al, START_MODE_COMPLETE_DMA_PAGE_1
-    out dx, al                                 ; switch to page 1 of the NIC
+    out dx, al                                       ; switch to page 1 of the NIC
 
     %define START_MODE_COMPLETE_REMOTE_DMA 0x22;
     mov dx, CURRENT_PAGE_REG
     in al, dx
-    mov bh, al                        ; bh = CURRENT PAGE register
+    mov bh, al                                       ; bh = CURRENT PAGE register
     mov dx, COMMAND_REG
     mov al, START_MODE_COMPLETE_REMOTE_DMA
-    out dx, al                        ; switched back to pg 0
+    out dx, al                                       ; switched back to pg 0
 
-    cmp ah, bh                        ; recv buff ring empty?
+    cmp ah, bh                                       ; recv buff ring empty?
     jne .handle_received_packet
     jmp .poll
 
 .handle_ring_overflow:
     mov dx, COMMAND_REG
     mov al, 0x21
-    out dx, al                   ; put NIC in stop mode
+    out dx, al                                ; put NIC in stop mode
 
     mov dx, REMOTE_BYTE_COUNT_0_REG
     xor al, al
@@ -154,7 +148,7 @@ extern _handle_received_packet
     out dx, al
 
     mov dx, INTERRUPT_STATUS_REG
-    mov cx, 0x7fff              ; load time out counter
+    mov cx, 0x7fff                            ; load time out counter
 
 .wait_for_reset:
     in al, dx
@@ -166,8 +160,13 @@ extern _handle_received_packet
                                     ; because the NIC was currently
                                     ; transmitting
 
+    mov dx, TRANSMIT_CONFIG_REG     ; save original value of the
+                                    ; Transmission Config. Register
+    og_tcr_value: resb 1
+    in al, dx
+    mov og_tcr_value, al
+
     %define INTERNAL_LOOPBACK_MODE_1 0x2
-    mov dx, TRANSMIT_CONFIG_REG
     mov al, INTERNAL_LOOPBACK_MODE_1
     out dx, al                                          ; go into loopback mode 1
 
@@ -175,17 +174,17 @@ extern _handle_received_packet
     mov al, START_MODE_COMPLETE_REMOTE_DMA
     out dx, al                                          ; back into start mode
 
-    mov ax, next_packet
-    mov ecx, packet_length
     call nic_to_host
 
+    %define OVERFLOW_BIT 0x10
     mov dx, INTERRUPT_STATUS_REG
-    mov al, 0x10
-    out dx, al                                    ; clear Overflow bit
+    mov al, OVERFLOW_BIT
+    out dx, al
 
     mov dx, TRANSMIT_CONFIG_REG
     mov al, tcr
     out dx, al                                    ; put TCR back to normal mode
+
     jmp .check_ring
 
 
@@ -213,7 +212,6 @@ extern _handle_received_packet
 
 .check_transmission_queue:
     call check_queue
-
     cmp cx, 0
     je .poll
 
