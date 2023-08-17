@@ -1,3 +1,5 @@
+[bits 32]
+
 %include "source/kernel/drivers/dp8390-nic/registers.asm"
 
 ; Transmits the packet passed in or queues up the
@@ -19,7 +21,7 @@ global send_or_queue_packet:
                                          ; transmitting
     je .queue_packet                     ; if so, queue packet
 
-    push ecx                              ; store byte count
+    push ecx                             ; store byte count
 
     mov ah, TRANSMIT_BUFFER
     xor al, al                           ; set page that will receive the packet
@@ -46,9 +48,13 @@ global send_or_queue_packet:
     jmp .finished
 
 .queue_packet:
-    extern _load_packet_to_queue_buffer
-    call load_packet_to_queue_buffer
+    extern _queue_packet_for_transmission
+
+    push ecx                                ; push C function parameters
+    push esi
+    call _queue_packet_for_transmission
+    add esp, byte 4
 
 .finished:
-    sti                                 ; enable interrupts
+    sti                                     ; enable interrupts
     ret

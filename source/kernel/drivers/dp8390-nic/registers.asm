@@ -17,7 +17,7 @@ NCR                            equ COMMAND_REG + 5
 TRANSMIT_BYTE_COUNT_1          equ COMMAND_REG + 6
 
 INTERRUPT_STATUS_REG           equ COMMAND_REG + 7
-CURRENT_PAGE_REG               equ COMMAND_REG + 7         ; in page 1
+CURRENT_PAGE_REG               equ COMMAND_REG + 7
 
 REMOTE_START_ADDRESS_0         equ COMMAND_REG + 8
 CR_DMA_0                       equ COMMAND_REG + 8

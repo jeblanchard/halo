@@ -6,7 +6,6 @@
 ; on the NIC card to the RAM in the host.
 ;
 ; Input:
-;   edi = address where packet will be stored
 ;   ecx = byte count
 ;   ax = NIC buffer page to transfer from
 global nic_to_host:
@@ -40,13 +39,15 @@ global nic_to_host:
     out dx, al
 
     shr ecx, 1                               ; only need to loop half as many times because
-                                             ; we will be transferring words to the host
+                                             ; we will be transferring words at a time
+                                             ; to the host
 
     mov dx, IO_PORT
 
     extern _start_packet_transfer_from_nic
     call _start_packet_transfer_from_nic
-.read_word:                              ; because of word-wide transfers
+
+.read_word:
     in ax, dx
 
     extern _transfer_word_from_nic_to_nic_receive_buffer
@@ -73,4 +74,5 @@ global nic_to_host:
 .finished:
     out dx, al                            ; ensure Remote DMA bit of the ISR
                                           ; is clear (set to 1)
+
     ret

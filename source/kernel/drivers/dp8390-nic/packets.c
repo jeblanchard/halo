@@ -86,11 +86,30 @@ static unsigned char transmission_data_buffer[MAX_NUM_BYTES_OF_DATA_IN_BUFFER]
 
 static bool packet_is_being_moved_to_nic;
 
+static unsigned int count_of_bytes_processed;
+
+static struct transmission_packet currently_processing_packet;
+
+// add logic to see if there is even a packet to be
+// transferred
 void start_packet_transfer_to_nic() {
     packet_is_being_moved_to_nic = true;
+    count_of_bytes_processed = 0;
+
+    currently_processing_packet = view_next_packet_to_transmit();
 }
 
 unsigned short index_of_next_packet_to_transmit;
+
+struct transmission_packet get_next_packet_to_transmit
+
+bool no_transfer_to_nic_is_happening() {
+    if (packet_is_being_transferred_from_nic) {
+        return false;
+    }
+
+    return true;
+}
 
 void advance_index_of_next_packet_to_transmit() {
     index_of_next_packet_to_transmit++;
@@ -101,6 +120,16 @@ void advance_index_of_next_packet_to_transmit() {
 }
 
 void end_packet_transfer_to_nic() {
+    if (no_transfer_to_nic_is_happening()) {
+        char bytes_are_left_msg[] = "No packet transfer was initiated.";
+        halt_and_display_error_msg(bytes_are_left_msg);
+    }
+
+    if (bytes_still_remain_to_be_processed_from_transmitting_packet) {
+        char bytes_are_left_msg[] = "Bytes still need to be processed from transmitting packet.";
+        halt_and_display_error_msg(bytes_are_left_msg);
+    }
+
     packet_is_being_moved_to_nic = false;
     advance_index_of_next_packet_to_transmit();
 }
@@ -112,14 +141,40 @@ void advance_index_of_next_byte_to_transmit() {
     index_of_next_byte_to_transmit %= MAX_NUM_BYTES_OF_DATA_IN_BUFFER;
 }
 
-unsigned char get_next_byte_to_transmit() {
+bool all_bytes_from_transmitting_packet_have_been_processed() {
+    if (count_of_bytes_processed == currently_processing_packet.byte_count) {
+        return true;
+    }
+
+    return false;
+}
+
+bool bytes_still_remain_to_be_processed_from_transmitting_packet() {
+    if (count_of_bytes_processed == currently_processing_packet.byte_count) {
+        return false;
+    }
+
+    return true;
+}
+
+unsigned char process_next_transmission_byte() {
+    if (no_transfer_to_nic_is_happening()) {
+        char no_trans_msg[] = "Transfer to NIC has not been initiated.";
+        halt_and_display_error_msg(no_trans_msg);
+    }
+
+    if (all_bytes_from_transmitting_packet_have_been_processed()) {
+        char no_bytes_msg[] = "No more bytes to process.";
+        halt_and_display_error_msg(no_bytes_msg);
+    }
+
     transmission_data_buffer[index_of_next_byte_to_transmit];
     advance_index_of_next_byte_to_transmit();
 }
 
-unsigned short get_next_word_to_transmit() {
-    unsigned char byte_0 = get_next_byte_to_transmit();
-    unsigned short byte_1 = get_next_byte_to_transmit() << 8;
+unsigned short process_next_transmission_word() {
+    unsigned char byte_0 = process_next_transmission_byte();
+    unsigned short byte_1 = process_next_transmission_byte() << 8;
 
     unsigned short word_to_send = byte_0 | byte_1;
     return word_to_send;
@@ -185,17 +240,17 @@ unsigned short add_packet_data_to_transmission_data_buffer(unsigned int packet_a
 
 static unsigned short index_of_next_packet_to_transmit;
 
-struct transmission_packet get_next_packet_to_transmit() {
+struct transmission_packet view_next_packet_to_transmit() {
     return transmission_queue[index_of_next_packet_to_transmit];
 }
 
-unsigned int get_byte_count_of_next_packet_to_transmit() {
-    struct transmission_packet next_trans_packet = get_next_packet_to_transmit();
+unsigned int view_byte_count_of_next_packet_to_transmit() {
+    struct transmission_packet next_trans_packet = view_next_packet_to_transmit();
     return next_trans_packet.byte_count;
 }
 
 // make sure this isn't used to manually go through data buffer
-unsigned char* get_address_of_next_byte_to_transmit() {
+unsigned char* view_address_of_next_byte_to_transmit() {
     return &packet_data_buffer[index_of_next_transmission_byte_to_store];
 }
 
@@ -218,7 +273,7 @@ void advance_index_of_next_packet_to_transmit() {
     index_of_next_packet_to_transmit %= MAX_NUM_PACKETS_IN_TRANSMISSION_QUEUE;
 }
 
-void save_packet_to_transmission_queue(unsigned short byte_count, unsigned short data_start_index) {
+void save_packet_to_transmission_queue(unsigned int byte_count, unsigned short data_start_index) {
 
     if (transmission_queue_is_full()) {
         char err_msg[] = "Packet storage is full.";
@@ -232,7 +287,7 @@ void save_packet_to_transmission_queue(unsigned short byte_count, unsigned short
 }
 
 void queue_packet_for_transmission(unsigned int packet_address,
-                                   unsigned short byte_count) {
+                                   unsigned int byte_count) {
 
     unsigned short data_start_index = add_packet_data_to_transmission_data_buffer(packet_address, byte_count);
     save_packet_to_transmission_queue(byte_count, data_start_index);

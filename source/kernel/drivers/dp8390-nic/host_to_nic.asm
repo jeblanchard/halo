@@ -43,16 +43,24 @@ load_packet_from_host:
                                               ; words at a time, we only need to
                                               ; loop half of the byte count
 
-.load_word_from_host:                   ; because of word-wide transfers
+    extern _process_next_transmission_word
+    extern _start_packet_transfer_to_nic
 
-    extern _get_next_word_to_transmit
-    call _get_next_word_to_transmit
+    call _start_packet_transfer_to_nic
+
+.load_word_from_host:
+
+    call _process_next_transmission_word
 
     out dx, ax                         ; write to IO_PORT on NIC board
+
     loop .load_word_from_host          ; decrement ecx (byte count) and
                                        ; check if ecx = 0 (which would
                                        ; mean we've loaded all words from
                                        ; the host)
+
+    extern _end_packet_transfer_to_nic
+    call _end_packet_transfer_to_nic
 
     mov ecx, 0
 

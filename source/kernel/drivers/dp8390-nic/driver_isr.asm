@@ -109,11 +109,10 @@ extern _handle_received_packet
     out dx, al
 
     mov ax, next_packet
-    mov cx, packet_length
-    mov es, seq_recv_pc_buff
-    mov edi, offset recv_pc_buff
-
+    mov ecx, packet_length
     call nic_to_host
+
+    mov next_packet,
 
     ; Inform upper layer software of a received packet to
     ; be processed
@@ -170,25 +169,23 @@ extern _handle_received_packet
     %define INTERNAL_LOOPBACK_MODE_1 0x2
     mov dx, TRANSMIT_CONFIG_REG
     mov al, INTERNAL_LOOPBACK_MODE_1
-    out dx, al                      ; go into loopback mode 1
+    out dx, al                                          ; go into loopback mode 1
 
     mov dx, COMMAND_REG
     mov al, START_MODE_COMPLETE_REMOTE_DMA
-    out dx, al                      ; back into start mode
+    out dx, al                                          ; back into start mode
 
     mov ax, next_packet
-    mov cx, packet_length
-    mov es, seg recv_pc_buff
-    mov edi, offset recv_pc_buff
+    mov ecx, packet_length
     call nic_to_host
 
     mov dx, INTERRUPT_STATUS_REG
     mov al, 0x10
-    out dx, al                  ; clear Overflow bit
+    out dx, al                                    ; clear Overflow bit
 
     mov dx, TRANSMIT_CONFIG_REG
     mov al, tcr
-    out dx, al                  ; put TCR back to normal mode
+    out dx, al                                    ; put TCR back to normal mode
     jmp .check_ring
 
 
