@@ -90,8 +90,6 @@ static unsigned int count_of_bytes_processed;
 
 static struct transmission_packet currently_processing_packet;
 
-// add logic to see if there is even a packet to be
-// transferred
 void start_packet_transfer_to_nic() {
     packet_is_being_moved_to_nic = true;
     count_of_bytes_processed = 0;
@@ -223,7 +221,7 @@ void add_byte_to_transmission_data_buffer(unsigned char byte) {
 }
 
 // Returns the start index of the packet's data.
-unsigned short add_packet_data_to_transmission_data_buffer(unsigned int packet_address,
+unsigned short copy_packet_data_to_transmission_data_buffer(unsigned int packet_address,
                                                            unsigned short byte_count) {
 
     unsigned char* pointer_to_packet = (unsigned char*) packet_address;
@@ -285,9 +283,39 @@ void save_packet_to_transmission_queue(unsigned int byte_count, unsigned short d
     advance_index_of_next_packet_to_transmit();
 }
 
-void queue_packet_for_transmission(unsigned int packet_address,
-                                   unsigned int byte_count) {
+void save_packet_to_transmission_buffer(unsigned int packet_address,
+                                        unsigned int byte_count) {
 
-    unsigned short data_start_index = add_packet_data_to_transmission_data_buffer(packet_address, byte_count);
+    unsigned short data_start_index = copy_packet_data_to_transmission_data_buffer(packet_address, byte_count);
     save_packet_to_transmission_queue(byte_count, data_start_index);
+}
+
+#pragma pack(push, 1)
+struct physical_address {
+    unsigned int low;
+    unsigned short high;
+};
+#pragma pack(pop)
+
+#define PHYSICAL_ADDRESS_SIZE 6
+#define LENGTH_FIELD_SIZE 2
+
+#define TOTAL_PREFIX_LENGTH (2 * PHYSICAL_ADDRESS_SIZE) + LENGTH_FIELD_SIZE
+
+void queue_packet_for_transmission(struct physical_address dest_address,
+                                   unsigned short length_in_bytes,
+                                   void* data) {
+
+    unsigned int total_length_of_packet = TOTAL_PREFIX_LENGTH + length_in_bytes;
+
+    void* buffer_for_packet = allocate(total_length_of_packet);
+
+    add_dest_address(buffer_for_packet, dest_address);
+    add_source_address(buffer_for_packet);
+    add_length_field(buffer_for_packet);
+    add_data(buffer_for_packet, data);
+
+    save_packet_to_transmission_buffer(buffer_for_packet, total_length_of_packet);
+
+    clear(buffer_for_packet, total_length_of_packet);
 }

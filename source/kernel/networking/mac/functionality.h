@@ -1,0 +1,1 @@
+struct mac_address get_host_mac_address();

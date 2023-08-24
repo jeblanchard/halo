@@ -215,9 +215,9 @@ extern _handle_received_packet
     cmp cx, 0
     je .poll
 
-    call send_or_queue_packet
+    call transmit_next_packet_in_queue
     jmp .poll
 
-%include "source/kernel/drivers/dp8390-nic/send_or_queue_packet.asm"
+%include "source/kernel/drivers/dp8390-nic/transmit_next_packet_in_queue.asm"
 %include "source/kernel/drivers/dp8390-nic/check_queue.asm"
 %include "source/kernel/drivers/dp8390-nic/nic_to_host.asm"

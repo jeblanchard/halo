@@ -63,3 +63,6 @@ refactor interrupt package
 
 abstract PIC logic from hardware devices. they don't need to know
 exactly how their interrupt needs to be handled.
+
+finish up the MAC protocol (transmission portion) after implementing
+higher level protocols
