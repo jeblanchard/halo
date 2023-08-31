@@ -66,3 +66,5 @@ exactly how their interrupt needs to be handled.
 
 finish up the MAC protocol (transmission portion) after implementing
 higher level protocols
+
+pay attention to the endianness of the address structs
