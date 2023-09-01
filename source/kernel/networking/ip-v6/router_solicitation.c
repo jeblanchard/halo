@@ -1,39 +1,44 @@
 #pragma pack(push, 1)
 struct router_solicitation_message {
-    unsigned char type;
-    unsigned char code;
-    unsigned short checksum;
     unsigned int reserved;
-    struct mac_address;
 };
 #pragma pack(pop)
 
 #define ROUTER_SOLICITATION_MSG_TYPE 133
 #define ROUTER_SOLICITATION_CODE 0
-#define ROUTER_SOLICITATION_CHECKSUM 0
-#define RESERVED 0
-
-struct router_solicitation_message get_router_router_solicitation_message() {
-    struct router_solicitation_message msg = {ROUTER_SOLICITATION_MSG_TYPE,
-                                              ROUTER_SOLICITATION_CODE,
-                                              ROUTER_SOLICITATION_CHECKSUM,
-                                              get_host_mac_address()}
-}
-
 #define ROUTER_SOLICITATION_MESSAGE_HOP_LIMIT 255
 
-void send_router_solicitation_message() {
-    struct router_solicitation_message msg = get_router_router_solicitation_message();
-    send_ipv6_message(get_unspecified_address(),
+bool is_the_unspecified_address(struct ip_v6_address address) {
+    if (address == get_unspecified_address()) {
+        return true;
+    }
+
+    return false;
+}
+
+#pragma pack(push, 1)
+struct router_solicitation_message_with_source_link_layer_address {
+    unsigned int reserved;
+    struct link_layer_address source_link_layer_address
+};
+#pragma pack(pop)
+
+void send_router_solicitation_message(struct ip_v6_address ip_source_addr) {
+
+
+    struct router_solicitation_message msg = {0, target_addr};
+
+    send_icmp_message(ROUTER_SOLICITATION_MSG_TYPE,
+                      ROUTER_SOLICITATION_CODE,
+                      ip_source_addr,
                       get_all_routers_multicast_address(),
-                      ROUTER_SOLICITATION_MESSAGE_HOP_LIMIT)
+                      ROUTER_SOLICITATION_MESSAGE_HOP_LIMIT,
+                      &msg,
+                      sizeof(msg));
 }
 
 #pragma pack(push, 1)
 struct router_advertisement_message {
-    unsigned char type;
-    unsigned char code;
-    unsigned short checksum;
     unsigned char cur_hop_limit;
     unsigned char managed_address_configuration : 1;
     unsigned char other_configuration_flag : 1;
@@ -45,44 +50,16 @@ struct router_advertisement_message {
 };
 #pragma pack(pop)
 
+static default_router_list ip_v6_address[5];
+
 #define ROUTER_ADVERTISEMENT_MSG_TYPE 134
 #define ROUTER_ADVERTISEMENT_CODE 0
 #define ROUTER_ADVERTISEMENT_CHECKSUM 0
 #define RESERVED 0
 
-void process_prefix_information_option(prefix_information_option option) {
-    if (autonomous_flag_is_set(option)) {
-        return;
-    }
-
-    if (prefix_is_the_link_local_prefix(option)) {
-        return;
-    }
-
-    if (preferred_lifetime_is_greater_than_the_valid_lifetime(option)) {
-        return;
-    }
-
-    if (prefix_is_unique(option) && valid_lifetime_is_not_zero(option)) {
-        form_and_save_address(option);
-    }
-
-    if (prefix_is_already_present(option) {
-        reset_preferred_lifetime_of_address(addr_from_option);
-        reset_valid_lifetime_address(addr_from_option);
-    }
-
-
-
-}
-
-void process_router_advertisement_message(struct router_advertisement_message msg) {
-    unsigned char num_options = get_number_of_prefix_info_options(msg);
-    prefix_information_option* all_options = extract_all_prefix_information_options(msg);
-
-    for (unsigned char i = 0; i < num_options; i++) {
-        prefix_information_option option = all_options[i];
-        process_prefix_information_option(option);
+void handle_router_advertisement_message(struct router_advertisement_message msg) {
+    if (global_address_configuration_is_in_progress()) {
+        process_for_address_autoconfiguration(msg);
     }
 }
 

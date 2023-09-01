@@ -27,18 +27,6 @@ struct ip_v6_address get_all_routers_multicast_address() {
     return unspecified_address;
 }
 
-#define LINK_LOCAL_ADDRESS_PREFIX 0xfe80
-
-struct ip_v6_address get_link_local_address() {
-    struct mac_address host_mac_addr = get_host_mac_address();
-    struct ip_v6_address addr = {LINK_LOCAL_ADDRESS_PREFIX,
-                                 host_mac_addr.low,
-                                 host_mac_addr.mid,
-                                 host_mac_addr.high}
-
-    return addr;
-}
-
 struct ip_v6_address create_link_local_unicast_address() {}
 
 struct ip_v6_address get_solicited_node_multicast_address_prefix() {
@@ -55,3 +43,5 @@ struct ip_v6_address get_solicited_node_multicast_address(struct ip_v6_address u
 
     return prefix;
 }
+
+struct link_layer_address get_link_layer_address() {}

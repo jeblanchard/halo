@@ -1,0 +1,1 @@
+get_random_int(unsigned int min, unsigned int max);
