@@ -109,8 +109,6 @@ bool global_address_configuration_is_in_progress() {
     return global_address_configuration_is_in_progress;
 }
 
-static interface_address struct ip_v6_address;
-
 #pragma pack(push, 1)
 struct prefix_information_option {
     struct neighbor_discovery_option option_prefix;
@@ -125,14 +123,69 @@ struct prefix_information_option {
 };
 #pragma pack(pop)
 
-void form_and_save_address(prefix_information_option option) {}
+
+struct interface_address_record {
+    struct ip_v6_address address;
+    unsigned int preferred_lifetime;
+    unsigned int valid_lifetime;
+}
+
+#define ALL_INTERFACE_ADDRESSES_LENGTH 5
+
+static all_interface_addresses struct interface_address_record[ALL_INTERFACE_ADDRESSES_LENGTH]
+
+void form_and_save_address(prefix_information_option option) {
+    if (sum_of_prefix_length_and_interface_id_length_dne_128_bits(option.prefix,
+                                                                  get_link_layer_address());
+
+    interface_address = option.prefix // do something with prefix
+}
 
 bool autonomous_flag_is_set(struct prefix_information_option option) {
     return option.autonomous_address_configuration_flag;
 }
 
 bool prefix_is_the_link_local_prefix(struct prefix_information_option option) {
-    if (option.);
+    if (option.prefix == get_link_local_prefix()) {
+        return true;
+    };
+
+    return false;
+}
+
+unsigned char get_index_of_address(struct ip_v6_address addr_to_find) {
+    for (int i = 0; i < ALL_INTERFACE_ADDRESSES_LENGTH; i++) {
+        if (all_interface_addresses[i].address == addr_to_find) {
+            return index;
+        }
+    }
+
+    char[] msg = "Could not find address.";
+    halt_and_display_error_message(msg);
+}
+
+void reset_preferred_lifetime_of_address(struct ip_v6_address addr,
+                                         unsigned int preferred_lifetime) {
+
+    unsigned char addr_index = get_index_of_address(addr);
+    all_interface_addresses[addr_index].preferred_lifetime = preferred_lifetime;
+}
+
+void update_valid_lifetime_address(struct ip_v6_address addr_to_update,
+                                   unsigned int new_valid_lifetime) {
+
+    unsigned int remaining_lifetime = get_remaining_lifetime(addr_to_update);
+    unsigned char addr_index = get_index_of_address(addr);
+
+    if (is_greater_than_2_hours(new_valid_lifetime) || new_valid_lifetime > remaining_lifetime) {
+        all_interface_addresses[addr_index].valid_lifetime = new_valid_lifetime;
+    } else if (remaining_lifetime < TWO_HOURS && router_advertisement_has_been_authenticated()) {
+        all_interface_addresses[addr_index].valid_lifetime = new_valid_lifetime;
+    } else if (remaining_lifetime < TWO_HOURS) {
+        return;
+    }
+
+    all_interface_addresses[addr_index].valid_lifetime = TWO_HOURS;
 }
 
 void process_prefix_information_option(struct prefix_information_option option) {
@@ -148,13 +201,14 @@ void process_prefix_information_option(struct prefix_information_option option) 
         return;
     }
 
-    if (prefix_is_unique(option) && valid_lifetime_is_not_zero(option)) {
+    if (prefix_is_unique(option.prefix) && valid_lifetime_is_not_zero(option.valid_lifetime)) {
         form_and_save_address(option);
     }
 
-    if (prefix_is_already_present(option) {
-        reset_preferred_lifetime_of_address(addr_from_option);
-        reset_valid_lifetime_address(addr_from_option);
+    if (prefix_is_already_present(option.prefix) {
+        struct ip_v6_address addr = get_address_with_prefix(option.prefix);
+        reset_preferred_lifetime_of_address(addr, option.preferred_lifetime);
+        update_valid_lifetime_address(addr, option.valid_lifetime);
     }
 }
 
