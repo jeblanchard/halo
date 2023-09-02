@@ -1,0 +1,1 @@
+void process_mtu_option(*neighbor_discovery_option_block option_block);

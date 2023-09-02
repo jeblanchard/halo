@@ -68,3 +68,5 @@ finish up the MAC protocol (transmission portion) after implementing
 higher level protocols
 
 pay attention to the endianness of the address structs
+
+implement testing with windows-based C as the testing language.

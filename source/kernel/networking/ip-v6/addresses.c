@@ -22,11 +22,6 @@ struct ip_v6_address create_multicast_address() {
     return unspecified_address;
 }
 
-struct ip_v6_address get_all_routers_multicast_address() {
-    struct ip_v6_address unspecified_address = {255, 0, 0, 0};
-    return unspecified_address;
-}
-
 struct ip_v6_address create_link_local_unicast_address() {}
 
 struct ip_v6_address get_solicited_node_multicast_address_prefix() {
@@ -45,3 +40,11 @@ struct ip_v6_address get_solicited_node_multicast_address(struct ip_v6_address u
 }
 
 struct link_layer_address get_link_layer_address() {}
+
+struct ip_v6_address get_ip_v6_address(unsigned int high_1,
+                                       unsigned int high_0,
+                                       unsigned int low_1,
+                                       unsigned int low_0) {
+
+    return ip_v6_address{high_1, high_0, low_1, low_0};
+}
