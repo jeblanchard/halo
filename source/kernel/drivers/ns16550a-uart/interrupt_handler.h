@@ -1,0 +1,1 @@
+void handle_ns16550a_interrupt();

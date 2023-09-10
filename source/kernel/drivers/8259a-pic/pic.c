@@ -93,7 +93,6 @@ char pic_isr_is_clear(char pic_num) {
     return false;
 }
 
-// Reads from the data register of PIC [pic_num]
 unsigned char read_pic_imr(unsigned char pic_num) {
 
     unsigned char reg;
@@ -107,7 +106,6 @@ unsigned char read_pic_imr(unsigned char pic_num) {
     return mask;
 }
 
-// Sends data to PIC 0 or 1
 void pic_send_data(unsigned char mask, unsigned char pic_num) {
 
     unsigned char reg;

@@ -111,36 +111,3 @@ unsigned int pci_config_read_register(unsigned int bus_num,
 
     return port_dword_in(CONFIG_DATA);
 }
-
-//#pragma pack(push, 1)
-//struct base_address_register {
-//
-//	// Bits 0-15, bits 0-15 of segment limit
-//	unsigned char
-//
-//	// Bits 16-39, bits 0-23 of segment base
-//	// address.
-//	// Defines the location of byte 0 of the
-//	// segment within the 4 GB linear
-//	// address space.
-//	unsigned short  base_low;
-//	unsigned char   base_mid;
-//
-//    // Bits 40-43, type field
-//    // Bit 44, descriptor type flag
-//    // Bits 45-46, descriptor privilege level field
-//    // Bit 47, segment-present flag
-//	unsigned char access;
-//
-//    // Bits 48-51, bits 16-19 of segment limit
-//    // Bit 52, available for use by system software
-//    // Bit 53, 64-bit code segment flag
-//    // Bit 54, D/B flag
-//    // Bit 55, granularity flag
-//	unsigned char granularity;
-//
-//    // Bits 56-63, bits 24-31 of the segment base
-//    // address
-//	unsigned char base_hi;
-//};
-//#pragma pack(pop)

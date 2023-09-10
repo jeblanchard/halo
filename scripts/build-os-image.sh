@@ -41,8 +41,6 @@ for full_filename in ${obj_dir}/*
 
 # Link all object files
 
-# (for IntelliJ)
-# shellcheck disable=SC2086
 kernel_tmp_full_filename="${obj_dir}/${kernel_tmp_filename}"
 ld -T NUL -o ${kernel_tmp_full_filename} -Ttext 0x1000 ${kernel_entry_obj_full_filename} ${o_files_to_link}
 

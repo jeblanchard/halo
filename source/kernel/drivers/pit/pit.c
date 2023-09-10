@@ -13,7 +13,7 @@ int get_tick_count() {
     return pit_ticks;
 }
 
-void pit_irq_handler() {
+void handle_pit_irq() {
 	pit_ticks++;
 	update_clock();
 }
@@ -73,7 +73,7 @@ void pit_set_counter(unsigned int freq, unsigned char ocw) {
 // Initialize PIT
 void initialize_pit() {
 
-    install_irq(PIT_IRQ_NUM, pit_irq_handler);
+    install_irq(PIT_IRQ_NUM, handle_pit_irq);
 
     unsigned char ocw = 0x36; // 0011 0110
     pit_set_counter(50, ocw);

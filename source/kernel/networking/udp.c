@@ -29,5 +29,3 @@ void send_datagram(unsigned short source_port,
 }
 
 void create_new_receive_port(unsigned short new_port) {}
-
-

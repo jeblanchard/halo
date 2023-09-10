@@ -70,3 +70,8 @@ higher level protocols
 pay attention to the endianness of the address structs
 
 implement testing with windows-based C as the testing language.
+
+finish editing linker script to include data sections
+
+figure out if adding global to c functions so i can access them
+in assembly is good practice or not

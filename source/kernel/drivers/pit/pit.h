@@ -8,7 +8,7 @@
 void initialize_pit();
 
 // Handles the PIT IRQ
-void pit_irq_handler();
+void handle_pit_irq();
 
 // Starts a PIT counter.
 //
@@ -23,7 +23,7 @@ void pit_irq_handler();
 // Bit 0: (BCP) Binary Counter
 //   0: Binary
 //   1: Binary Coded Decimal (BCD)
-// Bit 1-3: (M0, M1, M2) Operating Mode
+// Bit 3-1: (M0, M1, M2) Operating Mode
 //   000: Mode 0: Interrupt or Terminal Count
 //   001: Mode 1: Programmable one-shot
 //   010: Mode 2: Rate Generator
@@ -32,17 +32,17 @@ void pit_irq_handler();
 //   101: Mode 5: Hardware Triggered Strobe
 //   110: Undefined; Don't use
 //   111: Undefined; Don't use
-// Bits 4-5: (RL0, RL1) Read/Load Mode
+// Bits 5-4: (RL0, RL1) Read/Load Mode
 //   00: Counter value is latched into an internal control
 //       register at the time of the I/O write operation.
 //   01: Read or Load Least Significant Byte (LSB) only
 //   10: Read or Load Most Significant Byte (MSB) only
 //   11: Read or Load LSB first then MSB
-// Bits 6-7: (SC0-SC1) Select Counter
+// Bits 7-6: (SC0-SC1) Select Counter
 //   00: Counter 0
 //   01: Counter 1
 //   10: Counter 2
 //   11: Illegal value
-void pit_set_counter(unsigned int freq, unsigned char ocw);
+void pit_set_counter(unsigned int freq_in_hz, unsigned char ocw);
 
 int get_tick_count();

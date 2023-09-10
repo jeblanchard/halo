@@ -1,3 +1,0 @@
-fire interrupt, then adjust the GDT.
-it seems that the GDT is set to some initial
-configuration the memory map interrupt relies on.

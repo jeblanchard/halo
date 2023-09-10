@@ -1,0 +1,13 @@
+have a base program that that runs all of the test
+files. that seems complicated.
+
+have a function that standardizes what the test output
+should be.
+
+
+i think this is fine for now.
+
+show_test_failed()
+show_test_passed()
+
+
