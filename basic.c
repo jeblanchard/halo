@@ -3,16 +3,17 @@
 #include <stdint.h>
 #include <setjmp.h>
 #include <cmocka.h>
- 
-/* A test case that does nothing and succeeds. */
-static void null_test_success(void **state) {
-    (void) state; /* unused */
+#include <stdio.h>
+
+static void basic_test(void **state) {
+    (void) state;
+    assert_true(7);
 }
- 
-int main(void) {
+
+int main() {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(null_test_success),
+        cmocka_unit_test(basic_test)
     };
- 
+
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

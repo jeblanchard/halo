@@ -17,7 +17,6 @@ nasm -f elf ${kernel_entry_asm_filename} -o ${kernel_entry_obj_full_filename}
 # Move all object files to output directory
 mv_command="mv {} ${obj_dir}"
 
-# shellcheck disable=SC2086
 find source -type f -name "*.o" -exec $mv_command \;
 
 # Collect list of all object files to link

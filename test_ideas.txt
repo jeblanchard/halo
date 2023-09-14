@@ -1,13 +1,33 @@
-have a base program that that runs all of the test
-files. that seems complicated.
+use the cmocka framework
 
-have a function that standardizes what the test output
-should be.
+have a main method for each test directory? i think this is the best option.
+this will keep the manual coupling a low as possible by keeping everything
+in the same directory.
 
+i can then write a script that will execute every collection of
+tests.
 
-i think this is fine for now.
+my script can throw an error when it doesn't find what it is
+looking for
+- such as test directories, or the correct C file name
 
-show_test_failed()
-show_test_passed()
+we need to compile all of the tests before we can run them
 
+have a script that compiles all tests to an output directory
 
+have a script that runs all the tests stored in that output
+directory
+
+compilation of source code should be less stringent then how
+the test source is compiled - i can add this later.
+
+the object files that were generated from compiling the source
+can be just be linked with the compiled tests
+
+because there are many entrypoints if i were to compile everything, i assume
+an error would be thrown. i think no matter what there needs to be
+an executable for each testing group.
+
+i could have a script that goes into every testing group and compiles everything,
+then another script that actually runs these. and maybe these scripts can just be
+nested.
