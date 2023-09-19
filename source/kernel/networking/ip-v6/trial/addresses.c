@@ -64,4 +64,3 @@ bool addresses_are_equal(struct ip_v6_address a,
 
     return true;
 }
-
