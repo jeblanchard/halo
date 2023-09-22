@@ -30,5 +30,3 @@ struct ip_v6_address build_ip_v6_address(unsigned int high_1,
                                          unsigned int high_0,
                                          unsigned int low_1,
                                          unsigned int low_0);
-
-

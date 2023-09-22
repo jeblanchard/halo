@@ -1,0 +1,4 @@
+cmake -DCMAKE_BUILD_TYPE=Debug -DUNIT_TESTING=ON ..
+
+
+

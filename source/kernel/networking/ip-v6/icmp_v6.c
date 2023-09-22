@@ -1,13 +1,7 @@
-#pragma pack(push, 1)
-struct icmp_message_prefix {
-    unsigned char type;
-    unsigned char code;
-    unsigned short checksum;
-};
-#pragma pack(pop)
+#include "icmp_v6.h"
 
-struct icmp_message_prefix get_icmp_message_prefix(unsigned char type,
-                                                   unsigned code) {
+struct icmp_message_prefix build_icmp_message_prefix(unsigned char type,
+                                                     unsigned code) {
 
     struct icmp_message_prefix prefix = icmp_message_prefix{type, code};
 
@@ -34,7 +28,7 @@ void send_icmp_message(unsigned char type,
 
     unsigned int prefix_size = sizeof(prefix);
 
-    struct icmp_message_prefix prefix = get_icmp_message_prefix(type, code);
+    struct icmp_message_prefix prefix = build_icmp_message_prefix(type, code);
     memory_copy(&source, icmp_message, prefix_size);
 
     memory_copy(message_body, icmp_message + prefix_size, byte_count)

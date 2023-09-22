@@ -1,0 +1,30 @@
+i want cmake to allow me to compile my
+unit tests properly
+
+what is the best directory layout for test source
+and test executable output?
+    - i think having test source directories within the
+      source code structure is good
+    - and having a test output that matches the source
+      directory layout makes sense as well
+
+actually, instead of test directories i think simply
+appending _test to the test source code is better
+    - there's nothing that forces us to create a test
+      directory for every source code directoy (unless
+      there is some sort of CMake thing that I have to
+      configure that I'm not thinking about right now?)
+
+what if we have a CMakeLists file for each source directory (no
+explicit test directory) that includes all the files that end with
+a specific suffix (_test.c)
+
+create tests for the modules that i listed in my resume!
+
+i want the tests to compile for all platforms. all the other
+source code has to compile for the i-32 architecture that
+bochs is emulating
+
+how do i compile the kernel code without including all of
+the cmocka tests?
+
