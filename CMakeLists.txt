@@ -31,9 +31,10 @@ set(UNIT_TESTING ON)
 # into native executables
 include(BuildCMockaUnitTests)
 
-# build the OS image that will
+# Build the OS image that will
 # later be fed to Bochs
 include(BuildImageOfKernel)
 
-# maybe add a command that will send
-# the os image to the Bochs directory?
+# Move our OS image to the Bochs
+# program files
+include(MoveOSImageToBochs)

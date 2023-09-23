@@ -14,7 +14,7 @@ add_custom_command(OUTPUT ${KERNEL_ENTRY_OBJ_FILE}
 
     COMMAND nasm -f elf ${KERNEL_ENTRY_SRC_FILE} -o ${KERNEL_ENTRY_OBJ_FILE}
 
-    COMMENT "Building Halo OS image.")
+    COMMENT "Building kernel-entry object file.")
 
 # link all of the kernel fragments into one object
 # file
@@ -26,19 +26,7 @@ add_custom_command(OUTPUT ${KERNEL_OBJ_FILE}
 
     COMMAND ld -T NUL -o ${KERNEL_OBJ_FILE} -Ttext 0x1000 \ 
         ${KERNEL_ENTRY_OBJ_FILE} ${KERNEL_FRAGMENTS_OBJ_FILES}
-    COMMENT "Building Halo OS image.")
-
-# link all of the kernel fragments into one object
-# file
-add_custom_command(OUTPUT ${KERNEL_OBJ_FILE}
-
-    # depends on the kernel entry and kernel
-    # object files
-    DEPENDS ${KERNEL_ENTRY_OBJ_FILE} ${KERNEL_FRAGMENTS_OBJ_FILES}
-
-    COMMAND ld -T NUL -o ${KERNEL_OBJ_FILE} -Ttext 0x1000 \ 
-        ${KERNEL_ENTRY_OBJ_FILE} ${KERNEL_FRAGMENTS_OBJ_FILES}
-    COMMENT "Building Halo OS image.")
+    COMMENT "Building kernel object file.")
 
 # Take only the bare-metal usable binary from the kernel's
 # object file
@@ -49,7 +37,7 @@ add_custom_command(OUTPUT ${KERNEL_BIN_FILE}
     DEPENDS ${KERNEL_OBJ_FILE}
 
     COMMAND objcopy -O binary -j .text ${KERNEL_OBJ_FILE} ${KERNEL_BIN_FILE}
-    COMMENT "Building Halo OS image.")
+    COMMENT "Building kernel binary.")
 
 # Compile the bootsector to binary
 add_custom_command(OUTPUT ${BOOTSECTOR_BIN_FILE}
@@ -59,7 +47,7 @@ add_custom_command(OUTPUT ${BOOTSECTOR_BIN_FILE}
     DEPENDS ${BOOT_SECTOR_SOURCE_FILES}
 
     COMMAND nasm ${BOOT_SECTOR_SOURCE_FILES} -f bin -o ${BOOTSECTOR_BIN_FILE}
-    COMMENT "Building Halo OS image.")
+    COMMENT "Building bootsector binary.")
 
 
 # this is where we finalize the OS image to later
@@ -73,7 +61,7 @@ add_custom_command(OUTPUT ${HALO_OS_BIN_FILE}
 
     # the commands that build the OS
     COMMAND cat ${BOOTSECTOR_BIN_FILE} ${KERNEL_BIN_FILE} > ${HALO_OS_BIN_FILE}
-    COMMENT "Building Halo OS image.")
+    COMMENT "Building Halo image.")
 
 # this will set off the processing of all
 # CMake files in the source tree
