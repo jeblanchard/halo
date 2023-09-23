@@ -2,60 +2,38 @@
 # languages used
 project(Halo C ASM_NASM)
 
-# create the test source variable with
-# a top level scope
-set(TEST_SRC_FILES "")
-
-# this will set off the processing of all
-# CMake files in the source tree
-add_subdirectory(source)
-
+# Mark where to find this project's
+# modules
 set(CMAKE_MODULE_PATH cmake/Modules)
 
-# Add path to cmocka CMake modules. We'll
-# need this to create the executable for our
-# tests.
+# Mark where to find cmocka CMake modules
 list(APPEND CMAKE_MODULE_PATH
-     /c/"Program Files"/cmocka-1.1.7/cmake/Modules)
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmocka/Modules)
 
-# At this point, the names of all test
-# source files should have been collected.
-# Here we create one executable that
-# contains all of the project's tests.
+# Ensure that cmocka is available to use
+find_package(cmocka)
 
-# (I think I'll have to change this setup)
-add_executable(all_tests
-    ${TEST_SRC_FILES})
+# Mark where CMake can find the toolchain
+# file to use when cross-compiling to Bochs
+set(BOCHS_TOOLCHAIN_FILE_PATH
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Toolchains/bochs.cmake)
 
-# If we are testing, build all of the test
-# executables. If we aren't, build the
-# OS image.
+# declare the source directory name for
+# use in other CMake modules
+set(SOURCE_DIR source)
 
-# How do we best optionally set up the
-# executable that holds our tests?
-if (UNIT_TESTING)
-    find_package(cmocka)
-    include(AddCMockaTest)
-    add_subdirectory(test)
-endif()
+# Set CMocka's unit testing flag to on.
+# We will compile all CMocka unit tests
+# every time we build.
+set(UNIT_TESTING ON)
 
-# We need to use an executable that controls
-# the eventual os-image for Bochs.
-set(CMAKE_TOOLCHAIN_FILE cmake/TC-bochs.cmake)
+# build our unit tests
+# into native executables
+include(BuildCMockaUnitTests)
 
-# write a set of commands that create the kernel entry image
+# build the OS image that will
+# later be fed to Bochs
+include(BuildImageOfKernel)
 
-# and some commands that create the actual kernel image
-
-# and finally some commands that concatenate those two
-# into a complete kernel image to pass on to Bochs
-
-# this is where we finalize the OS image to later
-# feed to Bochs
-add_custom_command(OUTPUT bochs/halo-os-image.bin
-    COMMAND # the commands that build the OS
-    DEPENDS # the kernel entry and kernel object files
-    COMMENT "Building Halo OS image."
-
-    )
-
+# maybe add a command that will send
+# the os image to the Bochs directory?

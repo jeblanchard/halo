@@ -16,4 +16,3 @@ set(CMAKE_ASM_COMPILER C:/"Program Files"/NASM/nasm.exe ${NASM_OPTIONS})
 # Specify the processor we are cross-compiling
 # for. This is a processor that Bochs can emulate.
 set(CMAKE_SYSTEM_PROCESSOR i386)
-

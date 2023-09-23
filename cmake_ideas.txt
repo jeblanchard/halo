@@ -28,3 +28,13 @@ bochs is emulating
 how do i compile the kernel code without including all of
 the cmocka tests?
 
+what if i build both the tests and the image on the same run?
+  - i think this is best because that will eliminate the
+    necessity to run another command after seeing the results
+    of the tests (reduces coupling - read about this again)
+  - in one command the user will be able to see whether or not
+    os image builds correctly, and the tests FOR THAT EXACT
+    run of cmake are already present to run
+  - i don't even need to check for the UNIT TESTING variable
+    because the unit tests will be built no matter what
+
