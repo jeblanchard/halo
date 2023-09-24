@@ -1,9 +1,0 @@
-don't add buffers to comms drivers as a default behavior.
-
-act on the data received as soon as possible. typically,
-acting on received data may just mean sending it
-to the respective process.
-
-the process that eventually uses that data will have its
-own buffer that will store the data.
-

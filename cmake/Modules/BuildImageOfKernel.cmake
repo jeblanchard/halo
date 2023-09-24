@@ -4,6 +4,21 @@ set(CMAKE_TOOLCHAIN_FILE ${BOCHS_TOOLCHAIN_FILE_PATH})
 
 # how do i get CMake to compile all of these files?
 
+# 
+
+# Compile all source files into one cohesive
+# object library
+add_library(kernel OBJECT )
+
+add_custom_command(OUTPUT ${KERNEL_FRAGMENTS_OBJ_FILES}
+
+    # depends on the kernel entry and kernel
+    # object files
+    DEPENDS ${KERNEL_FRAGMENTS_SRC_FILES}
+
+    COMMAND nasm -f elf ${KERNEL_ENTRY_SRC_FILE} -o ${KERNEL_ENTRY_OBJ_FILE}
+
+    COMMENT "Building kernel-entry object file.")
 
 
 add_custom_command(OUTPUT ${KERNEL_ENTRY_OBJ_FILE}
@@ -52,8 +67,9 @@ add_custom_command(OUTPUT ${BOOTSECTOR_BIN_FILE}
 
 # this is where we finalize the OS image to later
 # feed to Bochs
-set(HALO_OS_BIN_FILE bochs/halo-os-image.bin)
-add_custom_command(OUTPUT ${HALO_OS_BIN_FILE}
+set(HALO_OS_BIN_FILE halo_os_image.bin)
+add_custom_command(
+    OUTPUT ${HALO_OS_BIN_FILE}
 
     # depends on the kernel entry and kernel
     # object files
@@ -61,7 +77,12 @@ add_custom_command(OUTPUT ${HALO_OS_BIN_FILE}
 
     # the commands that build the OS
     COMMAND cat ${BOOTSECTOR_BIN_FILE} ${KERNEL_BIN_FILE} > ${HALO_OS_BIN_FILE}
-    COMMENT "Building Halo image.")
+    COMMENT "Building Halo image."
+)
+
+add_custom_target(halo_os_bin ALL DEPENDS ${HALO_OS_BIN_FILE})
+
+
 
 # this will set off the processing of all
 # CMake files in the source tree

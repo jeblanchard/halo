@@ -1,0 +1,11 @@
+set(OS_IMAGE_SOURCE_FILES
+    ${OS_IMAGE_SOURCE_FILES}
+    check_queue.asm
+    driver_isr.asm
+    host_to_nic.asm
+    initialize_driver.asm
+    nic_to_host.asm
+    packets.c
+    registers.asm
+    transmit_next_packet_in_queue.asm
+)

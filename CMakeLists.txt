@@ -1,6 +1,17 @@
+cmake_minimum_required(VERSION 3.27.5)
+
 # declare the project name and the
 # languages used
 project(Halo C ASM_NASM)
+
+# When we process all of our source
+# directories these variables will be
+# populated.
+set(OS_IMAGE_SOURCE_FILES "")
+set(TESTING_SOURCE_FILES "")
+
+# process all of our source code
+add_subdirectory(source)
 
 # Mark where to find this project's
 # modules
@@ -17,10 +28,6 @@ find_package(cmocka)
 # file to use when cross-compiling to Bochs
 set(BOCHS_TOOLCHAIN_FILE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Toolchains/bochs.cmake)
-
-# declare the source directory name for
-# use in other CMake modules
-set(SOURCE_DIR source)
 
 # Set CMocka's unit testing flag to on.
 # We will compile all CMocka unit tests

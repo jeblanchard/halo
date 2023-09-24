@@ -35,3 +35,6 @@ out/
 # CMake
 CMakeFiles/
 CMakeCache.txt
+
+# Hide my personal notes
+notes/

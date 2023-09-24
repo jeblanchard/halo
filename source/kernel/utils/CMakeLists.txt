@@ -1,0 +1,10 @@
+set(OS_IMAGE_SOURCE_FILES
+    ${OS_IMAGE_SOURCE_FILES}
+    call_function_at_address.asm
+    call_function_at_address.c
+    errors.c
+    io.c
+    memory.c
+    standard.c
+    "string.c"
+)
