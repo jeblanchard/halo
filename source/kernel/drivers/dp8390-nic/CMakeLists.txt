@@ -1,5 +1,5 @@
-set(OS_IMAGE_SOURCE_FILES
-    ${OS_IMAGE_SOURCE_FILES}
+set(KERNEL_FRAGMENTS_SOURCE_FILES
+    ${KERNEL_FRAGMENTS_SOURCE_FILES}
     check_queue.asm
     driver_isr.asm
     host_to_nic.asm
@@ -8,4 +8,5 @@ set(OS_IMAGE_SOURCE_FILES
     packets.c
     registers.asm
     transmit_next_packet_in_queue.asm
+    PARENT_SCOPE
 )

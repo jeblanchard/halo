@@ -1,9 +1,10 @@
-set(OS_IMAGE_SOURCE_FILES
-    ${OS_IMAGE_SOURCE_FILES}
+set(KERNEL_FRAGMENTS_SOURCE_FILES
+    ${KERNEL_FRAGMENTS_SOURCE_FILES}
     address.c
     functionality.c
     icmp_v6.c
     message_transmission.c
     router_discovery.c
     stateless_address_autoconfiguration.c
+    PARENT_SCOPE
 )

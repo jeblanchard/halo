@@ -4,15 +4,6 @@ cmake_minimum_required(VERSION 3.27.5)
 # languages used
 project(Halo C ASM_NASM)
 
-# When we process all of our source
-# directories these variables will be
-# populated.
-set(OS_IMAGE_SOURCE_FILES "")
-set(TESTING_SOURCE_FILES "")
-
-# process all of our source code
-add_subdirectory(source)
-
 # Mark where to find this project's
 # modules
 set(CMAKE_MODULE_PATH cmake/Modules)
@@ -34,14 +25,72 @@ set(BOCHS_TOOLCHAIN_FILE_PATH
 # every time we build.
 set(UNIT_TESTING ON)
 
-# build our unit tests
-# into native executables
-include(BuildCMockaUnitTests)
+# When we process all of our source
+# directories these variables will be
+# populated.
+set(KERNEL_FRAGMENTS_SOURCE_FILES "")
+set(BOOTSECTOR_SOURCE_FILE "")
 
-# Build the OS image that will
-# later be fed to Bochs
-include(BuildImageOfKernel)
+# Process all of our source code.
+# This call also serves the function
+# of building all of our tests.
+add_subdirectory(source)
 
-# Move our OS image to the Bochs
-# program files
-include(MoveOSImageToBochs)
+set(KERNEL_ENTRY_SOURCE_FILE source/boot/multiboot2.asm)
+
+# We need to separate the kernel's entry
+# point from the rest of the kernel
+# fragments
+list(REMOVE_ITEM
+    KERNEL_FRAGMENTS_SOURCE_FILES
+    ${KERNEL_ENTRY_SOURCE_FILE})
+
+# Set our ELF names
+set(KERNEL_ENTRY_ELF kernel_entry.elf)
+set(KERNEL_FRAGMENTS_ELF kernel_fragments.elf)
+set(KERNEL_ELF kernel.elf)
+set(BOOTSECTOR_BIN boot_sector.bin)
+
+# Now we add ELFs for our kernel
+# entry point, all of the kernel fragments,
+# and the bootsector
+add_executable(${KERNEL_ENTRY_ELF} 
+    ${KERNEL_ENTRY_SOURCE_FILE})
+add_executable(${KERNEL_FRAGMENTS_ELF}
+    ${KERNEL_FRAGMENTS_SOURCE_FILES})
+
+# We then link these two together using
+# a custom command to ensure that the
+# kernel entry appears at the beginning
+# of the resulting file
+add_custom_command(
+    OUTPUT ${KERNEL_ELF}
+    COMMAND -T NUL -o ${KERNEL_ELF} -Ttext \ 
+        0x1000 ${KERNEL_ENTRY_ELF} ${KERNEL_FRAGMENTS}
+    DEPENDS ${KERNEL_ENTRY_ELF} ${KERNEL_FRAGMENTS})
+
+# For the bootsector, we can compile
+# directly to binary format
+add_executable(${BOOTSECTOR_BIN}
+    ${BOOTSECTOR_SOURCE_FILE})
+target_compile_options(${BOOTSECTOR_BIN}
+    PUBLIC -f bin -o ${BOOTSECTOR_BIN})
+
+# Now we convert the kernel's ELF file
+# to binary that hardware can run
+set(KERNEL_BIN kernel.bin)
+add_custom_command(
+    OUTPUT ${KERNEL_BIN}
+    DEPENDS ${KERNEL_ELF}
+    COMMAND objcopy -O binary ${KERNEL_ELF} ${KERNEL_BIN}
+)
+
+# To finish we combine the binaries of
+# our bootsector and kernel into a
+# singular image
+set(HALOS_BIN halos.bin)
+add_custom_command(
+    OUTPUT ${HALOS_BIN}
+    DEPENDS ${BOOTSECTOR_BIN} ${KERNEL_BIN}
+    COMMAND cat ${BOOTSECTOR_BIN} ${KERNEL_BIN} > ${HALOS_BIN}
+)

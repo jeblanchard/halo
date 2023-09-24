@@ -1,7 +1,5 @@
 set(KERNEL_FRAGMENTS_SOURCE_FILES
     ${KERNEL_FRAGMENTS_SOURCE_FILES}
-    pit.c
+    manager.c
     PARENT_SCOPE
 )
-
-add_subdirectory(test)

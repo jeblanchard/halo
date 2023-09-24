@@ -26,7 +26,6 @@ load_kernel_from_drive:
     mov bx, IN_LOAD_KERNEL              ; Announce we've loaded our kernel into
     call print_string                   ; memory.
 
-;call switch_to_pm
 jmp MULTIBOOT2_OFFSET          ; Jump to the address of our
                                ; Multiboot2 code.
 

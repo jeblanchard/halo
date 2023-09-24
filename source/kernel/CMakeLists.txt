@@ -1,7 +1,8 @@
-set(OS_IMAGE_SOURCE_FILES
-    ${OS_IMAGE_SOURCE_FILES}
+set(KERNEL_FRAGMENTS_SOURCE_FILES
+    ${KERNEL_FRAGMENTS_SOURCE_FILES}
     gdt.c
     start.c
+    PARENT_SCOPE
 )
 
 add_subdirectory(cmd-line)

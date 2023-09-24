@@ -38,3 +38,6 @@ CMakeCache.txt
 
 # Hide my personal notes
 notes/
+
+# Hide the CMake builds
+./build/

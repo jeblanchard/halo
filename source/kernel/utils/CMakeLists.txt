@@ -1,5 +1,5 @@
-set(OS_IMAGE_SOURCE_FILES
-    ${OS_IMAGE_SOURCE_FILES}
+set(KERNEL_FRAGMENTS_SOURCE_FILES
+    ${KERNEL_FRAGMENTS_SOURCE_FILES}
     call_function_at_address.asm
     call_function_at_address.c
     errors.c
@@ -7,4 +7,5 @@ set(OS_IMAGE_SOURCE_FILES
     memory.c
     standard.c
     "string.c"
+    PARENT_SCOPE
 )
