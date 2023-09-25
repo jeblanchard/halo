@@ -1,6 +1,6 @@
-set(KERNEL_FRAGMENTS_SOURCE_FILES
-    ${KERNEL_FRAGMENTS_SOURCE_FILES}
+set(SOURCE_FILES
     headers.c
-    padding.c
-    PARENT_SCOPE
-)
+    padding.c)
+
+include(GetAbsolutePaths)
+get_absolute_paths("${SOURCE_FILES}" ABSOLUTE_PATHS)

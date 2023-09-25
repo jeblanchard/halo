@@ -6,7 +6,7 @@ project(Halo C ASM_NASM)
 
 # Mark where to find this project's
 # modules
-set(CMAKE_MODULE_PATH cmake/Modules)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
 # Mark where to find cmocka CMake modules
 list(APPEND CMAKE_MODULE_PATH
@@ -29,12 +29,13 @@ set(UNIT_TESTING ON)
 # directories these variables will be
 # populated.
 set(KERNEL_FRAGMENTS_SOURCE_FILES "")
-set(BOOTSECTOR_SOURCE_FILE "")
+set(BOOTSECTOR_SOURCE_FILE source/boot/boot_sector.asm)
 
 # Process all of our source code.
 # This call also serves the function
 # of building all of our tests.
 add_subdirectory(source)
+
 
 set(KERNEL_ENTRY_SOURCE_FILE source/boot/multiboot2.asm)
 
