@@ -29,13 +29,15 @@ set(UNIT_TESTING ON)
 # directories these variables will be
 # populated.
 set(KERNEL_FRAGMENTS_SOURCE_FILES "")
-set(BOOTSECTOR_SOURCE_FILE source/boot/boot_sector.asm)
+
+# We add this here so that any NASM include
+# statements can find the files
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 # Process all of our source code.
 # This call also serves the function
 # of building all of our tests.
 add_subdirectory(source)
-
 
 set(KERNEL_ENTRY_SOURCE_FILE source/boot/multiboot2.asm)
 
@@ -47,7 +49,7 @@ list(REMOVE_ITEM
     ${KERNEL_ENTRY_SOURCE_FILE})
 
 # Set our ELF names
-set(KERNEL_ENTRY_ELF kernel_entry.elf)
+set(KERNEL_ENTRY_ELF multiboot2.elf)
 set(KERNEL_FRAGMENTS_ELF kernel_fragments.elf)
 set(KERNEL_ELF kernel.elf)
 set(BOOTSECTOR_BIN boot_sector.bin)
@@ -55,8 +57,17 @@ set(BOOTSECTOR_BIN boot_sector.bin)
 # Now we add ELFs for our kernel
 # entry point, all of the kernel fragments,
 # and the bootsector
-add_executable(${KERNEL_ENTRY_ELF} 
-    ${KERNEL_ENTRY_SOURCE_FILE})
+# add_executable(${KERNEL_ENTRY_ELF} 
+#     ${KERNEL_ENTRY_SOURCE_FILE})
+# target_compile_options(${KERNEL_ENTRY_ELF}
+#     PUBLIC -felf)
+
+add_custom_command(
+    OUTPUT ${KERNEL_ENTRY_ELF}
+    COMMAND nasm -f elf ${KERNEL_ENTRY_SOURCE_FILE}
+    DEPENDS ${KERNEL_ENTRY_SOURCE_FILE}
+)
+
 add_executable(${KERNEL_FRAGMENTS_ELF}
     ${KERNEL_FRAGMENTS_SOURCE_FILES})
 
@@ -66,16 +77,27 @@ add_executable(${KERNEL_FRAGMENTS_ELF}
 # of the resulting file
 add_custom_command(
     OUTPUT ${KERNEL_ELF}
-    COMMAND -T NUL -o ${KERNEL_ELF} -Ttext \ 
-        0x1000 ${KERNEL_ENTRY_ELF} ${KERNEL_FRAGMENTS}
-    DEPENDS ${KERNEL_ENTRY_ELF} ${KERNEL_FRAGMENTS})
+    COMMAND ld -T NUL -o ${KERNEL_ELF} -Ttext \ 
+        0x1000 ${KERNEL_ENTRY_ELF} ${KERNEL_FRAGMENTS_ELF}
+    DEPENDS ${KERNEL_ENTRY_ELF} ${KERNEL_FRAGMENTS_ELF})
 
 # For the bootsector, we can compile
 # directly to binary format
-add_executable(${BOOTSECTOR_BIN}
-    ${BOOTSECTOR_SOURCE_FILE})
-target_compile_options(${BOOTSECTOR_BIN}
-    PUBLIC -f bin -o ${BOOTSECTOR_BIN})
+set(BOOTSECTOR_SOURCE_FILE source/boot/boot_sector.asm)
+
+
+# add_executable(${BOOTSECTOR_BIN}
+#     ${BOOTSECTOR_SOURCE_FILE})
+# target_compile_options(${BOOTSECTOR_BIN}
+#     PUBLIC -f bin -o ${BOOTSECTOR_BIN})
+add_custom_command(
+    OUTPUT ${BOOTSECTOR_BIN}
+    COMMAND nasm ${BOOTSECTOR_SOURCE_FILE} -f bin -o ${BOOTSECTOR_BIN}
+
+    # the boot sector auxillary files were populated when we
+    # added the boot directory
+    DEPENDS ${BOOTSECTOR_SOURCE_FILE} ${BOOTSECTOR_AUXILLARY_FILES}
+)
 
 # Now we convert the kernel's ELF file
 # to binary that hardware can run

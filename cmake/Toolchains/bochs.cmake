@@ -10,8 +10,8 @@ set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_C_COMPILER C:/MinGW/bin/gcc.exe ${GCC_OPTIONS})
 
 # configure ASM compiler
-set(NASM_OPTIONS "-f elf")
-set(CMAKE_ASM_COMPILER C:/"Program Files"/NASM/nasm.exe ${NASM_OPTIONS})
+# set(NASM_OPTIONS "-f elf")
+set(CMAKE_ASM_COMPILER C:/"Program Files"/NASM/nasm.exe)
 
 # Specify the processor we are cross-compiling
 # for. This is a processor that Bochs can emulate.

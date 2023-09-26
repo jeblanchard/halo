@@ -1,4 +1,4 @@
-#include "../drivers/screen.h"
+#include "../drivers/vesa_display.h"
 
 void print_welcome_msg() {
     char reached_kernel_msg[] = "Welcome to Halo.\n\n";

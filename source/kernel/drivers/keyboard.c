@@ -1,6 +1,6 @@
-#include "../utils/low_level.h"
+#include "../utils/memory.h"
 #include "keyboard.h"
-#include "screen.h"
+#include "vesa_display.h"
 #include "../interrupts/idt.h"
 #include "../utils/standard.h"
 #include "8259a-pic/pic.h"
