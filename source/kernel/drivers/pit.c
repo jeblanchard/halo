@@ -1,6 +1,6 @@
-#include "../utils/low_level.h"
+#include "../utils/memory.h"
 #include "../interrupts/idt.h"
-#include "screen.h"
+#include "vesa_display.h"
 #include "pit.h"
 #include "../utils/string.h"
 #include "8259a-pic/pic.h"

@@ -1,11 +1,11 @@
-#include "../drivers/screen.h"
+#include "../drivers/vesa_display.h"
 #include "../utils/memory.h"
 #include "../drivers/8259a-pic/pic.h"
 #include "../utils/string.h"
 #include "../utils/standard.h"
 #include "../utils/errors.h"
 #include "idt.h"
-#include "predefined_interrupt_loading.h"
+#include "predefined/predefined_interrupt_loading.h"
 #include "../gdt.h"
 
 #pragma pack(push,1)

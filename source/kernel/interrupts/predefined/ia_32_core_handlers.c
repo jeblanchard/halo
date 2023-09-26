@@ -1,4 +1,4 @@
-#include "../utils/errors.h"
+#include "../../utils/errors.h"
 
 void handle_divide_error() {
     char msg[] = "Divide error.";

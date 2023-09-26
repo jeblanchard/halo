@@ -1,9 +1,18 @@
+#include "ip-v6/address.h"
+
 #pragma pack(push, 1)
 struct datagram_prefix {
     unsigned short source_port;
     unsigned short destination_port;
     unsigned short length;
     unsigned short checksum;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct ip_v6_message {
+    unsigned short to_do_1;
+    unsigned short to_do_2;
 };
 #pragma pack(pop)
 
@@ -24,7 +33,7 @@ void send_datagram(unsigned short source_port,
     struct datagram_prefix prefix = {source_port,
                                      destination_port,
                                      length,
-                                     compute_checksum()}
+                                     compute_checksum()};
 
 }
 

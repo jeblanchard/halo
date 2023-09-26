@@ -1,9 +1,12 @@
+#include "base.h"
+#include "../../address.h"
+
 #pragma pack(push, 1)
 struct prefix_information_option {
     struct neighbor_discovery_option_block option_prefix;
     unsigned char prefix_length;
-    bool on_link_flag : 1;
-    bool autonomous_address_configuration_flag : 1;
+    _Bool on_link_flag : 1;
+    _Bool autonomous_address_configuration_flag : 1;
     unsigned char reserved1 : 6;
     unsigned int valid_lifetime;
     unsigned int preferred_lifetime;
@@ -79,11 +82,11 @@ struct ip_v6_address get_prefix_from_third_and_fourth_blocks(struct neighbor_dis
                                              third_block.octet3);
 
     unsigned int high0 = get_int_from_octets(third_block.octet4,
-                                             third_block.octet5
+                                             third_block.octet5,
                                              third_block.octet6,
                                              third_block.octet7);
 
-    unsigned int low1 = get_int_from_octets(fourth_block.octet0,
+    unsigned int low0 = get_int_from_octets(fourth_block.octet0,
                                             fourth_block.octet1,
                                             fourth_block.octet2,
                                             fourth_block.octet3);
@@ -93,15 +96,17 @@ struct ip_v6_address get_prefix_from_third_and_fourth_blocks(struct neighbor_dis
                                             fourth_block.octet6,
                                             fourth_block.octet7);
 
-    return get_ip_v6_address(high1, high0, low1, low0);
+    struct ip_v6_address address = build_ip_v6_address(high1, high0, low1, low0);
+
+    return address;
 }
 
 struct prefix_information_option convert_to_prefix_information_option(struct neighbor_discovery_option_block *options_segment) {
-    prefix_information_option converted_option = {};
+    struct prefix_information_option converted_option = {};
 
     struct neighbor_discovery_option_block first_block = options_segment[0];
-    converted_option.option_prefix.type = first_block.octet0;
-    converted_option.option_prefix.length = first_block.octet1;
+    // converted_option.option_prefix.type = first_block.octet0;
+    // converted_option.option_prefix.length = first_block.octet1;
     converted_option.prefix_length = first_block.octet2;
     converted_option.on_link_flag = first_block.octet3 & 0x1;
     converted_option.autonomous_address_configuration_flag = first_block.octet3 & 0x2;

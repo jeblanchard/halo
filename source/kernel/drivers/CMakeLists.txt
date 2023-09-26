@@ -1,7 +1,8 @@
 set(SOURCE_FILES
     keyboard.c
     pci.c
-    vesa_display.c)
+    vesa_display.c
+    pit.c)
 
 include(GetAbsolutePaths)
 get_absolute_paths("${SOURCE_FILES}" ABSOLUTE_PATHS)

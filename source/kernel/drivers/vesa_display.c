@@ -1,9 +1,8 @@
-#include "../utils/low_level.h"
 #include "../utils/memory.h"
 #include "../utils/string.h"
 #include "../utils/standard.h"
 #include "pit.h"
-#include "screen.h"
+#include "vesa_display.h"
 
 #define VIDEO_ADDRESS 0xb8000
 

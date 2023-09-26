@@ -1,6 +1,6 @@
 #include "ia_32_core_handlers.h"
 #include "vector_handler_external_declarations.h"
-#include "idt.h"
+#include "../idt.h"
 
 static unsigned int core_handler_addresses[MAX_IR_NUM + 1];
 
