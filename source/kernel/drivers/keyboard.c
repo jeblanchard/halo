@@ -5,6 +5,7 @@
 #include "../utils/standard.h"
 #include "8259a-pic/pic.h"
 #include "../utils/errors.h"
+#include "../utils/io.h"
 
 #define KEYBOARD_CONTROLLER_STATUS_PORT 0x64
 

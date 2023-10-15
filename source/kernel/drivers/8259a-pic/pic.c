@@ -1,6 +1,6 @@
 #include "../../utils/io.h"
 #include "../../interrupts/idt.h"
-#include "../screen.h"
+#include "../vesa_display.h"
 #include "../../utils/standard.h"
 #include "../../utils/errors.h"
 #include "ports.h"

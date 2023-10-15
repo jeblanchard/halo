@@ -1,3 +1,7 @@
+add_subdirectory(8259a-pic)
+add_subdirectory(dp8390-nic)
+add_subdirectory(ns16550a-uart)
+
 set(SOURCE_FILES
     keyboard.c
     pci.c

@@ -7,7 +7,7 @@
 ;
 ; Input:
 ;     ecx = byte count of packet
-transmit_next_packet_in_queue:
+global transmit_next_packet_in_queue:
 
     cli                                  ; disable interrupts
 
@@ -25,6 +25,8 @@ transmit_next_packet_in_queue:
 
     mov ah, TRANSMIT_BUFFER
     xor al, al                           ; set page that will receive the packet
+
+    extern load_packet_from_host
     call load_packet_from_host           ; transfer packet to NIC buffer RAM
 
     mov dx, TRANSMIT_PAGE_START_REG

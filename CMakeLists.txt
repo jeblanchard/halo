@@ -17,11 +17,11 @@ find_package(cmocka)
 
 # Mark where CMake can find the toolchain
 # file to use when cross-compiling to Bochs
-set(BOCHS_TOOLCHAIN_FILE_PATH
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Toolchains/bochs.cmake)
+# set(BOCHS_TOOLCHAIN_FILE_PATH
+#     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Toolchains/bochs.cmake)
 
 # Set CMocka's unit testing flag to on.
-# We will compile all CMocka unit tests
+# We will compile CMocka unit tests
 # every time we build.
 set(UNIT_TESTING ON)
 
@@ -57,10 +57,11 @@ set(BOOTSECTOR_BIN boot_sector.bin)
 # Now we add ELFs for our kernel
 # entry point, all of the kernel fragments,
 # and the bootsector
+
 # add_executable(${KERNEL_ENTRY_ELF} 
 #     ${KERNEL_ENTRY_SOURCE_FILE})
 # target_compile_options(${KERNEL_ENTRY_ELF}
-#     PUBLIC -felf)
+#     PUBLIC $<$<COMPILE_LANGUAGE:ASM_NASM>:-f elf>)
 
 add_custom_command(
     OUTPUT ${KERNEL_ENTRY_ELF}
@@ -70,6 +71,8 @@ add_custom_command(
 
 add_executable(${KERNEL_FRAGMENTS_ELF}
     ${KERNEL_FRAGMENTS_SOURCE_FILES})
+target_compile_options(${KERNEL_FRAGMENTS_ELF}
+    PUBLIC $<$<COMPILE_LANGUAGE:ASM_NASM>:-felf>)
 
 # We then link these two together using
 # a custom command to ensure that the

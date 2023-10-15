@@ -1,4 +1,4 @@
-#include "drivers/screen.h"
+#include "drivers/vesa_display.h"
 #include "drivers/pit.h"
 #include "drivers/8259a-pic/pic.h"
 #include "interrupts/idt.h"
@@ -7,7 +7,7 @@
 #include "cmd-line/main.h"
 #include "boot.h"
 #include "physical-memory-management/manager.h"
-#include "drivers/pci/functions.h"
+#include "drivers/pci.h"
 
 
 void initialize_kernel(struct multiboot2_info* boot_info) {

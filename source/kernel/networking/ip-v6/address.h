@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../../utils/standard.h"
 
 #pragma pack(push, 1)

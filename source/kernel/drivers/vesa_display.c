@@ -3,6 +3,7 @@
 #include "../utils/standard.h"
 #include "pit.h"
 #include "vesa_display.h"
+#include "../utils/io.h"
 
 #define VIDEO_ADDRESS 0xb8000
 

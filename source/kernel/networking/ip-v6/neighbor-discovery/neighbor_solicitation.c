@@ -1,3 +1,10 @@
+#include "../address.h"
+#include "../stateless_address_autoconfiguration.h"
+#include "../icmp_v6.h"
+#include <stdlib.h>
+#include "../../mac.h"
+#include <stdbool.h>
+
 #pragma pack(push, 1)
 struct neighbor_solicitation_message {
     unsigned int reserved;
@@ -27,14 +34,14 @@ void send_neighbor_solicitation_message(struct ip_v6_address ip_source_addr,
                       ip_source_addr,
                       target_address,
                       NEIGHBOR_SOLICITATION_IP_V6_HOP_LIMIT,
-                      &msg,
+                      NULL,
                       sizeof(msg));
 }
 
 #pragma pack(push, 1)
 struct neighbor_solicitation_message_with_source_link_layer_address {
     struct neighbor_solicitation_message core_message;
-    struct mac_address link_layer_address
+    struct mac_address link_layer_address;
 };
 #pragma pack(pop)
 
@@ -42,15 +49,15 @@ void send_neighbor_solicitation_message_with_source_link_layer_address(struct ip
                                                                        struct ip_v6_address target_addr) {
 
     struct neighbor_solicitation_message_with_source_link_layer_address msg = \
-                                {0, target_address, get_host_mac_address()};
+                                {0, target_addr, get_host_mac_address()};
 
     send_icmp_message(NEIGHBOR_SOLICITATION_ICMP_TYPE,
                       NEIGHBOR_SOLICITATION_ICMP_CODE,
                       source_addr,
                       target_addr,
                       NEIGHBOR_SOLICITATION_IP_V6_HOP_LIMIT,
-                      &msg;
-                      sizeof(msg))
+                      NULL,
+                      sizeof(msg));
 }
 
 #pragma pack(push, 1)
@@ -63,17 +70,17 @@ struct neighbor_advertisement_message {
 };
 #pragma pack(pop)
 
-bool was_a_solicited_advertisement(struct neighbor_advertisement msg) {
+bool was_a_solicited_advertisement(struct neighbor_advertisement_message msg) {
     return msg.solicited_flag;
 }
 
-void handle_solicited_neighbor_advertisement(struct neighbor_advertisement msg) {
+void handle_solicited_neighbor_advertisement(struct neighbor_advertisement_message msg) {
     if (currently_verifying_tentative_address()) {
         acknowledge_advertisement_from_tentative_address();
     }
 }
 
-void handle_received_neighbor_advertisement(struct neighbor_advertisement msg) {
+void handle_received_neighbor_advertisement(struct neighbor_advertisement_message msg) {
     if (was_a_solicited_advertisement(msg)) {
         handle_solicited_neighbor_advertisement(msg);
     }

@@ -125,29 +125,39 @@ struct prefix_information_option convert_to_prefix_information_option(struct nei
     return converted_option;
 }
 
-void process_prefix_information_option(struct prefix_information_option option) {
-    if (autonomous_flag_is_set(option)) {
-        return;
-    }
-
-    if (prefix_is_the_link_local_prefix(option)) {
-        return;
-    }
-
-    if (preferred_lifetime_is_greater_than_the_valid_lifetime(option)) {
-        return;
-    }
-
-    if (prefix_is_unique(option.prefix) && valid_lifetime_is_not_zero(option.valid_lifetime)) {
-        form_and_save_address(option);
-    }
-
-    if (prefix_is_already_present(option.prefix) {
-        struct ip_v6_address addr = get_address_with_prefix(option.prefix);
-        reset_preferred_lifetime_of_address(addr, option.preferred_lifetime);
-        update_valid_lifetime_address(addr, option.valid_lifetime);
-    }
+bool autonomous_flag_is_set(struct prefix_information_option option) {
+    return false;
 }
+
+bool prefix_is_the_link_local_prefix(struct prefix_information_option option) {
+    return false;
+}
+
+bool preferred_lifetime_is_greater_than_the_valid_lifetime(struct prefix_information_option option) {
+    return false;
+}
+
+bool prefix_is_unique(struct ip_v6_address prefix) {
+    return false;
+}
+
+bool valid_lifetime_is_not_zero(int valid_lifetime) {
+    return false;
+}
+
+bool form_and_save_address(struct prefix_information_option option) {
+    return false;
+}
+
+bool prefix_is_already_present(struct ip_v6_address prefix) {
+    return false;
+}
+
+struct ip_v6_address get_address_with_prefix(struct ip_v6_address prefix) {
+    return (struct ip_v6_address) {};
+}
+
+void reset_preferred_lifetime_of_address(struct ip_v6_address addr, int new_preferred_lifetime) {}
 
 void convert_and_process_prefix_information_option(struct neighbor_discovery_option_block *option_segment) {
     struct prefix_information_option option = convert_to_prefix_information_option(option_segment);

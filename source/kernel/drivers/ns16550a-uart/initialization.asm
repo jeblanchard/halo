@@ -33,7 +33,7 @@ add esp, byte 6
 
 ;**************** INITIALIZE NS16550A ***********************
 
-%include "registers.asm"
+%include "source/kernel/drivers/ns16550a-uart/registers.asm"
 
 mov al, DIVISOR_LATCH_ACCESS_CODE    ; set-up access to divisor latch
 mov dx, LINE_CONROL_REG

@@ -1,6 +1,6 @@
 set(SOURCE_FILES
-    check_queue.asm
     driver_isr.asm
+    check_queue.asm
     host_to_nic.asm
     initialize_driver.asm
     nic_to_host.asm

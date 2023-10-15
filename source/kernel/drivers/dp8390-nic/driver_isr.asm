@@ -1,7 +1,6 @@
 [bits 32]
 
 %include "source/kernel/drivers/dp8390-nic/registers.asm"
-%include "source/kernel/drivers/8259a-pic/ports.h"
 
 %define NIC_IRQ_NUM 3
 
@@ -24,9 +23,11 @@ global nic_isr:
     push es
     push bp
 
-    in al, PRIMARY_PIC_INT_MASK_REG         ; disable NIC's IRQ
+    extern _PRIMARY_PIC_INT_MASK_REG
+
+    in al, _PRIMARY_PIC_INT_MASK_REG         ; disable NIC's IRQ
     or al, NIC_IRQ_NUM
-    out PRIMARY_PIC_INT_MASK_REG, al
+    out _PRIMARY_PIC_INT_MASK_REG, al
 
     sti                                     ; re-enable hardware interrupts
 
@@ -51,8 +52,8 @@ global nic_isr:
     mov dx, INTERRUPT_MASK_REG              ; save original IMR value
     in al, dx
 
-    og_imr_value: resb 1
-    mov og_imr_value, al
+    
+    mov [og_imr_value], al
 
     mov al, 0                               ; disable NIC interrupts
     out dx, al
@@ -60,14 +61,16 @@ global nic_isr:
     cli                                     ; disable hardware interrupts
 
 
-    in al, PRIMARY_PIC_INT_MASK_REG         ; re-enable NIC's IRQ
+    in al, _PRIMARY_PIC_INT_MASK_REG         ; re-enable NIC's IRQ
     xor al, NIC_IRQ_NUM
-    out PRIMARY_PIC_INT_MASK_REG, al
+    out _PRIMARY_PIC_INT_MASK_REG, al
 
+    extern _PRIMARY_PIC_COMMAND_REG
     %define ROTATE_ON_NON_SPECIFIC_EOI 0x60
+
     mov al, ROTATE_ON_NON_SPECIFIC_EOI          ; build EOI command for the NIC's IRQ
     or al, NIC_IRQ_NUM
-    out PRIMARY_PIC_COMMAND_REG, al             ; send out EOI command
+    out _PRIMARY_PIC_COMMAND_REG, al             ; send out EOI command
 
     sti                                     ; re-enable hardware interrupts
 
@@ -90,14 +93,13 @@ global nic_isr:
 
     iret
 
-%define RING_OVERFLOW 0x10
-extern _handle_received_packet
-
 ; Clears out all good packets in local receive buffer ring.
 ; Bad packets are ignored.
 .handle_received_packet:
     mov dx, INTERRUPT_STATUS_REG
     in al, dx
+
+    %define RING_OVERFLOW 0x10
 
     test al, RING_OVERFLOW               ; test for ring overflow
     jnz .handle_ring_overflow
@@ -105,6 +107,8 @@ extern _handle_received_packet
     %define PACKET_RECEIVED_BIT 1
     mov al, PACKET_RECEIVED_BIT
     out dx, al
+
+    extern nic_to_host
 
     call nic_to_host
 
@@ -162,9 +166,9 @@ extern _handle_received_packet
 
     mov dx, TRANSMIT_CONFIG_REG     ; save original value of the
                                     ; Transmission Config. Register
-    og_tcr_value: resb 1
+    
     in al, dx
-    mov og_tcr_value, al
+    mov [og_tcr_value], al
 
     %define INTERNAL_LOOPBACK_MODE_1 0x2
     mov al, INTERNAL_LOOPBACK_MODE_1
@@ -182,7 +186,7 @@ extern _handle_received_packet
     out dx, al
 
     mov dx, TRANSMIT_CONFIG_REG
-    mov al, tcr
+    mov al, [og_tcr_value]
     out dx, al                                    ; put TCR back to normal mode
 
     jmp .check_ring
@@ -204,20 +208,24 @@ extern _handle_received_packet
     extern _notify_of_successful_transmission
     call _notify_of_successful_transmission
 
-    jmp check_transmission_queue
+    jmp .check_transmission_queue
 
 .handle_bad_transmission:
     extern _notify_of_erroneous_transmission
     call _notify_of_erroneous_transmission
 
 .check_transmission_queue:
+
+    extern check_queue
     call check_queue
     cmp cx, 0
     je .poll
 
+    extern transmit_next_packet_in_queue
     call transmit_next_packet_in_queue
     jmp .poll
 
-%include "source/kernel/drivers/dp8390-nic/transmit_next_packet_in_queue.asm"
-%include "source/kernel/drivers/dp8390-nic/check_queue.asm"
-%include "source/kernel/drivers/dp8390-nic/nic_to_host.asm"
+section .bss
+
+og_tcr_value: resb 1
+og_imr_value: resb 1

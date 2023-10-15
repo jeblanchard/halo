@@ -1,4 +1,6 @@
-#include "../utils/standard.h"
+#include "stdbool.h"
+#include "../../utils/errors.h"
+#include "../../utils/memory.h"
 
 #define MAX_NUM_BYTES_IN_RECEIVE_BUFFER 500
 static unsigned char received_data_buffer[MAX_NUM_BYTES_IN_RECEIVE_BUFFER];
@@ -79,10 +81,10 @@ struct transmission_packet {
 };
 
 #define MAX_NUM_PACKETS_IN_TRANSMISSION_QUEUE 20
-static struct transmission_packet transmission_queue[MAX_NUM_PACKETS_IN_TRANSMISSION_QUEUE]
+static struct transmission_packet transmission_queue[MAX_NUM_PACKETS_IN_TRANSMISSION_QUEUE];
 
 #define MAX_NUM_BYTES_OF_DATA_IN_BUFFER 1000
-static unsigned char transmission_data_buffer[MAX_NUM_BYTES_OF_DATA_IN_BUFFER]
+static unsigned char transmission_data_buffer[MAX_NUM_BYTES_OF_DATA_IN_BUFFER];
 
 static bool packet_is_being_moved_to_nic;
 
@@ -90,16 +92,18 @@ static unsigned int count_of_bytes_processed;
 
 static struct transmission_packet currently_processing_packet;
 
+static unsigned short index_of_next_packet_to_transmit;
+
+struct transmission_packet view_next_packet_to_transmit() {
+    return transmission_queue[index_of_next_packet_to_transmit];
+}
+
 void start_packet_transfer_to_nic() {
     packet_is_being_moved_to_nic = true;
     count_of_bytes_processed = 0;
 
     currently_processing_packet = view_next_packet_to_transmit();
 }
-
-unsigned short index_of_next_packet_to_transmit;
-
-struct transmission_packet get_next_packet_to_transmit
 
 bool no_transfer_to_nic_is_happening() {
     if (packet_is_being_transferred_from_nic) {
@@ -117,13 +121,21 @@ void advance_index_of_next_packet_to_transmit() {
     }
 }
 
+bool bytes_still_remain_to_be_processed_from_transmitting_packet() {
+    if (count_of_bytes_processed == currently_processing_packet.byte_count) {
+        return false;
+    }
+
+    return true;
+}
+
 void end_packet_transfer_to_nic() {
     if (no_transfer_to_nic_is_happening()) {
         char bytes_are_left_msg[] = "No packet transfer was initiated.";
         halt_and_display_error_msg(bytes_are_left_msg);
     }
 
-    if (bytes_still_remain_to_be_processed_from_transmitting_packet) {
+    if (bytes_still_remain_to_be_processed_from_transmitting_packet()) {
         char bytes_are_left_msg[] = "Bytes still need to be processed from transmitting packet.";
         halt_and_display_error_msg(bytes_are_left_msg);
     }
@@ -145,14 +157,6 @@ bool all_bytes_from_transmitting_packet_have_been_processed() {
     }
 
     return false;
-}
-
-bool bytes_still_remain_to_be_processed_from_transmitting_packet() {
-    if (count_of_bytes_processed == currently_processing_packet.byte_count) {
-        return false;
-    }
-
-    return true;
 }
 
 unsigned char process_next_transmission_byte() {
@@ -212,19 +216,18 @@ void advance_index_of_next_transmission_byte_to_store() {
 
 void add_byte_to_transmission_data_buffer(unsigned char byte) {
     if (transmission_data_buffer_is_full()) {
-        char msg[] = "Transmission data buffer is full.";
-        halt_and_display_error_msg()
+        char * msg = "Transmission data buffer is full.";
+        halt_and_display_error_msg(msg);
     }
 
-    packet_data_buffer[index_of_next_transmission_byte_to_store] = byte;
+    transmission_data_buffer[index_of_next_transmission_byte_to_store] = byte;
     advance_index_of_next_transmission_byte_to_store();
 }
 
 // Returns the start index of the packet's data.
-unsigned short copy_packet_data_to_transmission_data_buffer(unsigned int packet_address,
-                                                           unsigned short byte_count) {
+unsigned short copy_packet_data_to_transmission_data_buffer(unsigned char * pointer_to_packet,
+                                                            unsigned short byte_count) {
 
-    unsigned char* pointer_to_packet = (unsigned char*) packet_address;
     unsigned short og_index_of_next_transmission_byte_to_store = \
                                                    index_of_next_transmission_byte_to_store;
 
@@ -236,19 +239,13 @@ unsigned short copy_packet_data_to_transmission_data_buffer(unsigned int packet_
     return og_index_of_next_transmission_byte_to_store;
 }
 
-static unsigned short index_of_next_packet_to_transmit;
-
-struct transmission_packet view_next_packet_to_transmit() {
-    return transmission_queue[index_of_next_packet_to_transmit];
-}
-
 unsigned int view_byte_count_of_next_packet_to_transmit() {
     struct transmission_packet next_trans_packet = view_next_packet_to_transmit();
     return next_trans_packet.byte_count;
 }
 
 unsigned char* view_address_of_next_byte_to_transmit() {
-    return &packet_data_buffer[index_of_next_transmission_byte_to_store];
+    return &transmission_data_buffer[index_of_next_transmission_byte_to_store];
 }
 
 unsigned short index_of_next_transmission_packet_to_queue;
@@ -265,12 +262,7 @@ bool transmission_queue_is_full() {
 
 static unsigned short index_of_next_packet_to_transmit;
 
-void advance_index_of_next_packet_to_transmit() {
-    index_of_next_packet_to_transmit++;
-    index_of_next_packet_to_transmit %= MAX_NUM_PACKETS_IN_TRANSMISSION_QUEUE;
-}
-
-void save_packet_to_transmission_queue(unsigned int byte_count, unsigned short data_start_index) {
+void save_packet_to_transmission_queue(int byte_count, unsigned short data_start_index) {
 
     if (transmission_queue_is_full()) {
         char err_msg[] = "Packet storage is full.";
@@ -283,8 +275,8 @@ void save_packet_to_transmission_queue(unsigned int byte_count, unsigned short d
     advance_index_of_next_packet_to_transmit();
 }
 
-void save_packet_to_transmission_buffer(unsigned int packet_address,
-                                        unsigned int byte_count) {
+void save_packet_to_transmission_buffer(unsigned char * packet_address,
+                                        int byte_count) {
 
     unsigned short data_start_index = copy_packet_data_to_transmission_data_buffer(packet_address, byte_count);
     save_packet_to_transmission_queue(byte_count, data_start_index);
@@ -302,20 +294,28 @@ struct physical_address {
 
 #define TOTAL_PREFIX_LENGTH (2 * PHYSICAL_ADDRESS_SIZE) + LENGTH_FIELD_SIZE
 
+void add_dest_address(unsigned char * buffer_ptr, struct physical_address dest_address) {}
+
+void add_source_address(unsigned char * buffer_ptr) {}
+
+void add_length_field(unsigned char * buffer_ptr) {}
+
+void add_data(unsigned char * buffer_ptr, unsigned char * data) {}
+
 void queue_packet_for_transmission(struct physical_address dest_address,
                                    unsigned short length_in_bytes,
-                                   void* data) {
+                                   unsigned char * data) {
 
     unsigned int total_length_of_packet = TOTAL_PREFIX_LENGTH + length_in_bytes;
 
-    void* buffer_for_packet = allocate(total_length_of_packet);
+    unsigned char * packet_buffer_ptr = (unsigned char *) allocate(total_length_of_packet);
 
-    add_dest_address(buffer_for_packet, dest_address);
-    add_source_address(buffer_for_packet);
-    add_length_field(buffer_for_packet);
-    add_data(buffer_for_packet, data);
+    add_dest_address(packet_buffer_ptr, dest_address);
+    add_source_address(packet_buffer_ptr);
+    add_length_field(packet_buffer_ptr);
+    add_data(packet_buffer_ptr, data);
 
-    save_packet_to_transmission_buffer(buffer_for_packet, total_length_of_packet);
+    save_packet_to_transmission_buffer(packet_buffer_ptr, total_length_of_packet);
 
-    clear(buffer_for_packet, total_length_of_packet);
+    clear(packet_buffer_ptr);
 }

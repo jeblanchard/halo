@@ -8,7 +8,7 @@
 ; Input:
 ;   ecx = byte count
 ;   ax = NIC buffer page to transfer to
-load_packet_from_host:
+global load_packet_from_host:
 
     push ax                               ; save buffer page
 
