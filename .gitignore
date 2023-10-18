@@ -41,3 +41,6 @@ CMakeCache.txt
 
 # Hide the CMake builds
 /build/
+
+# Hide output files from Shell scripts
+/output/
