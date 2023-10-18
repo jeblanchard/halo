@@ -4,7 +4,7 @@
 #include "interrupts/idt.h"
 #include "gdt.h"
 #include "drivers/keyboard.h"
-#include "cmd-line/main.h"
+#include "cmd-line/cmd_line.h"
 #include "boot.h"
 #include "physical-memory-management/manager.h"
 #include "drivers/pci.h"

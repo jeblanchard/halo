@@ -9,4 +9,4 @@ set(CMAKE_C_COMPILER C:/MinGW/bin/gcc.exe)
 
 set(CMAKE_ASM_COMPILER C:/"Program Files"/NASM/nasm.exe)
 
-# set(CMAKE_SYSTEM_PROCESSOR i386)
+set(CMAKE_SYSTEM_PROCESSOR i386)

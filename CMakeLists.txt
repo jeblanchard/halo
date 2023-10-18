@@ -9,11 +9,11 @@ project(Halo C ASM_NASM)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
 # Mark where to find cmocka CMake modules
-list(APPEND CMAKE_MODULE_PATH
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmocka/Modules)
+# list(APPEND CMAKE_MODULE_PATH
+#     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmocka/Modules)
 
 # Ensure that cmocka is available to use
-find_package(cmocka)
+# find_package(cmocka)
 
 # Mark where CMake can find the toolchain
 # file to use when cross-compiling to Bochs
@@ -23,7 +23,7 @@ find_package(cmocka)
 # Set CMocka's unit testing flag to on.
 # We will compile CMocka unit tests
 # every time we build.
-set(UNIT_TESTING ON)
+# set(UNIT_TESTING ON)
 
 # When we process all of our source
 # directories these variables will be
@@ -63,27 +63,54 @@ set(BOOTSECTOR_BIN boot_sector.bin)
 # target_compile_options(${KERNEL_ENTRY_ELF}
 #     PUBLIC $<$<COMPILE_LANGUAGE:ASM_NASM>:-f elf>)
 
-add_custom_command(
-    OUTPUT ${KERNEL_ENTRY_ELF}
-    COMMAND nasm -f elf ${KERNEL_ENTRY_SOURCE_FILE}
-    DEPENDS ${KERNEL_ENTRY_SOURCE_FILE}
-)
+# add_custom_command(
+#     OUTPUT ${KERNEL_ENTRY_ELF}
+#     COMMAND nasm -f elf ${KERNEL_ENTRY_SOURCE_FILE}
+#     DEPENDS ${KERNEL_ENTRY_SOURCE_FILE}
+# )
 
-add_executable(${KERNEL_FRAGMENTS_ELF}
-    ${KERNEL_FRAGMENTS_SOURCE_FILES})
-target_compile_options(${KERNEL_FRAGMENTS_ELF}
-    PUBLIC $<$<COMPILE_LANGUAGE:ASM_NASM>:-f elf>
-    PUBLIC $<$<COMPILE_LANGUAGE:C>:-ffreestanding -o -Werror -Wextra -Wall -nostdlib -lgcc>)
+# add_library(${KERNEL_ENTRY_ELF}
+#     ${KERNEL_ENTRY_SOURCE_FILE}
+# )
+
+# target_compile_options(${KERNEL_ENTRY_ELF}
+#     PUBLIC $<$<COMPILE_LANGUAGE:ASM_NASM>:-f elf>
+# )
+
+# add_library(${KERNEL_FRAGMENTS_ELF}
+#     ${KERNEL_FRAGMENTS_SOURCE_FILES})
+
+# target_compile_options(${KERNEL_FRAGMENTS_ELF}
+#     PUBLIC $<$<COMPILE_LANGUAGE:ASM_NASM>:-f elf>
+#     PUBLIC $<$<COMPILE_LANGUAGE:C>:-ffreestanding -Werror -Wextra -Wall -nostdlib -lgcc>)
+
 
 # We then link these two together using
 # a custom command to ensure that the
 # kernel entry appears at the beginning
 # of the resulting file
-add_custom_command(
-    OUTPUT ${KERNEL_ELF}
-    COMMAND ld -T NUL -o ${KERNEL_ELF} -Ttext \ 
-        0x1000 ${KERNEL_ENTRY_ELF} ${KERNEL_FRAGMENTS_ELF}
-    DEPENDS ${KERNEL_ENTRY_ELF} ${KERNEL_FRAGMENTS_ELF})
+# add_custom_command(
+#     OUTPUT ${KERNEL_ELF}
+#     COMMAND ld -T NUL -o ${KERNEL_ELF} -Ttext \ 
+#         0x1000 ${KERNEL_ENTRY_ELF} ${KERNEL_FRAGMENTS_ELF}
+#     DEPENDS ${KERNEL_ENTRY_ELF} ${KERNEL_FRAGMENTS_ELF})
+
+add_executable(${KERNEL_ELF}
+    ${KERNEL_ENTRY_SOURCE_FILE} ${KERNEL_FRAGMENTS_SOURCE_FILES}
+)
+
+target_compile_options(${KERNEL_ELF}
+    PUBLIC $<$<COMPILE_LANGUAGE:ASM_NASM>:-f elf>
+    PUBLIC $<$<COMPILE_LANGUAGE:C>:-ffreestanding -Werror -Wextra -Wall -nostdlib>)
+
+set_target_properties(${KERNEL_ELF}
+    PROPERTIES LINK_LIBRARIES ""
+)
+
+target_link_options(${KERNEL_ELF}
+    PUBLIC -T NUL -Ttext 0x1000
+)
+
 
 # For the bootsector, we can compile
 # directly to binary format
@@ -101,6 +128,7 @@ add_custom_command(
     # the boot sector auxillary files were populated when we
     # added the boot directory
     DEPENDS ${BOOTSECTOR_SOURCE_FILE} ${BOOTSECTOR_AUXILLARY_FILES}
+    COMMENT Created Bootsector.
 )
 
 # Now we convert the kernel's ELF file
