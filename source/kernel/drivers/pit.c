@@ -5,6 +5,7 @@
 #include "../utils/string.h"
 #include "8259a-pic/pic.h"
 #include "../utils/standard.h"
+#include "../utils/io.h"
 
 // Global Tick count
 static int pit_ticks = 0;

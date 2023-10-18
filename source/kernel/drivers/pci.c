@@ -17,10 +17,9 @@ struct device_initializer {
 static struct device_initializer all_device_initializers[KNOWN_NUMBER_OF_PCI_DEVICES];
 
 void initialize_device_function_address_table() {
-    struct device_initializer dp8390_initializer = all_device_initializers[0];
-    dp8390_initializer.vendor_id = DP8390_VENDOR_ID;
-    dp8390_initializer.device_id = DP8390_DEVICE_ID;
-    dp8390_initializer.initialization_function_address = initialize_dp8390;
+    all_device_initializers[0].vendor_id = DP8390_VENDOR_ID;
+    all_device_initializers[0].device_id = DP8390_DEVICE_ID;
+    all_device_initializers[0].initialization_function_address = initialize_dp8390;
 }
 
 bool offset_has_bits_0_or_1_filled(unsigned int offset) {

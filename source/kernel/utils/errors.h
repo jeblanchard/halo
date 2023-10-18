@@ -1,1 +1,1 @@
-void halt_and_display_error_msg(char* message);
+void halt_and_display_error_msg(char * message);

@@ -1,3 +1,5 @@
+#include "address.h"
+
 void update_valid_lifetime_address(struct ip_v6_address addr_to_update,
                                    unsigned int new_valid_lifetime);
 

@@ -7,7 +7,8 @@
 ;
 ; Input:
 ;     ecx = byte count of packet
-global transmit_next_packet_in_queue:
+global transmit_next_packet_in_queue
+transmit_next_packet_in_queue:
 
     cli                                  ; disable interrupts
 

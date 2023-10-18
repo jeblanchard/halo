@@ -25,9 +25,10 @@ global nic_isr:
 
     extern _PRIMARY_PIC_INT_MASK_REG
 
-    in al, _PRIMARY_PIC_INT_MASK_REG         ; disable NIC's IRQ
+    mov dx, [_PRIMARY_PIC_INT_MASK_REG]
+    in al, dx                               ; disable NIC's IRQ
     or al, NIC_IRQ_NUM
-    out _PRIMARY_PIC_INT_MASK_REG, al
+    out dx, al
 
     sti                                     ; re-enable hardware interrupts
 
@@ -60,22 +61,24 @@ global nic_isr:
 
     cli                                     ; disable hardware interrupts
 
-
-    in al, _PRIMARY_PIC_INT_MASK_REG         ; re-enable NIC's IRQ
+    mov dx, [_PRIMARY_PIC_INT_MASK_REG]
+    in al, dx                               ; re-enable NIC's IRQ
     xor al, NIC_IRQ_NUM
-    out _PRIMARY_PIC_INT_MASK_REG, al
+    out dx, al
 
     extern _PRIMARY_PIC_COMMAND_REG
     %define ROTATE_ON_NON_SPECIFIC_EOI 0x60
 
     mov al, ROTATE_ON_NON_SPECIFIC_EOI          ; build EOI command for the NIC's IRQ
     or al, NIC_IRQ_NUM
-    out _PRIMARY_PIC_COMMAND_REG, al             ; send out EOI command
+
+    mov dx, [_PRIMARY_PIC_COMMAND_REG]
+    out dx, al                              ; send out EOI command
 
     sti                                     ; re-enable hardware interrupts
 
     mov dx, INTERRUPT_MASK_REG              ; NOTE: interrupts from the NIC
-    mov al, og_imr_value                    ; are enabled at this point so
+    mov al, [og_imr_value]                  ; are enabled at this point so
     out dx, al                              ; that the 8259 interrupt
                                             ; controller does not miss any
                                             ; IRQ edges from the NIC
@@ -109,7 +112,6 @@ global nic_isr:
     out dx, al
 
     extern nic_to_host
-
     call nic_to_host
 
     ; Inform upper layer software that packet has been

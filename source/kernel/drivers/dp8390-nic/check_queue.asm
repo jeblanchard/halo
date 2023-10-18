@@ -6,10 +6,11 @@
 ; Returns:
 ;     ecx = byte count of packet in queue
 ;         = 0 when queue is empty
-global check_queue:
-    call _get_byte_count_of_next_packet_in_transmission_queue
+global check_queue
+check_queue:
+    call _view_byte_count_of_next_packet_to_transmit
     mov ecx, eax
 
     ret
 
-extern _get_byte_count_of_next_packet_in_transmission_queue
+extern _view_byte_count_of_next_packet_to_transmit

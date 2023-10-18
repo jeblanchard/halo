@@ -1,7 +1,7 @@
-#include "../address.h"
 #include "../stateless_address_autoconfiguration.h"
 #include "../icmp_v6.h"
 #include <stdlib.h>
+// #include "../address.h"
 #include "../../mac.h"
 #include <stdbool.h>
 
@@ -18,7 +18,9 @@ void handle_received_neighbor_solicitation(struct neighbor_solicitation_message 
     }
 }
 
-struct neighbor_solicitation_message get_neighbor_solicitation_message() {}
+struct neighbor_solicitation_message get_neighbor_solicitation_message() {
+    return (struct neighbor_solicitation_message) {};
+}
 
 #define NEIGHBOR_SOLICITATION_ICMP_TYPE 135
 #define NEIGHBOR_SOLICITATION_ICMP_CODE 0
@@ -49,7 +51,7 @@ void send_neighbor_solicitation_message_with_source_link_layer_address(struct ip
                                                                        struct ip_v6_address target_addr) {
 
     struct neighbor_solicitation_message_with_source_link_layer_address msg = \
-                                {0, target_addr, get_host_mac_address()};
+                                {{}, get_host_mac_address()};
 
     send_icmp_message(NEIGHBOR_SOLICITATION_ICMP_TYPE,
                       NEIGHBOR_SOLICITATION_ICMP_CODE,
@@ -78,6 +80,8 @@ void handle_solicited_neighbor_advertisement(struct neighbor_advertisement_messa
     if (currently_verifying_tentative_address()) {
         acknowledge_advertisement_from_tentative_address();
     }
+
+    msg.target_address.high0 += 1;
 }
 
 void handle_received_neighbor_advertisement(struct neighbor_advertisement_message msg) {

@@ -1,6 +1,7 @@
 #include "stdbool.h"
 #include "../../utils/errors.h"
 #include "../../utils/memory.h"
+#include <stdlib.h>
 
 #define MAX_NUM_BYTES_IN_RECEIVE_BUFFER 500
 static unsigned char received_data_buffer[MAX_NUM_BYTES_IN_RECEIVE_BUFFER];
@@ -59,7 +60,7 @@ void advance_next_index_to_store_byte_in_receive_buffer() {
 }
 
 void move_data_from_nic_buffer_to_receive_buffer() {
-    for (int i = 0; i < next_index_to_store_byte_from_nic; i++) {
+    for (unsigned int i = 0; i < next_index_to_store_byte_from_nic; i++) {
         received_data_buffer[next_index_to_store_byte_in_receive_buffer] \
                                                = data_from_nic_buffer[i];
         advance_next_index_to_store_byte_in_receive_buffer();
@@ -170,8 +171,10 @@ unsigned char process_next_transmission_byte() {
         halt_and_display_error_msg(no_bytes_msg);
     }
 
-    transmission_data_buffer[index_of_next_byte_to_transmit];
+    unsigned char next_byte = transmission_data_buffer[index_of_next_byte_to_transmit];
     advance_index_of_next_byte_to_transmit();
+
+    return next_byte;
 }
 
 unsigned short process_next_transmission_word() {
@@ -271,6 +274,7 @@ void save_packet_to_transmission_queue(int byte_count, unsigned short data_start
 
     transmission_queue[index_of_next_packet_to_transmit].needs_to_be_transmitted = true;
     transmission_queue[index_of_next_packet_to_transmit].data_buffer_start_index = data_start_index;
+    transmission_queue[index_of_next_packet_to_transmit].byte_count = byte_count;
 
     advance_index_of_next_packet_to_transmit();
 }
@@ -294,13 +298,23 @@ struct physical_address {
 
 #define TOTAL_PREFIX_LENGTH (2 * PHYSICAL_ADDRESS_SIZE) + LENGTH_FIELD_SIZE
 
-void add_dest_address(unsigned char * buffer_ptr, struct physical_address dest_address) {}
+void add_dest_address(unsigned char * buffer_ptr, struct physical_address dest_address) {
+    buffer_ptr += 1;
+    dest_address.high += 1;
+}
 
-void add_source_address(unsigned char * buffer_ptr) {}
+void add_source_address(unsigned char * buffer_ptr) {
+    buffer_ptr += 1;
+}
 
-void add_length_field(unsigned char * buffer_ptr) {}
+void add_length_field(unsigned char * buffer_ptr) {
+    buffer_ptr += 1;
+}
 
-void add_data(unsigned char * buffer_ptr, unsigned char * data) {}
+void add_data(unsigned char * buffer_ptr, unsigned char * data) {
+    buffer_ptr += 1;
+    data += 1;
+}
 
 void queue_packet_for_transmission(struct physical_address dest_address,
                                    unsigned short length_in_bytes,

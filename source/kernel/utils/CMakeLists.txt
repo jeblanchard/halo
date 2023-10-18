@@ -4,7 +4,8 @@ set(SOURCE_FILES
     io.c
     memory.c
     standard.c
-    "string.c")
+    string.c
+    clock.c)
 
 include(GetAbsolutePaths)
 set(ABSOLUTE_PATHS "")

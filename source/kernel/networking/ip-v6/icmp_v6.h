@@ -16,5 +16,5 @@ void send_icmp_message(unsigned char type,
                        struct ip_v6_address src_address,
                        struct ip_v6_address dest_address,
                        unsigned short hop_limit,
-                       char* message_body,
+                       unsigned char * message_body,
                        unsigned int byte_count);

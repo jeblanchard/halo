@@ -3,10 +3,12 @@
 #include "../vesa_display.h"
 #include "../../utils/standard.h"
 #include "../../utils/errors.h"
-#include "ports.h"
+#include "pic.h"
 
-#define PRIMARY_PIC_COMMAND_REG 0x20
-#define SECONDARY_PIC_COMMAND_REG 0xa0
+unsigned short PRIMARY_PIC_INT_MASK_REG = 0x21;
+unsigned short PRIMARY_PIC_COMMAND_REG = 0x20;
+unsigned short SECONDARY_PIC_COMMAND_REG = 0xa0;
+unsigned short SECONDARY_PIC_INT_MASK_REG = 0xa1;
 
 #define NUMBER_OF_IRQS 16
 
@@ -270,4 +272,8 @@ void initialize_pic() {
 	pic_send_data(0, 1);
 
 	initialize_irq_in_use_table();
+}
+
+unsigned short get_primary_pic_int_mask_reg() {
+    return 0;
 }

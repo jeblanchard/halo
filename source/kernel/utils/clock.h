@@ -1,1 +1,1 @@
-wait(unsigned int milliseconds);
+void wait(unsigned int milliseconds);

@@ -1,5 +1,5 @@
 set(SOURCE_FILES
-    main.c)
+    cmd_line.c)
 
 include(GetAbsolutePaths)
 get_absolute_paths("${SOURCE_FILES}" ABSOLUTE_PATHS)

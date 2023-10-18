@@ -1,19 +1,6 @@
 #include "base.h"
 #include "../../address.h"
-
-#pragma pack(push, 1)
-struct prefix_information_option {
-    struct neighbor_discovery_option_block option_prefix;
-    unsigned char prefix_length;
-    _Bool on_link_flag : 1;
-    _Bool autonomous_address_configuration_flag : 1;
-    unsigned char reserved1 : 6;
-    unsigned int valid_lifetime;
-    unsigned int preferred_lifetime;
-    unsigned int reserved2;
-    struct ip_v6_address prefix;
-};
-#pragma pack(pop)
+#include "prefix_information.h"
 
 unsigned int get_valid_lifetime_from_first_block(struct neighbor_discovery_option_block first_block) {
     unsigned int valid_lifetime = 0;
@@ -125,41 +112,36 @@ struct prefix_information_option convert_to_prefix_information_option(struct nei
     return converted_option;
 }
 
-bool autonomous_flag_is_set(struct prefix_information_option option) {
-    return false;
-}
-
-bool prefix_is_the_link_local_prefix(struct prefix_information_option option) {
-    return false;
-}
-
 bool preferred_lifetime_is_greater_than_the_valid_lifetime(struct prefix_information_option option) {
+    option.prefix_length += 1;
     return false;
 }
 
 bool prefix_is_unique(struct ip_v6_address prefix) {
+    prefix.high1 += 1;
     return false;
 }
 
 bool valid_lifetime_is_not_zero(int valid_lifetime) {
-    return false;
-}
-
-bool form_and_save_address(struct prefix_information_option option) {
+    valid_lifetime += 1;
     return false;
 }
 
 bool prefix_is_already_present(struct ip_v6_address prefix) {
+    prefix.high1 += 1;
     return false;
 }
 
 struct ip_v6_address get_address_with_prefix(struct ip_v6_address prefix) {
+    prefix.high1 += 1;
     return (struct ip_v6_address) {};
 }
 
-void reset_preferred_lifetime_of_address(struct ip_v6_address addr, int new_preferred_lifetime) {}
+void process_prefix_information_option2(struct prefix_information_option option) {
+    option.preferred_lifetime += 1;
+}
 
-void convert_and_process_prefix_information_option(struct neighbor_discovery_option_block *option_segment) {
+void convert_and_process_prefix_information_option(struct neighbor_discovery_option_block * option_segment) {
     struct prefix_information_option option = convert_to_prefix_information_option(option_segment);
-    process_prefix_information_option(option);
+    process_prefix_information_option2(option);
 }

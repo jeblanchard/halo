@@ -77,8 +77,8 @@ int handle_scrolling(int cursor_offset) {
 
     // Shuffle the rows back one
     for (int i = 1; i < NUM_WRITEABLE_ROWS; i++) {
-        memory_copy((char*) (get_screen_offset(0, i) + VIDEO_ADDRESS),
-                    (char*) (get_screen_offset(0, i - 1) + VIDEO_ADDRESS),
+        memory_copy((unsigned char *) (get_screen_offset(0, i) + VIDEO_ADDRESS),
+                    (unsigned char *) (get_screen_offset(0, i - 1) + VIDEO_ADDRESS),
                     NUM_WRITEABLE_COLS * 2
         );
     }

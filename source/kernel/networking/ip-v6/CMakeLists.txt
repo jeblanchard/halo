@@ -1,3 +1,6 @@
+add_subdirectory(extension-headers)
+add_subdirectory(neighbor-discovery)
+
 set(SOURCE_FILES
     address.c
     functionality.c
@@ -7,10 +10,7 @@ set(SOURCE_FILES
     stateless_address_autoconfiguration.c)
 
 include(GetAbsolutePaths)
-get_absolute_paths(${SOURCE_FILES} ABSOLUTE_PATHS)
-
-add_subdirectory(extension-headers)
-add_subdirectory(neighbor-discovery)
+get_absolute_paths("${SOURCE_FILES}" ABSOLUTE_PATHS)
 
 set(KERNEL_FRAGMENTS_SOURCE_FILES
     ${KERNEL_FRAGMENTS_SOURCE_FILES}

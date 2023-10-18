@@ -6,7 +6,9 @@ set(SOURCE_FILES
     nic_to_host.asm
     packets.c
     registers.asm
-    transmit_next_packet_in_queue.asm)
+    transmit_next_packet_in_queue.asm
+    notifications.c
+    functions.c)
 
 include(GetAbsolutePaths)
 get_absolute_paths("${SOURCE_FILES}" ABSOLUTE_PATHS)

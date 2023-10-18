@@ -72,7 +72,8 @@ add_custom_command(
 add_executable(${KERNEL_FRAGMENTS_ELF}
     ${KERNEL_FRAGMENTS_SOURCE_FILES})
 target_compile_options(${KERNEL_FRAGMENTS_ELF}
-    PUBLIC $<$<COMPILE_LANGUAGE:ASM_NASM>:-felf>)
+    PUBLIC $<$<COMPILE_LANGUAGE:ASM_NASM>:-f elf>
+    PUBLIC $<$<COMPILE_LANGUAGE:C>:-ffreestanding -o -Werror -Wextra -Wall -nostdlib -lgcc>)
 
 # We then link these two together using
 # a custom command to ensure that the

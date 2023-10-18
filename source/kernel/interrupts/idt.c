@@ -92,7 +92,7 @@ void enable_hardware_interrupts() {
 #define DEFAULT_SEG_SELECTOR 0x8
 
 void add_handler_to_idt(unsigned char ir_num,
-                        void* handler_address) {
+                        void * handler_address) {
 
     unsigned int handler_address_int = (unsigned int) handler_address;
 

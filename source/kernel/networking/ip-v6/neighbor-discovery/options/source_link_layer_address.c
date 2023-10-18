@@ -1,5 +1,8 @@
+#include "base.h"
+
 void process_source_link_layer_address_option(unsigned char length,
-                                              struct neighbor_discovery_option_block *option_segment) {
+                                              neighbor_discovery_option_block * option_segment) {
 
-
+    length += 1;
+    option_segment -> octet0 += 1;                                            
 }

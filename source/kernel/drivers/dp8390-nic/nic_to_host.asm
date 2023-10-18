@@ -4,7 +4,8 @@
 
 ; This routine will transfer a packet from the RAM
 ; on the NIC card to the RAM in the host.
-global nic_to_host:
+global nic_to_host
+nic_to_host:
 
     mov dx, REMOTE_BYTE_COUNT_1_REG           ; this needs to be set in
                                               ; order for the NIC to

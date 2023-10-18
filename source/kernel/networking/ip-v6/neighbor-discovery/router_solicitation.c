@@ -65,7 +65,7 @@ struct router_advertisement_message {
 };
 #pragma pack(pop)
 
-static struct ip_v6_address default_router_list[5];
+// static struct ip_v6_address default_router_list[5];
 
 #define ROUTER_ADVERTISEMENT_MSG_TYPE 134
 #define ROUTER_ADVERTISEMENT_CODE 0
@@ -95,13 +95,15 @@ neighbor_discovery_option_type get_neighbor_discovery_option_type(neighbor_disco
         return MTU;
     }
 
-    char * err_msg = "Invalid option type.";
-
     return SOURCE_LINK_LAYER_ADDRESS;
 }
 
 void process_target_link_layer_address_option(unsigned char length,
-                                              neighbor_discovery_option_block * option_block_ptr) {}
+                                              neighbor_discovery_option_block * option_block_ptr) {
+
+    length += 1;
+    option_block_ptr -> octet0 += 1;
+}
 
 void process_prefix_information_option(neighbor_discovery_option_block * option_block_ptr) {
     unsigned char length = 0;
@@ -121,10 +123,14 @@ void process_prefix_information_option(neighbor_discovery_option_block * option_
 }
 
 unsigned char get_option_length(neighbor_discovery_option_block option) {
+    option.octet0 += 1;
     return 0;
 }
 
-void process_router_advertisement_option(unsigned char length, neighbor_discovery_option_block * option) {}
+void process_router_advertisement_option(unsigned char length, neighbor_discovery_option_block * option) {
+    length += 1;
+    option -> octet0 += 1;
+}
 
 void process_all_router_advertisement_options(neighbor_discovery_option_block * all_options,
                                               unsigned char num_option_blocks) {
@@ -140,6 +146,7 @@ void process_all_router_advertisement_options(neighbor_discovery_option_block * 
 }
 
 bool neighbor_discovery_packet_has_an_option_with_length_zero(struct router_advertisement_message msg) {
+    msg.cur_hop_limit += 1;
     return false;
 }
 
