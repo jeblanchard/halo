@@ -8,6 +8,8 @@ project(Halo C ASM_NASM)
 # modules
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
+# set(CMAKE_HOST_SYSTEM_NAME Linux)
+
 # Mark where to find cmocka CMake modules
 # list(APPEND CMAKE_MODULE_PATH
 #     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmocka/Modules)
@@ -29,6 +31,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 # directories these variables will be
 # populated.
 set(KERNEL_FRAGMENTS_SOURCE_FILES "")
+set(ALL_BOOT_SOURCES "")
 
 # We add this here so that any NASM include
 # statements can find the files
@@ -48,104 +51,110 @@ list(REMOVE_ITEM
     KERNEL_FRAGMENTS_SOURCE_FILES
     ${KERNEL_ENTRY_SOURCE_FILE})
 
-# Set our ELF names
-set(KERNEL_ENTRY_ELF multiboot2.elf)
-set(KERNEL_FRAGMENTS_ELF kernel_fragments.elf)
+set(KERNEL_ENTRY_LIB kernel_entry)
+set(KERNEL_FRAGMENTS_LIB kernel_fragments)
 set(KERNEL_ELF kernel.elf)
 set(BOOTSECTOR_BIN boot_sector.bin)
 
-# Now we add ELFs for our kernel
-# entry point, all of the kernel fragments,
-# and the bootsector
-
-# add_executable(${KERNEL_ENTRY_ELF} 
-#     ${KERNEL_ENTRY_SOURCE_FILE})
-# target_compile_options(${KERNEL_ENTRY_ELF}
-#     PUBLIC $<$<COMPILE_LANGUAGE:ASM_NASM>:-f elf>)
-
-# add_custom_command(
-#     OUTPUT ${KERNEL_ENTRY_ELF}
-#     COMMAND nasm -f elf ${KERNEL_ENTRY_SOURCE_FILE}
-#     DEPENDS ${KERNEL_ENTRY_SOURCE_FILE}
-# )
-
-# add_library(${KERNEL_ENTRY_ELF}
-#     ${KERNEL_ENTRY_SOURCE_FILE}
-# )
-
-# target_compile_options(${KERNEL_ENTRY_ELF}
-#     PUBLIC $<$<COMPILE_LANGUAGE:ASM_NASM>:-f elf>
-# )
-
-# add_library(${KERNEL_FRAGMENTS_ELF}
-#     ${KERNEL_FRAGMENTS_SOURCE_FILES})
-
-# target_compile_options(${KERNEL_FRAGMENTS_ELF}
-#     PUBLIC $<$<COMPILE_LANGUAGE:ASM_NASM>:-f elf>
-#     PUBLIC $<$<COMPILE_LANGUAGE:C>:-ffreestanding -Werror -Wextra -Wall -nostdlib -lgcc>)
-
-
-# We then link these two together using
-# a custom command to ensure that the
-# kernel entry appears at the beginning
-# of the resulting file
-# add_custom_command(
-#     OUTPUT ${KERNEL_ELF}
-#     COMMAND ld -T NUL -o ${KERNEL_ELF} -Ttext \ 
-#         0x1000 ${KERNEL_ENTRY_ELF} ${KERNEL_FRAGMENTS_ELF}
-#     DEPENDS ${KERNEL_ENTRY_ELF} ${KERNEL_FRAGMENTS_ELF})
-
-add_executable(${KERNEL_ELF}
-    ${KERNEL_ENTRY_SOURCE_FILE} ${KERNEL_FRAGMENTS_SOURCE_FILES}
+add_library(${KERNEL_ENTRY_LIB}
+    ${KERNEL_ENTRY_SOURCE_FILE}
 )
-
-target_compile_options(${KERNEL_ELF}
+target_compile_options(${KERNEL_ENTRY_LIB}
     PUBLIC $<$<COMPILE_LANGUAGE:ASM_NASM>:-f elf>
-    PUBLIC $<$<COMPILE_LANGUAGE:C>:-ffreestanding -Werror -Wextra -Wall -nostdlib>)
-
-set_target_properties(${KERNEL_ELF}
-    PROPERTIES LINK_LIBRARIES ""
 )
 
-target_link_options(${KERNEL_ELF}
-    PUBLIC -T NUL -Ttext 0x1000
+add_library(${KERNEL_FRAGMENTS_LIB}
+    ${KERNEL_FRAGMENTS_SOURCE_FILES})
+target_compile_options(${KERNEL_FRAGMENTS_LIB}
+    # PUBLIC $<$<COMPILE_LANGUAGE:ASM_NASM>:-f elf>
+    PUBLIC $<$<COMPILE_LANGUAGE:C>:-ffreestanding -Werror -Wextra -Wall -nostdlib -lgcc>)
+
+set(KERNEL_FRAGMENTS_LIB_GOOD_FORMAT ${KERNEL_FRAGMENTS_LIB}_good_format)
+add_custom_target(${KERNEL_FRAGMENTS_LIB_GOOD_FORMAT} ALL
+    DEPENDS ${KERNEL_FRAGMENTS_LIB}
+    COMMAND objcopy -I pe-i386 -O elf32-i386 lib${KERNEL_FRAGMENTS_LIB}.a
+        lib${KERNEL_FRAGMENTS_LIB_GOOD_FORMAT}.a
+    COMMENT "Building kernel ELF"
 )
 
+
+
+# target_link_options(${KERNEL_FRAGMENTS_LIB}
+#     PUBLIC --oformat elf32-i386
+# )
+
+# add_custom_target(${KERNEL_FRAGMENTS_LIB} ALL
+#     DEPENDS ${KERNEL_FRAGMENTS_SOURCE_FILES}
+#     COMMAND ld -T NUL -o ${KERNEL_ELF} -Ttext 0x1000
+#         -l${KERNEL_ENTRY_LIB} -l${KERNEL_FRAGMENTS_LIB}
+#         -L. --oformat elf32-i386
+#     COMMENT "Building kernel ELF"
+# )
+
+include(GetAbsolutePaths)
+
+# We then link these two together,
+# and we ensure that the kernel
+# entry appears at the beginning
+# of the resulting file
+
+add_custom_target(${KERNEL_ELF} ALL
+    DEPENDS ${KERNEL_ENTRY_LIB} ${KERNEL_FRAGMENTS_LIB}
+    COMMAND ld -T NUL -o ${KERNEL_ELF} -Ttext 0x1000
+        -l${KERNEL_ENTRY_LIB} -l${KERNEL_FRAGMENTS_LIB}
+        -L.
+    COMMENT "Building kernel ELF"
+)
+
+add_dependencies(${KERNEL_ELF}
+    ${KERNEL_ENTRY_LIB}
+    ${KERNEL_FRAGMENTS_LIB}
+)
+
+set(BOOTSECTOR_SOURCE_REL source/boot/boot_sector.asm)
+
+# We need to separate the boot sector
+# from the rest of the boot sources
+
+list(REMOVE_ITEM
+    ALL_BOOT_SOURCES
+    ${BOOTSECTOR_SOURCE_REL})
 
 # For the bootsector, we can compile
 # directly to binary format
-set(BOOTSECTOR_SOURCE_FILE source/boot/boot_sector.asm)
 
+get_absolute_paths(${BOOTSECTOR_SOURCE_REL} BOOTSECTOR_SOURCE_ABS)
+get_absolute_paths("${ALL_BOOT_SOURCES}" BOOTSECTOR_DEPS_ABS)
 
-# add_executable(${BOOTSECTOR_BIN}
-#     ${BOOTSECTOR_SOURCE_FILE})
-# target_compile_options(${BOOTSECTOR_BIN}
-#     PUBLIC -f bin -o ${BOOTSECTOR_BIN})
-add_custom_command(
-    OUTPUT ${BOOTSECTOR_BIN}
-    COMMAND nasm ${BOOTSECTOR_SOURCE_FILE} -f bin -o ${BOOTSECTOR_BIN}
+add_custom_target(${BOOTSECTOR_BIN} ALL
 
     # the boot sector auxillary files were populated when we
     # added the boot directory
-    DEPENDS ${BOOTSECTOR_SOURCE_FILE} ${BOOTSECTOR_AUXILLARY_FILES}
-    COMMENT Created Bootsector.
+    DEPENDS ${BOOTSECTOR_SOURCE_ABS} ${BOOTSECTOR_DEPS_ABS}
+    COMMAND nasm ${BOOTSECTOR_SOURCE_ABS} -f bin -o ${BOOTSECTOR_BIN}
+        -i${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Building bootsector binary"
 )
 
 # Now we convert the kernel's ELF file
 # to binary that hardware can run
+
 set(KERNEL_BIN kernel.bin)
-add_custom_command(
-    OUTPUT ${KERNEL_BIN}
+
+add_custom_target(${KERNEL_BIN} ALL
     DEPENDS ${KERNEL_ELF}
-    COMMAND objcopy -O binary ${KERNEL_ELF} ${KERNEL_BIN}
+    COMMAND objcopy -O binary -j .text ${KERNEL_ELF} ${KERNEL_BIN}
+    COMMENT "Building kernel binary"
 )
 
 # To finish we combine the binaries of
 # our bootsector and kernel into a
-# singular image
+# single image
+
 set(HALOS_BIN halos.bin)
-add_custom_command(
-    OUTPUT ${HALOS_BIN}
-    DEPENDS ${BOOTSECTOR_BIN} ${KERNEL_BIN}
+
+add_custom_target(${HALOS_BIN} ALL
+    DEPENDS ${HALOS_BIN}
     COMMAND cat ${BOOTSECTOR_BIN} ${KERNEL_BIN} > ${HALOS_BIN}
+    COMMENT "Building final OS image."
 )

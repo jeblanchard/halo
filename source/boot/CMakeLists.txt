@@ -1,3 +1,5 @@
+add_subdirectory(utils)
+
 set(SOURCE_FILES
     basic_gdt.asm
     boot_sector.asm
@@ -8,8 +10,8 @@ set(SOURCE_FILES
 include(GetAbsolutePaths)
 get_absolute_paths("${SOURCE_FILES}" ABSOLUTE_PATHS)
 
-set(BOOTSECTOR_AUXILLARY_FILES
-    ${BOOTSECTOR_AUXILLARY_FILES}
+set(ALL_BOOT_SOURCES
+    ${ALL_BOOT_SOURCES}
     ${ABSOLUTE_PATHS}
     PARENT_SCOPE
 )
