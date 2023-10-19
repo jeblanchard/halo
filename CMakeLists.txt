@@ -8,19 +8,12 @@ project(Halo C ASM_NASM)
 # modules
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
-# set(CMAKE_HOST_SYSTEM_NAME Linux)
-
 # Mark where to find cmocka CMake modules
-# list(APPEND CMAKE_MODULE_PATH
-#     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmocka/Modules)
+list(APPEND CMAKE_MODULE_PATH
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmocka/Modules)
 
 # Ensure that cmocka is available to use
-# find_package(cmocka)
-
-# Mark where CMake can find the toolchain
-# file to use when cross-compiling to Bochs
-# set(BOCHS_TOOLCHAIN_FILE_PATH
-#     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Toolchains/bochs.cmake)
+find_package(CMocka)
 
 # Set CMocka's unit testing flag to on.
 # We will compile CMocka unit tests
