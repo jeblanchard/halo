@@ -1,3 +1,5 @@
+add_subdirectory(test)
+
 set(C_SOURCES
     interrupt_handler.c
     uart.c)

@@ -1,1 +1,0 @@
-void send_messsage(unsigned char* message, unsigned short byte_count);

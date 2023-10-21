@@ -12,13 +12,13 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmocka/Modules)
 
-# Ensure that cmocka is available to use
-find_package(CMocka)
+if (UNIT_TESTING)
 
-# Set CMocka's unit testing flag to on.
-# We will compile CMocka unit tests
-# every time we build.
-# set(UNIT_TESTING ON)
+    # Ensure that cmocka is available to use
+    find_package(CMocka)
+    include(AddCMockaTest)
+    # add_subdirectory(test)
+endif()
 
 # When we process all of our source
 # directories these variables will be

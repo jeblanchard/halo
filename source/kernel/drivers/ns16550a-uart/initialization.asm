@@ -2,21 +2,13 @@
 
 ;**************** DATA EQUATES *****************
 
-TX_RX_BUFFER_SIZE equ 0x7cf
 DOS_ROUTINE_SPEC equ 0x25
 DIVISOR_LATCH_ACCESS_CODE equ 0x80
 LOWER_DIVISOR equ 0x06
 UPPER_DIVISOR equ 0x00
 UART_INT_ENABLE_MASK equ 0x0f
 
-
-;********* ESTABLISH DATA BUFFERS AND RAM REGISTERS ********
-
-string_buf db TX_RX_BUFFER_SIZE dup ("S")
-receive_buf db TX_RX_BUFFER_SIZE dup ("R")
-string_buf_end equ string_buf + TX_RX_BUFFER_SIZE
-recieve_buf_end equ receive_buf + TX_RX_BUFFER_SIZE
-
+; Pause interrupts during initialization
 cli
 
 ;****** LOAD NEW INTERRUPT SERVICE ROUTINE ***
@@ -102,4 +94,4 @@ extern _MODEM_CONTROL_REG
 mov dx, _MODEM_CONTROL_REG
 out dx, al
 
-sti    ; enable CPU interrupts
+sti    ; resume CPU interrupts
