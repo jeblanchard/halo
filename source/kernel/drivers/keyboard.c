@@ -1,6 +1,6 @@
 #include "../utils/memory.h"
 #include "keyboard.h"
-#include "vesa_display.h"
+#include "vesa-display/vesa_display.h"
 #include "../interrupts/idt.h"
 #include "../utils/standard.h"
 #include "8259a-pic/pic.h"

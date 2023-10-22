@@ -1,6 +1,6 @@
 #include "gdt.h"
 #include "utils/memory.h"
-#include "./drivers/vesa_display.h"
+#include "./drivers/vesa-display/vesa_display.h"
 
 // A GDT descriptor defines the properties of a specific
 // memory block and its permissions.

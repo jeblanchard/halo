@@ -1,7 +1,8 @@
 #include "../../utils/memory.h"
 #include <stdbool.h>
 #include "message.h"
-#include "buffer.h"
+
+static unsigned char tx_queue_buffer[TX_RX_BUFFER_SIZE];
 
 static unsigned int next_byte_to_tx_index;
 static unsigned int next_free_tx_queue_index;

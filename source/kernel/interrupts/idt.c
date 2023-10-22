@@ -1,4 +1,4 @@
-#include "../drivers/vesa_display.h"
+#include "../drivers/vesa-display/vesa_display.h"
 #include "../utils/memory.h"
 #include "../drivers/8259a-pic/pic.h"
 #include "../utils/string.h"

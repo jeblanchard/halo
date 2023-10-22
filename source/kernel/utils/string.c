@@ -1,4 +1,4 @@
-#include "../drivers/vesa_display.h"
+#include "../drivers/vesa-display/vesa_display.h"
 
 char* int_to_string(unsigned int val, unsigned int base) {
     static char buf[32] = {0};

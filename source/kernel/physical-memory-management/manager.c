@@ -2,7 +2,7 @@
 #include "../utils/standard.h"
 #include "../utils/memory.h"
 #include "../boot.h"
-#include "../drivers/vesa_display.h"
+#include "../drivers/vesa-display/vesa_display.h"
 
 // Block alignment
 #define BLOCK_ALIGNMENT	BYTES_PER_MEMORY_BLOCK

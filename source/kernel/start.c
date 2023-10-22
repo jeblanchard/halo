@@ -1,4 +1,4 @@
-#include "drivers/vesa_display.h"
+#include "drivers/vesa-display/vesa_display.h"
 #include "drivers/pit.h"
 #include "drivers/8259a-pic/pic.h"
 #include "interrupts/idt.h"

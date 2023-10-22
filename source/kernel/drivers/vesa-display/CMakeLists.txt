@@ -1,12 +1,8 @@
-add_subdirectory(8259a-pic)
-add_subdirectory(dp8390-nic)
-add_subdirectory(ns16550a-uart)
-add_subdirectory(vesa-display)
+add_subdirectory(test)
 
 set(C_SOURCES
-    keyboard.c
-    pci.c
-    pit.c)
+    vesa_display.c
+    video_buffer.c)
 
 include(GetAbsolutePaths)
 get_absolute_paths("${C_SOURCES}" C_SOURCES_ABS)

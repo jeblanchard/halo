@@ -1,10 +1,10 @@
 // Prints a string at the current
 // cursor position.
-void print(char* message);
+void print(char * message);
 
 // Same as print() but followed by a
 // newline.
-void print_ln(char* message);
+void print_ln(char * message);
 
 // Prints a character at the specified cell. If row or col is negative,
 // prints the char at the current cursor position. If the
@@ -14,13 +14,10 @@ void print_char(char character, int col, int row, char attribute_byte);
 
 // Prints a char at a particular row and col
 // of the screen.
-void print_at(char* message, int col, int row);
+void print_at(char * message, int col, int row);
 
 // Clears the screen.
 void clear_screen();
-
-// Sets the cursor to the provided cell offset.
-void set_cursor(int cell_offset);
 
 // Prints the string representation of the
 // val provided (in base 10). Followed by

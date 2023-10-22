@@ -1,63 +1,21 @@
-#include "../utils/memory.h"
-#include "../utils/string.h"
-#include "../utils/standard.h"
-#include "pit.h"
+#include "../../utils/memory.h"
+#include "../../utils/string.h"
+#include "../../utils/standard.h"
+#include "../pit.h"
 #include "vesa_display.h"
-#include "../utils/io.h"
-
-#define VIDEO_ADDRESS 0xb8000
-
-// Attribute byte for our default color scheme.
-#define WHITE_ON_BLACK 0x0f
-
-// Screen device I/O ports
-#define SCREEN_CTRL_REG 0x3D4
-#define SCREEN_DATA_REG 0x3D5
-
-void set_cursor(int cell_offset) {
-
-    // Convert from cell offset to char offset.
-    cell_offset /= 2;
-
-    int high_byte = cell_offset >> 8;
-
-    int low_byte_tmp = cell_offset << 24;
-    int low_byte = low_byte_tmp >> 24;
-
-    // The device uses its control register as an index
-    // to select its internal registers, of which we are
-    // interested in:
-    //   reg 14: which is the high byte of the cursor’s offset
-    //   reg 15: which is the low byte of the cursor’s offset
-    // Once the internal register has been selected, we may read or
-    // write a byte on the data register.
-    port_byte_out(SCREEN_CTRL_REG, 14);
-    port_byte_out(SCREEN_DATA_REG, high_byte);
-
-    port_byte_out(SCREEN_CTRL_REG, 15);
-    port_byte_out(SCREEN_DATA_REG, low_byte);
-}
-
-#define NUM_ROWS 25
-#define NUM_COLS 80
-
-// Returns the memory offset for a particular
-// col and row of the screen.
-int get_screen_offset(int col, int row) {
-    return (row * NUM_COLS + col) * 2;
-}
+#include "../../utils/io.h"
+#include "video_buffer.h"
+#include <stdio.h>
 
 void clear_row(char row_num) {
-
-    // We set all bytes to 0
-    char* line = (char*) (get_screen_offset(0, row_num) + VIDEO_ADDRESS);
-    for (int i = 0; i < NUM_COLS * 2; i++) {
-        line[i] = 0;
+    unsigned int line_offset = get_screen_offset(0, row_num);
+    for (int i = 0; i < NUM_COLS * CONFIG_BYTE_PERIOD; i++) {
+        set_byte_in_video_buffer(line_offset + i, '\0');
     }
 }
 
-static char NUM_WRITEABLE_ROWS;
-static char NUM_WRITEABLE_COLS;
+static unsigned char NUM_WRITEABLE_ROWS;
+static unsigned char NUM_WRITEABLE_COLS;
 
 static bool SCROLLING_IS_ENABLED;
 
@@ -71,16 +29,23 @@ int handle_scrolling(int cursor_offset) {
     }
 
     // If the cursor is within the screen, return it unmodified
-    if (cursor_offset < NUM_WRITEABLE_ROWS * NUM_WRITEABLE_COLS * 2) {
+    if (cursor_offset < NUM_WRITEABLE_ROWS * NUM_WRITEABLE_COLS * CONFIG_BYTE_PERIOD) {
         return cursor_offset;
     }
 
     // Shuffle the rows back one
-    for (int i = 1; i < NUM_WRITEABLE_ROWS; i++) {
-        memory_copy((unsigned char *) (get_screen_offset(0, i) + VIDEO_ADDRESS),
-                    (unsigned char *) (get_screen_offset(0, i - 1) + VIDEO_ADDRESS),
-                    NUM_WRITEABLE_COLS * 2
-        );
+    for (unsigned int r = 1; r < NUM_WRITEABLE_ROWS; r++) {
+            unsigned int low_row_offset = get_screen_offset(0, r);
+            unsigned int high_row_offset = get_screen_offset(0, r - 1);
+
+        for (unsigned int c = 0; c < NUM_WRITEABLE_COLS * CONFIG_BYTE_PERIOD; c++) {
+            unsigned int low_row_col_offset = low_row_offset + c;
+            unsigned int high_row_col_offset = high_row_offset + c;
+
+            unsigned char new_high_row_col_val = get_byte_in_video_buffer(low_row_col_offset);
+
+            set_byte_in_video_buffer(high_row_col_offset, new_high_row_col_val);
+        }
     }
 
     // Clear the last line
@@ -89,7 +54,7 @@ int handle_scrolling(int cursor_offset) {
 
     // Move the offset back one row, such that it is now on the last
     // row, rather than off the edge of the screen.
-    cursor_offset -= 2 * NUM_WRITEABLE_COLS;
+    cursor_offset -= CONFIG_BYTE_PERIOD * NUM_WRITEABLE_COLS;
 
     // Return the updated cursor position
     return cursor_offset;
@@ -119,30 +84,8 @@ void show_clock() {
     update_clock();
 }
 
-// Returns the memory offset for the cursor
-// location.
-int get_cursor() {
-
-    // The device uses its control register as an index
-    // to select its internal registers, of which we are
-    // interested in:
-    //   reg 14: which is the high byte of the cursor’s offset
-    //   reg 15: which is the low byte of the cursor’s offset
-    // Once the internal register has been selected, we may read or
-    // write a byte on the data register.
-    port_byte_out(SCREEN_CTRL_REG, 14);
-    int offset = port_byte_in(SCREEN_DATA_REG) << 8;
-    port_byte_out(SCREEN_CTRL_REG, 15);
-    offset += port_byte_in(SCREEN_DATA_REG);
-
-    // Since the cursor offset reported by the VGA hardware is the
-    // number of characters, we multiply by two to convert it to
-    // a character cell offset.
-    return offset * 2;
-}
-
 void print_int_bottom_left(unsigned int num) {
-    int og_cursor_loc = get_cursor();
+    int og_cursor_loc = get_cursor_offset();
 
     int bottom_left_offset = \
         get_screen_offset(0, NUM_ROWS - 1);
@@ -172,10 +115,10 @@ void update_clock() {
     }
 }
 
-void print_char(char character, int col, int row, char attribute_byte) {
+// Attribute byte for our default color scheme.
+#define WHITE_ON_BLACK 0x0f
 
-    /* Create a byte (char) pointer to the start of video memory */
-    unsigned char *vid_memory = (unsigned char*) VIDEO_ADDRESS;
+void print_char(char character, int col, int row, char attribute_byte) {
 
     /* If attribute byte is zero, assume the default style. */
     if (!attribute_byte) {
@@ -191,26 +134,26 @@ void print_char(char character, int col, int row, char attribute_byte) {
 
     /* Otherwise, use the current cursor position. */
     } else {
-        offset = get_cursor();
+        offset = get_cursor_offset();
     }
 
     // If we see a newline character, set offset to the end of
     // current row, so it will be advanced to the first col
     // of the next row.
     if (character == '\n') {
-        int rows = offset / (2 * NUM_COLS);
-        offset = get_screen_offset(79, rows);
+        unsigned int rows = offset / (CONFIG_BYTE_PERIOD * NUM_COLS);
+        offset = get_screen_offset(NUM_COLS - 1, rows);
 
     // Otherwise, write the character and its attribute byte to
     // video memory at our calculated offset.
     } else {
-        vid_memory[offset] = character;
-        vid_memory[offset+1] = attribute_byte;
+        set_byte_in_video_buffer(offset, character);
+        set_byte_in_video_buffer(offset + 1, attribute_byte);
     }
 
     // Update the offset to the next character cell, which is
     // two bytes ahead of the current cell.
-    offset += 2;
+    offset += CONFIG_BYTE_PERIOD;
 
     offset = handle_scrolling(offset);
 
@@ -233,7 +176,7 @@ void print_at(char* message, int col, int row) {
     }
 }
 
-void print(char* message) {
+void print(char * message) {
     print_at(message, -1, -1);
 }
 

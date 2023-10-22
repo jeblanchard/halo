@@ -1,6 +1,6 @@
 #include "../../utils/io.h"
 #include "../../interrupts/idt.h"
-#include "../vesa_display.h"
+#include "../vesa-display/vesa_display.h"
 #include "../../utils/standard.h"
 #include "../../utils/errors.h"
 #include "pic.h"
