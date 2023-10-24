@@ -1,8 +1,9 @@
 add_subdirectory(extension-headers)
 add_subdirectory(neighbor-discovery)
+add_subdirectory(test)
 
 set(C_SOURCES
-    address.c
+    addressing.c
     functionality.c
     icmp_v6.c
     message_transmission.c

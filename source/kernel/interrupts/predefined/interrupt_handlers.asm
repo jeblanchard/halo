@@ -1,6 +1,6 @@
 [bits 32]
 
-%include "source/boot/utils/print_string_pm.asm"
+%include "boot/utils/print_string_pm.asm"
 
 extern _get_core_vector_handler_address
 

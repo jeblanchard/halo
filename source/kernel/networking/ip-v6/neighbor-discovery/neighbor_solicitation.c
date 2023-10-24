@@ -1,7 +1,7 @@
-#include "../stateless_address_autoconfiguration.h"
+#include "kernel/networking/ip-v6/stateless_address_autoconfiguration.h"
 #include "../icmp_v6.h"
 #include <stdlib.h>
-// #include "../address.h"
+#include "../address.h"
 #include "../../mac.h"
 #include <stdbool.h>
 

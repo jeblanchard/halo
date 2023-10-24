@@ -1,4 +1,4 @@
-#include "../address.h"
+#include "kernel/networking/ip-v6/addressing.h"
 #include "options/base.h"
 
 void send_router_solicitation_message(struct ip_v6_address ip_source_addr);

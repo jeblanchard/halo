@@ -1,4 +1,4 @@
-#include "ip-v6/address.h"
+#include "ip-v6/addressing.h"
 
 #pragma pack(push, 1)
 struct datagram_prefix {

@@ -1,5 +1,5 @@
 #include "base.h"
-#include "../../address.h"
+#include "kernel/networking/ip-v6/addressing.h"
 #include "prefix_information.h"
 
 unsigned int get_valid_lifetime_from_first_block(struct neighbor_discovery_option_block first_block) {

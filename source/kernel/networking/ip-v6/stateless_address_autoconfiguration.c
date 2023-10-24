@@ -1,12 +1,11 @@
 #include "neighbor-discovery/router_solicitation.h"
 #include "../../utils/errors.h"
-#include "address.h"
+#include "addressing.h"
 #include "neighbor-discovery/neighbor_solicitation.h"
 #include "../../utils/clock.h"
 #include "../mac.h"
 #include "neighbor-discovery/options/prefix_information.h"
 #include "stdlib.h"
-#include "address.h"
 
 static bool currently_verifying_tentative_address_;
 

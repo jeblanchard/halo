@@ -29,7 +29,9 @@ set(ALL_BOOT_SOURCES "")
 
 # We add this here so that any NASM include
 # statements can find the files
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source)
+
+set(DEFAULT_GCC_OPTIONS -Werror -Wextra -Wall)
 
 # Process all of our source code.
 # This call also serves the function

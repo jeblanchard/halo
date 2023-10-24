@@ -70,9 +70,9 @@ multiboot2:
     ; Now we're ready to initialize PM.
     jmp switch_to_pm
 
-%include "source/boot/memory_size.asm"
-%include "source/boot/utils/print_string_rm.asm"
-%include "source/boot/utils/print_hex_rm.asm"
+%include "boot/memory_size.asm"
+%include "boot/utils/print_string_rm.asm"
+%include "boot/utils/print_hex_rm.asm"
 
 BEFORE_NUM_KB db "Before number of KBs.", 0
 AFTER_NUM_KB db "After number of KBs.", 0
@@ -82,7 +82,7 @@ AFTER_MEM_MAP_BIOS db "After BIOS memory map.", 0
 ; ---------------------------------------------------------------------------- ;
 
 ; This allocates a basic GDT.
-%include "source/boot/basic_gdt.asm"
+%include "boot/basic_gdt.asm"
 
 ; Switch to Protected Mode.
 switch_to_pm:
@@ -158,5 +158,5 @@ begin_pm:
     jmp $                               ; Hang forever when we return from the kernel
                                         ; (which we shouldn't).
 
-%include "source/boot/utils/print_string_pm.asm"
+%include "boot/utils/print_string_pm.asm"
 LANDED_IN_PM db "Landed in PM.", 0

@@ -1,7 +1,7 @@
 #include <stdbool.h>
-#include "../address.h"
-#include "../../mac.h"
-#include "../icmp_v6.h"
+#include "kernel/networking/ip-v6/addressing.h"
+#include "kernel/networking/mac.h"
+#include "kernel/networking/icmp_v6.h"
 #include <stdlib.h>
 #include "options/base.h"
 #include "options/source_link_layer_address.h"
