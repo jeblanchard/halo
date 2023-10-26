@@ -21,7 +21,7 @@ void send_ipv6_message(struct ip_v6_address src_address,
                        struct ip_v6_address dest_address,
                        unsigned short hop_limit) {
 
-    src_address.high0 += 1;
-    dest_address.high0 += 1;
-    hop_limit += 1;                    
+    (void) src_address;
+    (void) dest_address;
+    (void) hop_limit;                 
 }

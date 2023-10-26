@@ -32,11 +32,6 @@ ip_v6_address get_solicited_node_multicast_adddress();
 
 ip_v6_address get_link_layer_address();
 
-ip_v6_address build_ip_v6_address(unsigned int high_1,
-                                  unsigned int high_0,
-                                  unsigned int low_1,
-                                  unsigned int low_0);
-
 ip_v6_address get_solicited_node_multicast_address(struct ip_v6_address unicast_addr);
 
 typedef enum {

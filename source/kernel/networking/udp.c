@@ -39,12 +39,11 @@ void send_datagram(unsigned short source_port,
                                      length,
                                      compute_checksum()};
 
-    source_address.high0 += 1;
-    dest_address.high0 += 1;
-    data_octets += 1;
+    (void) prefix;
 
-    prefix.checksum += 1;
-
+    (void) source_address;
+    (void) dest_address;
+    (void) data_octets;
 }
 
 void create_new_receive_port(unsigned short new_port) {

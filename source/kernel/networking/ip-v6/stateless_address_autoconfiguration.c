@@ -73,10 +73,11 @@ bool link_local_address_is_unique(struct ip_v6_address tentative_addr) {
 
 struct ip_v6_address generate_tentative_link_local_address() {
     struct mac_address host_mac_addr = get_host_mac_address();
-    struct ip_v6_address addr = {LINK_LOCAL_ADDRESS_PREFIX,
-                                 host_mac_addr.low,
+    ip_v6_address addr = {LINK_LOCAL_ADDRESS_PREFIX,
+                                 0, 0, 0, 0,
+                                 host_mac_addr.high,
                                  host_mac_addr.mid,
-                                 host_mac_addr.high};
+                                 host_mac_addr.low};
 
     return addr;
 }
@@ -118,8 +119,9 @@ struct interface_address_record {
 static struct interface_address_record all_interface_addresses[ALL_INTERFACE_ADDRESSES_LENGTH];
 
 bool address_is_correct_length(struct ip_v6_address option, struct ip_v6_address link_layer_address) {
-    option.high0 += 1;
-    link_layer_address.high0 += 1;
+    (void) option;
+    (void) link_layer_address;
+
     return false;
 }
 
@@ -165,7 +167,8 @@ void reset_preferred_lifetime_of_address(struct ip_v6_address addr,
 }
 
 unsigned int get_remaining_lifetime(struct ip_v6_address addr) {
-    addr.high0 += 1;
+    (void) addr;
+
     return 0;
 }
 

@@ -63,29 +63,10 @@ unsigned int get_int_from_octets(unsigned char high1,
 struct ip_v6_address get_prefix_from_third_and_fourth_blocks(struct neighbor_discovery_option_block third_block,
                                                              struct neighbor_discovery_option_block fourth_block) {
 
-    unsigned int high1 = get_int_from_octets(third_block.octet0,
-                                             third_block.octet1,
-                                             third_block.octet2,
-                                             third_block.octet3);
+    (void) third_block;
+    (void) fourth_block;
 
-    unsigned int high0 = get_int_from_octets(third_block.octet4,
-                                             third_block.octet5,
-                                             third_block.octet6,
-                                             third_block.octet7);
-
-    unsigned int low0 = get_int_from_octets(fourth_block.octet0,
-                                            fourth_block.octet1,
-                                            fourth_block.octet2,
-                                            fourth_block.octet3);
-
-    unsigned int low1 = get_int_from_octets(fourth_block.octet4,
-                                            fourth_block.octet5,
-                                            fourth_block.octet6,
-                                            fourth_block.octet7);
-
-    struct ip_v6_address address = build_ip_v6_address(high1, high0, low1, low0);
-
-    return address;
+    return (ip_v6_address) {};
 }
 
 struct prefix_information_option convert_to_prefix_information_option(struct neighbor_discovery_option_block *options_segment) {
@@ -117,8 +98,8 @@ bool preferred_lifetime_is_greater_than_the_valid_lifetime(struct prefix_informa
     return false;
 }
 
-bool prefix_is_unique(struct ip_v6_address prefix) {
-    prefix.high1 += 1;
+bool prefix_is_unique(ip_v6_address prefix) {
+    (void) prefix;
     return false;
 }
 
@@ -127,13 +108,13 @@ bool valid_lifetime_is_not_zero(int valid_lifetime) {
     return false;
 }
 
-bool prefix_is_already_present(struct ip_v6_address prefix) {
-    prefix.high1 += 1;
+bool prefix_is_already_present(ip_v6_address prefix) {
+    (void) prefix;
     return false;
 }
 
-struct ip_v6_address get_address_with_prefix(struct ip_v6_address prefix) {
-    prefix.high1 += 1;
+ip_v6_address get_address_with_prefix(ip_v6_address prefix) {
+    (void) prefix;
     return (struct ip_v6_address) {};
 }
 
