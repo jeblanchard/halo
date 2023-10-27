@@ -10,7 +10,7 @@
 #include "drivers/pci.h"
 
 
-void initialize_kernel(struct multiboot2_info* boot_info) {
+void initialize_kernel(struct boot_info* boot_info) {
     initialize_screen();
 
     initialize_gdt();
@@ -31,7 +31,7 @@ void initialize_kernel(struct multiboot2_info* boot_info) {
 /* At this point, we have just entered PM. Hardware
  * interrupts have been disabled in order to allow us to
  * initialize our PM environment. */
-void start(struct multiboot2_info* boot_info) {
+void start(struct boot_info* boot_info) {
     initialize_kernel(boot_info);
 
     for (;;) {}

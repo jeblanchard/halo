@@ -63,6 +63,10 @@ void set_memory_block(unsigned int block_num) {
     unsigned int block_section = get_memory_map_section(block_num);
     unsigned int block_mask = get_memory_map_section_offset_mask(block_num);
 
+    if ((memory_map[block_section] & block_mask) == 0) {
+        num_blocks_in_use += 1;
+    }
+
     memory_map[block_section] |= block_mask;
 }
 
@@ -76,15 +80,14 @@ void set_memory_blocks_of_address_range(physical_address base_addr,
 
     for (unsigned int b = start_block_num; b <= end_block_num; b++) {
         set_memory_block(b);
-        num_blocks_in_use++;
     }
 }
 
-void allocate_memory_for_memory_map_entry(struct memory_map_entry* entry) {
+void allocate_memory_for_memory_map_entry(mem_map_entry * entry) {
     unsigned int entry_base_addr = entry -> base_addr_low;
-    unsigned int region_length = entry -> length_low;
+    unsigned int region_length = entry -> length_in_bytes_low;
 
-    memory_range_type entry_type = entry -> type;
+    mem_range_type entry_type = entry -> type;
 
     if (entry_type == AVAILABLE_RAM) {
         free_memory_blocks_of_address_range(entry_base_addr, region_length);
@@ -94,37 +97,33 @@ void allocate_memory_for_memory_map_entry(struct memory_map_entry* entry) {
 
 }
 
-void reserve_bios_memory(multiboot2_info * boot_info) {
+void config_mem_regions(boot_info * boot_info) {
 
     unsigned int num_mem_map_entries = boot_info -> mem_map_num_entries;
 
-    memory_map_entry * mem_map_entry_list_base_addr = boot_info -> mem_map_entry_list_base_addr;
+    mem_map_entry * mem_map_entry_list_base_addr = boot_info -> mem_map_entry_list_base_addr;
 
     for (unsigned int i = 0; i < num_mem_map_entries; i++) {
-        memory_map_entry * entry = mem_map_entry_list_base_addr + i;
+        mem_map_entry * entry = mem_map_entry_list_base_addr + i;
 
         allocate_memory_for_memory_map_entry(entry);
     }
 }
 
 void set_all_mem_blocks() {
-    void * mem_map_base_address = &memory_map[0];
     unsigned int num_bytes_to_null_out = sizeof(memory_map);
-    set_memory(mem_map_base_address, 0xff, num_bytes_to_null_out);
+    set_memory(memory_map, 0xff, num_bytes_to_null_out);
+
+    num_blocks_in_use = num_accessible_memory_blocks;
 }
 
-void init_phys_mem_manager(multiboot2_info * boot_info) {
+void init_phys_mem_manager(boot_info * boot_info) {
 
 	unsigned int num_kb_in_memory = boot_info -> num_kb_in_mem;
 	num_accessible_memory_blocks = (num_kb_in_memory * BYTES_PER_KB) / BYTES_PER_MEMORY_BLOCK;
 
-    // To start, all of memory is in use
-    num_blocks_in_use = num_accessible_memory_blocks;
     set_all_mem_blocks();
-
-	reserve_bios_memory(boot_info);
-    
-    printf("source num blocks in use: %d\n", num_blocks_in_use);
+	config_mem_regions(boot_info);
 }
 
 unsigned int get_num_memory_map_sections() {

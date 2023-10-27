@@ -13,63 +13,60 @@ static int teardown_test_init_phys_mem_manager(void **state) {
 
     num_blocks_in_use = 0;
 
+    unsigned int num_bytes_to_null_out = sizeof(memory_map);
+    set_memory(memory_map, 0, num_bytes_to_null_out);
+
     return 0;
 }
 
-#define FAKE_NUM_KB_IN_MEM 1000
+#define FAKE_NUM_BYTES_IN_MEM 1000 * 1000
 
-#define CORRECT_NUM_ACCESSIBLE_BLOCKS (FAKE_NUM_KB_IN_MEM * BYTES_PER_KB) / BYTES_PER_MEMORY_BLOCK
+#define NUM_MEM_MAP_ENTRIES 4
 
 static void test_init_phys_mem_manager(void **state) {
     (void) state;
 
-    #define NUM_MEM_MAP_ENTRIES 4
+    unsigned int mem_range_size_in_bytes = FAKE_NUM_BYTES_IN_MEM / NUM_MEM_MAP_ENTRIES;
 
-    memory_map_entry fake_mem_map_entry_list[NUM_MEM_MAP_ENTRIES] = {
+    mem_map_entry fake_mem_map_entry_list[NUM_MEM_MAP_ENTRIES] = {
 
-        {base_addr_low: 0, base_addr_high: 0,
-         length_low: 0, length_high: 0,
-         type: 1},
+        {base_addr_low: 0,
+         base_addr_high: 0,
+         length_in_bytes_low: mem_range_size_in_bytes,
+         length_in_bytes_high: 0,
+         type: AVAILABLE_RAM},
 
-        {base_addr_low: 0, base_addr_high: 0,
-         length_low: 0, length_high: 0,
-         type: 1},
+        {base_addr_low: mem_range_size_in_bytes, 
+         base_addr_high: 0,
+         length_in_bytes_low: mem_range_size_in_bytes,
+         length_in_bytes_high: 0,
+         type: RESERVED_MEMORY},
 
-         {base_addr_low: 0, base_addr_high: 0,
-         length_low: 0, length_high: 0,
-         type: 1},
+        {base_addr_low: 2 * mem_range_size_in_bytes,
+         base_addr_high: 0,
+         length_in_bytes_low: mem_range_size_in_bytes,
+         length_in_bytes_high: 0,
+         type: RESERVED_MEMORY},
 
-         {base_addr_low: 0, base_addr_high: 0,
-         length_low: 0, length_high: 0,
-         type: 1}
+        {base_addr_low: 3 * mem_range_size_in_bytes,
+         base_addr_high: 0,
+         length_in_bytes_low: mem_range_size_in_bytes,
+         length_in_bytes_high: 0,
+         type: RESERVED_MEMORY}
     };
 
-    multiboot2_info fake_boot_info = {
-        total_size: 1000,
-        reserved: 0,
-        mem_info_type: 0,
-        mem_info_size: 0,
-        num_kb_in_mem: FAKE_NUM_KB_IN_MEM,
-        mem_map_info_type: 1,
-        mem_map_info_size: 1,
-        entry_size: 1,
-        entry_version: 0,
-        &fake_mem_map_entry_list[0],
-        NUM_MEM_MAP_ENTRIES,
-        terminating_tag_type: 1,
-        terminating_tag_size: 1
+    boot_info fake_boot_info = {
+        num_kb_in_mem: FAKE_NUM_BYTES_IN_MEM / BYTES_PER_KB,
+        mem_map_entry_list_base_addr: &fake_mem_map_entry_list[0],
+        mem_map_num_entries: NUM_MEM_MAP_ENTRIES,
     };
 
     init_phys_mem_manager(&fake_boot_info);
 
-    printf("%d\n", num_blocks_in_use);
-    printf("%d\n", CORRECT_NUM_ACCESSIBLE_BLOCKS);
-    
-    assert_true(num_blocks_in_use == CORRECT_NUM_ACCESSIBLE_BLOCKS);
+    unsigned int correct_num_blocks_in_use = \
+        (NUM_MEM_MAP_ENTRIES - 1) * mem_range_size_in_bytes / BYTES_PER_MEMORY_BLOCK;
 
-    for (unsigned int i = 0; i < sizeof(memory_map); i++) {
-        assert_true(memory_map[i] == 0xff);
-    }
+    assert_true(num_blocks_in_use == correct_num_blocks_in_use);
 }
 
 int main() {
