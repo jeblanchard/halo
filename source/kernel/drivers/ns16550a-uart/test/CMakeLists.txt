@@ -1,5 +1,5 @@
 add_cmocka_test(ns16550a_uart_test
-    SOURCES message_test.c ../../../utils/memory.c
+    SOURCES message_test.c ${SOURCE_DIR}/kernel/utils/memory.c
     COMPILE_OPTIONS ${DEFAULT_GCC_OPTIONS}
     LINK_LIBRARIES ${CMOCKA_LIBRARY}
 )

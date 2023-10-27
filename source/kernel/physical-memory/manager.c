@@ -1,13 +1,12 @@
-#include "../utils/errors.h"
-#include "../utils/standard.h"
-#include "../utils/memory.h"
-#include "../boot.h"
-#include "../drivers/vesa-display/vesa_display.h"
+#include "kernel/utils/errors.h"
+#include "kernel/utils/standard.h"
+#include "kernel/utils/memory.h"
+#include "boot.h"
+#include "kernel/drivers/vesa-display/vesa_display.h"
+#include "stdio.h"
 
-// Block alignment
 #define BLOCK_ALIGNMENT	BYTES_PER_MEMORY_BLOCK
 
-// 4 GB
 #define MAX_MEMORY_32_BIT_IN_BYTES 0x40000000
 
 #define BYTES_PER_MEMORY_BLOCK 4096
@@ -95,35 +94,37 @@ void allocate_memory_for_memory_map_entry(struct memory_map_entry* entry) {
 
 }
 
-void reserve_bios_memory(struct multiboot2_info* boot_info) {
+void reserve_bios_memory(multiboot2_info * boot_info) {
 
     unsigned int num_mem_map_entries = boot_info -> mem_map_num_entries;
 
-    struct memory_map_entry* mem_map_entry_list_base_addr = boot_info -> mem_map_entry_list_base_addr;
+    memory_map_entry * mem_map_entry_list_base_addr = boot_info -> mem_map_entry_list_base_addr;
 
     for (unsigned int i = 0; i < num_mem_map_entries; i++) {
-        struct memory_map_entry* entry = mem_map_entry_list_base_addr + i;
+        memory_map_entry * entry = mem_map_entry_list_base_addr + i;
 
         allocate_memory_for_memory_map_entry(entry);
     }
 }
 
-void set_all_memory_blocks() {
-    void* memory_map_base_address = &memory_map[0];
+void set_all_mem_blocks() {
+    void * mem_map_base_address = &memory_map[0];
     unsigned int num_bytes_to_null_out = sizeof(memory_map);
-    set_memory(memory_map_base_address, 0xff, num_bytes_to_null_out);
+    set_memory(mem_map_base_address, 0xff, num_bytes_to_null_out);
 }
 
-void initialize_physical_mem_manager(struct multiboot2_info* boot_info) {
+void init_phys_mem_manager(multiboot2_info * boot_info) {
 
 	unsigned int num_kb_in_memory = boot_info -> num_kb_in_mem;
 	num_accessible_memory_blocks = (num_kb_in_memory * BYTES_PER_KB) / BYTES_PER_MEMORY_BLOCK;
 
     // To start, all of memory is in use
     num_blocks_in_use = num_accessible_memory_blocks;
-    set_all_memory_blocks();
+    set_all_mem_blocks();
 
 	reserve_bios_memory(boot_info);
+    
+    printf("source num blocks in use: %d\n", num_blocks_in_use);
 }
 
 unsigned int get_num_memory_map_sections() {
@@ -166,7 +167,7 @@ bool offset_in_section_is_free(unsigned int section_num, unsigned int offset) {
     return true;
 }
 
-unsigned int get_offset_of_first_free_block_in_memory_map_section(unsigned int section_num) {
+unsigned int get_offset_of_first_free_block_in_mem_map_section(unsigned int section_num) {
 
     unsigned int o = 0;
     bool could_not_find_offset = true;
@@ -193,7 +194,7 @@ unsigned int get_first_free_block_num() {
     bool block_found = false;
 	for (unsigned int s = 0; s < get_num_memory_map_sections(); s++) {
 		if (memory_map_section_has_space(s)) {
-		    section_offset = get_offset_of_first_free_block_in_memory_map_section(s);
+		    section_offset = get_offset_of_first_free_block_in_mem_map_section(s);
 		    section_num = s;
 
             block_found = true;
@@ -214,7 +215,7 @@ unsigned int get_num_free_blocks() {
     return num_accessible_memory_blocks - num_blocks_in_use;
 }
 
-void* allocate_block() {
+void * allocate_block() {
 
 	if (get_num_free_blocks() <= 0) {
 	    char error_msg[] = "No free memory blocks.";
@@ -229,5 +230,5 @@ void* allocate_block() {
 
 	num_blocks_in_use++;
 
-	return (void*) block_address;
+	return (void *) block_address;
 }

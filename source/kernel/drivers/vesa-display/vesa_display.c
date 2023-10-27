@@ -1,9 +1,9 @@
-#include "../../utils/memory.h"
-#include "../../utils/string.h"
-#include "../../utils/standard.h"
-#include "../pit.h"
+#include "kernel/utils/memory.h"
+#include "kernel/utils/string.h"
+#include "kernel/utils/standard.h"
+#include "kernel/drivers/pit.h"
 #include "vesa_display.h"
-#include "../../utils/io.h"
+#include "kernel/utils/io.h"
 #include "video_buffer.h"
 #include <stdio.h>
 

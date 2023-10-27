@@ -2,7 +2,7 @@ add_subdirectory(cmd-line)
 add_subdirectory(drivers)
 add_subdirectory(interrupts)
 add_subdirectory(networking)
-add_subdirectory(physical-memory-management)
+add_subdirectory(physical-memory)
 add_subdirectory(utils)
 
 set(C_SOURCES

@@ -1,1 +1,0 @@
-void initialize_physical_mem_manager(struct multiboot2_info* boot_info);

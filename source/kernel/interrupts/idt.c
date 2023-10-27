@@ -1,12 +1,12 @@
-#include "../drivers/vesa-display/vesa_display.h"
-#include "../utils/memory.h"
-#include "../drivers/8259a-pic/pic.h"
-#include "../utils/string.h"
-#include "../utils/standard.h"
-#include "../utils/errors.h"
+#include "kernel/drivers/vesa-display/vesa_display.h"
+#include "kernel/utils/memory.h"
+#include "kernel/drivers/8259a-pic/pic.h"
+#include "kernel/utils/string.h"
+#include "kernel/utils/standard.h"
+#include "kernel/utils/errors.h"
 #include "idt.h"
 #include "predefined/predefined_interrupt_loading.h"
-#include "../gdt.h"
+#include "kernel/gdt.h"
 
 #pragma pack(push,1)
 struct idt_descriptor {

@@ -7,6 +7,10 @@ void set_byte_in_video_buffer(unsigned int offset, unsigned char val) {
     VIDEO_ADDRESS[offset] = val;
 }
 
+unsigned char get_byte_in_video_buffer(unsigned int offset) {
+    return VIDEO_ADDRESS[offset];
+}
+
 // Screen device I/O ports
 #define SCREEN_CTRL_REG 0x3D4
 #define SCREEN_DATA_REG 0x3D5

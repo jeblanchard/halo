@@ -5,7 +5,7 @@
 #include "cmocka.h"
 #include <stdbool.h>
 #include <stdlib.h>
-#include "../../../utils/memory.h"
+#include "kernel/utils/memory.h"
 #include <stdio.h>
 
 #include "../message.c"

@@ -32,6 +32,11 @@ set(ALL_BOOT_SOURCES "")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source)
 
 set(DEFAULT_GCC_OPTIONS -Werror -Wextra -Wall)
+set(CMOCKA_GCC_INCLUDE_OPTION -I${CMOCKA_INCLUDE_DIR})
+
+include(GetAbsolutePaths)
+
+set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source)
 
 # Process all of our source code.
 # This call also serves the function
@@ -85,8 +90,6 @@ add_custom_target(${KERNEL_FRAGMENTS_C_LIB_GOOD_FORMAT} ALL
         ${KERNEL_FRAGMENTS_C_LIB_GOOD_FORMAT}
     COMMENT "Converting object file format of kernel fragment library from C sources"
 )
-
-include(GetAbsolutePaths)
 
 # We then link these two together,
 # and we ensure that the kernel
