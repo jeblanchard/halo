@@ -2,17 +2,17 @@
 #include "vector_handler_external_declarations.h"
 #include "../idt.h"
 
-static unsigned int core_handler_addresses[MAX_IR_NUM + 1];
+static void * core_handler_addresses[MAX_IR_NUM + 1];
 
-void assign_core_handler_address(unsigned short ir_vector, void* handler) {
-    core_handler_addresses[ir_vector] = (unsigned int) handler;
+void assign_core_handler_address(unsigned short handler_ir_num, void * handler) {
+    core_handler_addresses[handler_ir_num] = handler;
 }
 
-unsigned int get_core_vector_handler_address(unsigned short vector) {
+void * get_core_vector_handler_address(unsigned short vector) {
     return core_handler_addresses[vector];
 }
 
-void store_all_predefined_core_handlers() {
+void assign_all_predefined_core_handlers() {
     assign_core_handler_address(0, handle_divide_error);
     assign_core_handler_address(1, handle_debug);
     assign_core_handler_address(2, handle_nmi_interrupt);
@@ -50,7 +50,7 @@ void store_all_predefined_core_handlers() {
 
 void load_initial_handlers_to_idt() {
 
-    store_all_predefined_core_handlers();
+    assign_all_predefined_core_handlers();
 
     add_handler_to_idt(0, handle_vector_0);
     add_handler_to_idt(1, handle_vector_1);

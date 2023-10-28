@@ -14,7 +14,7 @@ void initialize_kernel(struct boot_info* boot_info) {
     initialize_screen();
 
     initialize_gdt();
-    initialize_idt();
+    init_idt();
 
     initialize_pic();
 
@@ -23,7 +23,7 @@ void initialize_kernel(struct boot_info* boot_info) {
 
     initialize_pci();
 
-    enable_hardware_interrupts();
+    enable_hw_ints();
 
     print_int_ln((unsigned int) boot_info);
 }

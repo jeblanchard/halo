@@ -9,10 +9,10 @@
 #include "kernel/gdt.h"
 
 #pragma pack(push,1)
-struct idt_descriptor {
+typedef struct idt_descriptor {
 
 	// Bits 0-15, bits 0-15 of procedure offset
-	unsigned short   handler_address_low;
+	unsigned short handler_address_low;
 
 	// Bits 16-31, segment selector for
 	// destination code segment
@@ -21,11 +21,11 @@ struct idt_descriptor {
 	// Bit 2, table indicator flag
 	// Bits 3-15, index
 	// something is wrong here
-	unsigned short   segment_sel;
+	unsigned short segment_sel;
 
 	// Bits 32-36, reserved
 	// Bits 37-39, must be 0
-	unsigned char    reserved;
+	unsigned char reserved;
 
 	// Bits 40-42, must be 0, 1, 1
 	// Bit 43, size of gate (1 = 32 bits, 0 = 16
@@ -37,7 +37,7 @@ struct idt_descriptor {
 
 	// Bits 48-63, bits 16-31 of procedure offset
 	unsigned short	handler_address_high;
-};
+} idt_descriptor;
 #pragma pack(pop)
 
 // Installs an IDTR into the processor's IDTR register.
@@ -62,8 +62,9 @@ static inline void load_idt(void* base, unsigned short size) {
     asm ("lidt %0" : : "m"(idtr));
 }
 
-// Our Interrupt Descriptor Table
-struct idt_descriptor idt[MAX_IR_NUM + 1];
+#define MAX_INT_VECTORS 256
+
+static idt_descriptor idt[MAX_INT_VECTORS];
 
 // Nulls out the area of memory occupied by the IDT.
 void clear_idt() {
@@ -72,7 +73,7 @@ void clear_idt() {
     set_memory(idt_base_address, 15, num_bytes_to_null_out);
 }
 
-void enable_hardware_interrupts() {
+void enable_hw_ints() {
     asm volatile ("sti");
 }
 
@@ -111,7 +112,7 @@ void install_ir(unsigned char ir_num, void* handler_address) {
 }
 
 // Initialize IDT
-void initialize_idt() {
+void init_idt() {
 	clear_idt();
 
     load_initial_handlers_to_idt();

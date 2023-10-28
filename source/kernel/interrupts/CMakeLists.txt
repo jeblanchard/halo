@@ -1,4 +1,5 @@
 add_subdirectory(predefined)
+add_subdirectory(test)
 
 set(C_SOURCES
     idt.c)
