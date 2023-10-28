@@ -1,4 +1,3 @@
-add_subdirectory(cmd-line)
 add_subdirectory(drivers)
 add_subdirectory(interrupts)
 add_subdirectory(networking)

@@ -1,6 +1,4 @@
-add_subdirectory(boot)
-add_subdirectory(kernel)
-add_subdirectory(user-space)
+add_subdirectory(cmd-line)
 
 set(KERNEL_FRAGMENTS_ASM_SOURCES
     ${KERNEL_FRAGMENTS_ASM_SOURCES}
