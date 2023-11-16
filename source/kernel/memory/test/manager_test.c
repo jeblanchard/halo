@@ -4,7 +4,6 @@
 #include <setjmp.h>
 #include "cmocka.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
 
 #include "kernel/memory/manager.c"

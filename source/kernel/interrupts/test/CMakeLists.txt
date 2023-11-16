@@ -1,4 +1,4 @@
-add_cmocka_test(idt_test
+add_cmocka_test(idt
     SOURCES idt_test.c
         ${SOURCE_DIR}/kernel/utils/memory.c
         ${SOURCE_DIR}/kernel/interrupts/predefined/predefined_interrupt_loading.c

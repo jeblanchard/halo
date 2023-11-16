@@ -1,9 +1,9 @@
 add_subdirectory(test)
-add_subdirectory(virtual)
 
 set(C_SOURCES
-    manager.c
-    physical_mem.c)
+    pde.c
+    pte.c
+    manager.c)
 
 include(GetAbsolutePaths)
 get_absolute_paths("${C_SOURCES}" C_SOURCES_ABS)

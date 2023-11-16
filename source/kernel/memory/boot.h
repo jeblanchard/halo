@@ -30,7 +30,7 @@ typedef struct mem_map_entry {
 #pragma pack(push, 1)
 typedef struct boot_info {
     unsigned int num_kb_in_mem;
-    mem_map_entry * mem_map_entry_list_base_addr;
+    mem_map_entry* mem_map_entry_list_base_addr;
     unsigned int mem_map_num_entries;
 } boot_info;
 #pragma pack(pop)

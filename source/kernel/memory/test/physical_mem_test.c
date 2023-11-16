@@ -69,10 +69,132 @@ static void test_init_phys_mem(void **state) {
     assert_true(num_blocks_in_use == correct_num_blocks_in_use);
 }
 
+#define TWENTY_KB 0x5000
+
+#define PHYSICAL_MEM_SIZE_IN_BYTES TWENTY_KB
+
+unsigned char fake_physical_mem[PHYSICAL_MEM_SIZE_IN_BYTES];
+
+static int setup_alloc_block_test(void **state) {
+    (void) state;
+    
+    mem_map_entry all_mem_avail = {
+        base_addr_low: 0,
+        base_addr_high: 0,
+        length_in_bytes_low: PHYSICAL_MEM_SIZE_IN_BYTES,
+        length_in_bytes_high: 0,
+        type: AVAILABLE_RAM
+    };
+
+    boot_info custom_mem_boot = {
+        num_kb_in_mem: PHYSICAL_MEM_SIZE_IN_BYTES / BYTES_PER_KB,
+        mem_map_entry_list_base_addr: &all_mem_avail,
+        mem_map_num_entries: 1
+    };
+
+    init_phys_mem(&custom_mem_boot);
+
+    return 0;
+}
+
+static void alloc_block_test(void **state) {
+    (void) state;
+
+    unsigned int old_num_blocks_in_use = get_num_blocks_in_use();
+
+    block_alloc_resp res = alloc_block();
+    
+    assert_true(res.status == BLOCK_ALLOC_SUCCESS);
+
+    assert_int_equal(1 + old_num_blocks_in_use, get_num_blocks_in_use());
+
+    unsigned int fake_physical_mem_index = (unsigned int) res.buffer;
+    for (int i = 0; i < res.buffer_size; i++) {
+        fake_physical_mem[fake_physical_mem_index + i] = 'a';
+    }
+
+    for (int i = 0; i < res.buffer_size; i++) {
+        assert_true(fake_physical_mem[i] == 'a');
+    }
+}
+
+#define TWENTY_KB 0x5000
+
+#define PHYSICAL_MEM_SIZE_IN_BYTES TWENTY_KB
+
+unsigned char fake_physical_mem[PHYSICAL_MEM_SIZE_IN_BYTES];
+
+block_alloc_resp resp_of_block_to_free;
+
+static int setup_free_block_test(void **state) {
+    (void) state;
+    
+    mem_map_entry all_mem_avail = {
+        base_addr_low: 0,
+        base_addr_high: 0,
+        length_in_bytes_low: PHYSICAL_MEM_SIZE_IN_BYTES,
+        length_in_bytes_high: 0,
+        type: AVAILABLE_RAM
+    };
+
+    boot_info custom_mem_boot = {
+        num_kb_in_mem: PHYSICAL_MEM_SIZE_IN_BYTES / BYTES_PER_KB,
+        mem_map_entry_list_base_addr: &all_mem_avail,
+        mem_map_num_entries: 1
+    };
+
+    init_phys_mem(&custom_mem_boot);
+
+    resp_of_block_to_free = alloc_block();
+
+    return 0;
+}
+
+static void free_block_test(void **state) {
+    (void) state;
+
+    unsigned int old_num_blocks_in_use = get_num_blocks_in_use();
+
+    free_block(resp_of_block_to_free.buffer);
+
+    assert_int_equal(old_num_blocks_in_use - 1, get_num_blocks_in_use());
+}
+
+static int teardown_get_num_blocks_in_use_test(void **state) {
+    (void) state;
+    num_blocks_in_use = 0;
+
+    return 0;
+}
+
+#define FAKE_NUM_BLOCKS_IN_USE 10
+
+static int setup_get_num_blocks_in_use_test(void **state) {
+    (void) state;
+    num_blocks_in_use = FAKE_NUM_BLOCKS_IN_USE;
+
+    return 0;
+}
+
+static void get_num_blocks_in_use_test(void **state) {
+    (void) state;
+
+    int actual_num_blocks_in_use = get_num_blocks_in_use();
+    
+    assert_int_equal(actual_num_blocks_in_use, FAKE_NUM_BLOCKS_IN_USE);
+}
+
 int main() {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test_teardown(test_init_phys_mem,
-            teardown_test_init_phys_mem)
+            teardown_test_init_phys_mem),
+        cmocka_unit_test_setup_teardown(get_num_blocks_in_use_test,
+            setup_get_num_blocks_in_use_test,
+            teardown_get_num_blocks_in_use_test),
+        cmocka_unit_test_setup(alloc_block_test,
+            setup_alloc_block_test),
+        cmocka_unit_test_setup(free_block_test,
+            setup_free_block_test)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
