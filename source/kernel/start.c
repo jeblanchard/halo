@@ -5,8 +5,8 @@
 #include "gdt.h"
 #include "drivers/keyboard.h"
 #include "user-space/cmd-line/cmd_line.h"
-#include "physical-memory/boot.h"
-#include "physical-memory/manager.h"
+#include "memory/boot.h"
+#include "memory/manager.h"
 #include "drivers/pci.h"
 
 

@@ -1,6 +1,3 @@
-add_subdirectory(cmd-line)
-add_subdirectory(programs)
-
 set(KERNEL_FRAGMENTS_ASM_SOURCES
     ${KERNEL_FRAGMENTS_ASM_SOURCES}
     PARENT_SCOPE

@@ -92,14 +92,14 @@ bool transmitter_is_empty(unsigned char line_status) {
 void handle_transmitter_empty() {}
 
 bool data_is_ready(unsigned char line_status) {
-    line_status += 1;
+    (void) line_status;
     return false;
 }
 
 void transfer_data_from_receive_buffer_to_host() {}
 
 bool break_interrupt_occured(unsigned char line_status) {
-    line_status += 1;
+    (void) line_status;
     return false;
 }
 

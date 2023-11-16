@@ -17,7 +17,6 @@ if (UNIT_TESTING)
     # Ensure that cmocka is available to use
     find_package(CMocka)
     include(AddCMockaTest)
-    # add_subdirectory(test)
 endif()
 
 # When we process all of our source
@@ -28,7 +27,7 @@ set(KERNEL_FRAGMENTS_ASM_SOURCES "")
 set(ALL_BOOT_SOURCES "")
 
 # We add this here so that any NASM include
-# statements can find the files
+# statements can find the desired files
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source)
 
 set(DEFAULT_GCC_OPTIONS -Werror -Wextra -Wall)

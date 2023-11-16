@@ -4,11 +4,11 @@
 #include <setjmp.h>
 #include "cmocka.h"
 #include <stdio.h>
+#include <stdlib.h>
 
-#include "kernel/physical-memory/manager.c"
-#include "kernel/physical-memory/boot.h"
+#include "kernel/memory/physical_mem.c"
 
-static int teardown_test_init_phys_mem_manager(void **state) {
+static int teardown_test_init_phys_mem(void **state) {
     (void) state;
 
     num_blocks_in_use = 0;
@@ -23,7 +23,7 @@ static int teardown_test_init_phys_mem_manager(void **state) {
 
 #define NUM_MEM_MAP_ENTRIES 4
 
-static void test_init_phys_mem_manager(void **state) {
+static void test_init_phys_mem(void **state) {
     (void) state;
 
     unsigned int mem_range_size_in_bytes = FAKE_NUM_BYTES_IN_MEM / NUM_MEM_MAP_ENTRIES;
@@ -61,7 +61,7 @@ static void test_init_phys_mem_manager(void **state) {
         mem_map_num_entries: NUM_MEM_MAP_ENTRIES,
     };
 
-    init_phys_mem_manager(&fake_boot_info);
+    init_phys_mem(&fake_boot_info);
 
     unsigned int correct_num_blocks_in_use = \
         (NUM_MEM_MAP_ENTRIES - 1) * mem_range_size_in_bytes / BYTES_PER_MEMORY_BLOCK;
@@ -71,8 +71,8 @@ static void test_init_phys_mem_manager(void **state) {
 
 int main() {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test_teardown(test_init_phys_mem_manager,
-            teardown_test_init_phys_mem_manager),
+        cmocka_unit_test_teardown(test_init_phys_mem,
+            teardown_test_init_phys_mem)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

@@ -1,1 +1,0 @@
-void init_phys_mem_manager(struct boot_info * boot_info);

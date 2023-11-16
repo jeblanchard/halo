@@ -1,5 +1,5 @@
-add_cmocka_test(memory_manager_test
-    SOURCES manager_test.c ${SOURCE_DIR}/kernel/utils/memory.c
+add_cmocka_test(physical_mem
+    SOURCES physical_mem_test.c ${SOURCE_DIR}/kernel/utils/memory.c
         ${SOURCE_DIR}/kernel/utils/errors.c
         ${SOURCE_DIR}/kernel/drivers/vesa-display/vesa_display.c
         ${SOURCE_DIR}/kernel/drivers/vesa-display/video_buffer.c
@@ -14,4 +14,15 @@ add_cmocka_test(memory_manager_test
 
     COMPILE_OPTIONS ${DEFAULT_GCC_OPTIONS} ${CMOCKA_GCC_INCLUDE_OPTION}
     LINK_LIBRARIES ${CMOCKA_LIBRARY}
+)
+
+
+set(TEST_LINK_OPTIONS -Wl,--wrap=alloc_block)
+
+add_cmocka_test(mem_manager
+    SOURCES manager_test.c
+
+    COMPILE_OPTIONS ${DEFAULT_GCC_OPTIONS} ${CMOCKA_GCC_INCLUDE_OPTION}
+    LINK_LIBRARIES ${CMOCKA_LIBRARY}
+    LINK_OPTIONS ${TEST_LINK_OPTIONS}
 )
