@@ -1,17 +1,19 @@
-#include "kernel/memory/physical_mem.h"
+#pragma once
+
+#include "kernel/memory/physical/physical_mem.h"
 #include <stdbool.h>
 
 typedef enum page_table_entry_flag {
-    PRESENT = 1,
-    WRITABLE = 2,
-    USER = 4,
-    WRITE_THROUGH = 8,
-    NOT_CACHEABLE = 0x10,
-    ACCESSED = 0x20,
-    DIRTY = 0x40,
-    PAT = 0x80,
-    CPU_GLOBAL = 0x100,
-    LV4_GLOBAL = 0x200,
+    PTE_PRESENT = 1,
+    PTE_WRITABLE = 2,
+    PTE_USER = 4,
+    PTE_WRITE_THROUGH = 8,
+    PTE_NOT_CACHEABLE = 0x10,
+    PTE_ACCESSED = 0x20,
+    PTE_DIRTY = 0x40,
+    PTE_PAT = 0x80,
+    PTE_CPU_GLOBAL = 0x100,
+    PTE_LV4_GLOBAL = 0x200,
     PTE_FRAME = 0x7FFFF000
 } page_table_entry_flag;
 

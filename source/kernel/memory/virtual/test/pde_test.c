@@ -14,9 +14,9 @@ static void add_pde_attrib_test(void **state) {
 
     page_dir_entry fake_entry = 0;
 
-    add_pde_attrib(&fake_entry, WRITABLE);
+    add_pde_attrib(&fake_entry, PDE_WRITABLE);
 
-    page_dir_entry correct_res = fake_entry | WRITABLE;
+    page_dir_entry correct_res = fake_entry | PDE_WRITABLE;
 
     assert_true(correct_res == fake_entry);
 }
@@ -24,9 +24,9 @@ static void add_pde_attrib_test(void **state) {
 static void rm_pde_attrib_test(void **state) {
     (void) state;
 
-    page_dir_entry fake_entry = WRITABLE;
+    page_dir_entry fake_entry = PDE_WRITABLE;
 
-    rm_pde_attrib(&fake_entry, WRITABLE);
+    rm_pde_attrib(&fake_entry, PDE_WRITABLE);
 
     page_dir_entry correct_res = 0;
 
@@ -49,7 +49,7 @@ static void set_pde_frame_test(void **state) {
 static void pde_is_present_test(void **state) {
     (void) state;
 
-    page_dir_entry fake_entry = PRESENT;
+    page_dir_entry fake_entry = PDE_PRESENT;
 
     bool is_present = pde_is_present(&fake_entry);
 
@@ -59,7 +59,7 @@ static void pde_is_present_test(void **state) {
 static void pde_is_user_test(void **state) {
     (void) state;
 
-    page_dir_entry fake_entry = USER;
+    page_dir_entry fake_entry = PDE_USER;
 
     bool is_user = pde_is_user(&fake_entry);
 
@@ -69,7 +69,7 @@ static void pde_is_user_test(void **state) {
 static void pde_is_4mb_test(void **state) {
     (void) state;
 
-    page_dir_entry fake_entry = SIZE_4MB;
+    page_dir_entry fake_entry = PDE_SIZE_4MB;
 
     bool is_4mb = pde_is_4mb(&fake_entry);
 
@@ -79,7 +79,7 @@ static void pde_is_4mb_test(void **state) {
 static void pde_is_writeable_test(void **state) {
     (void) state;
 
-    page_dir_entry fake_entry = WRITABLE;
+    page_dir_entry fake_entry = PDE_WRITABLE;
 
     bool is_writeable = pde_is_writeable(&fake_entry);
 
@@ -104,7 +104,7 @@ static void enable_global_test(void **state) {
 
     enable_global(&fake_entry);
 
-    page_dir_entry correct_entry = CPU_GLOBAL;
+    page_dir_entry correct_entry = PDE_CPU_GLOBAL;
 
     assert_true(fake_entry == correct_entry);
 }

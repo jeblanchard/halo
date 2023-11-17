@@ -1,20 +1,22 @@
-#include "kernel/memory/physical_mem.h"
+#pragma once
+
+#include "kernel/memory/physical/physical_mem.h"
 #include <stdbool.h>
 
 typedef unsigned int page_dir_entry;
 
 typedef enum page_dir_entry_flag {
-    PRESENT = 1,
-    WRITABLE = 2, 
-    USER = 4,
-    PWT = 8,
-    PCD = 0x10,
-    ACCESSED = 0x20,
-    DIRTY = 0x40,
-    SIZE_4MB = 0x80,
-    CPU_GLOBAL = 0x100,
-    LV4_GLOBAL = 0x200,
-    FRAME = 0x7ffff000
+    PDE_PRESENT = 1,
+    PDE_WRITABLE = 2, 
+    PDE_USER = 4,
+    PDE_PWT = 8,
+    PDE_PCD = 0x10,
+    PDE_ACCESSED = 0x20,
+    PDE_DIRTY = 0x40,
+    PDE_SIZE_4MB = 0x80,
+    PDE_CPU_GLOBAL = 0x100,
+    PDE_LV4_GLOBAL = 0x200,
+    PDE_FRAME = 0x7ffff000
 } page_dir_entry_flag;
 
 void add_pde_attrib(page_dir_entry* entry, page_dir_entry_flag attrib);

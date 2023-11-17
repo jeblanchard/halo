@@ -13,19 +13,19 @@ void set_pde_frame(page_dir_entry* entry, physical_address phys_addr) {
 }
 
 bool pde_is_present(page_dir_entry* entry) {
-    return (*entry & PRESENT);
+    return (*entry & PDE_PRESENT);
 }
 
 bool pde_is_user(page_dir_entry* entry) {
-    return (*entry & USER);
+    return (*entry & PDE_USER);
 }
 
 bool pde_is_4mb(page_dir_entry* entry) {
-    return (*entry & SIZE_4MB);
+    return (*entry & PDE_SIZE_4MB);
 }
 
 bool pde_is_writeable(page_dir_entry* entry) {
-    return (*entry & WRITABLE);
+    return (*entry & PDE_WRITABLE);
 }
 
 physical_address get_pde_frame(page_dir_entry* entry) {
@@ -33,5 +33,5 @@ physical_address get_pde_frame(page_dir_entry* entry) {
 }
 
 void enable_global(page_dir_entry* entry) {
-    *entry |= CPU_GLOBAL;
+    *entry |= PDE_CPU_GLOBAL;
 }

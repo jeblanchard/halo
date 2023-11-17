@@ -7,7 +7,7 @@
 #include <stdbool.h>
 
 #include "kernel/memory/manager.c"
-#include "kernel/memory/boot.h"
+#include "kernel/memory/physical/physical_mem.h"
 
 #define FAKE_BYTES_PER_MEM_BLOCK 4096
 

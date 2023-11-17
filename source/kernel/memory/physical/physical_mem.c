@@ -3,8 +3,7 @@
 #include "kernel/utils/memory.h"
 #include "kernel/drivers/vesa-display/vesa_display.h"
 #include "stdio.h"
-#include "boot.h"
-#include "manager.h"
+#include "kernel/memory/manager.h"
 #include "physical_mem.h"
 
 #define BLOCK_ALIGNMENT	BYTES_PER_MEMORY_BLOCK
@@ -244,6 +243,19 @@ block_alloc_resp alloc_block() {
     return (block_alloc_resp) {status: BLOCK_ALLOC_SUCCESS, buffer: (void*) block_address};
 }
 
-void free_block(void* block_address) {
-    free_mem_blocks_of_address_range((physical_address) block_address, BYTES_PER_MEMORY_BLOCK);
+void free_block(physical_address block_address) {
+    free_mem_blocks_of_address_range(block_address, BYTES_PER_MEMORY_BLOCK);
+}
+
+static physical_address current_pdbr_base_addr;
+
+extern void load_pdbr_asm(physical_address new_pdbr_base_addr);
+
+void load_pdbr(physical_address new_pdbr_base_addr) {
+    current_pdbr_base_addr = new_pdbr_base_addr;
+    load_pdbr_asm(new_pdbr_base_addr);
+}
+
+physical_address get_curr_pdbr() {
+    return current_pdbr_base_addr;
 }

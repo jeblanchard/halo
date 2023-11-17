@@ -14,9 +14,9 @@ static void add_pte_attrib_test(void **state) {
 
     page_table_entry fake_entry = 0;
 
-    add_pte_attrib(&fake_entry, WRITABLE);
+    add_pte_attrib(&fake_entry, PTE_WRITABLE);
 
-    page_table_entry correct_res = fake_entry | WRITABLE;
+    page_table_entry correct_res = fake_entry | PTE_WRITABLE;
 
     assert_true(correct_res == fake_entry);
 }
@@ -24,9 +24,9 @@ static void add_pte_attrib_test(void **state) {
 static void rm_pte_attrib_test(void **state) {
     (void) state;
 
-    page_table_entry fake_entry = WRITABLE;
+    page_table_entry fake_entry = PTE_WRITABLE;
 
-    rm_pte_attrib(&fake_entry, WRITABLE);
+    rm_pte_attrib(&fake_entry, PTE_WRITABLE);
 
     page_table_entry correct_res = 0;
 
@@ -60,7 +60,7 @@ static void get_pte_frame_test(void **state) {
 static void pte_is_writeable_test(void **state) {
     (void) state;
 
-    page_table_entry writeable_entry = WRITABLE;
+    page_table_entry writeable_entry = PTE_WRITABLE;
 
     bool is_writeable = pte_is_writeable(&writeable_entry);
 
@@ -70,7 +70,7 @@ static void pte_is_writeable_test(void **state) {
 static void pte_is_present_test(void **state) {
     (void) state;
 
-    page_table_entry present_entry = PRESENT;
+    page_table_entry present_entry = PTE_PRESENT;
 
     bool is_present = pte_is_present(&present_entry);
 

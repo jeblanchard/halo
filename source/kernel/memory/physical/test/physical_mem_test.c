@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "kernel/memory/physical_mem.c"
+#include "kernel/memory/physical/physical_mem.c"
 
 static int teardown_test_init_phys_mem(void **state) {
     (void) state;
@@ -155,7 +155,7 @@ static void free_block_test(void **state) {
 
     unsigned int old_num_blocks_in_use = get_num_blocks_in_use();
 
-    free_block(resp_of_block_to_free.buffer);
+    free_block((physical_address) resp_of_block_to_free.buffer);
 
     assert_int_equal(old_num_blocks_in_use - 1, get_num_blocks_in_use());
 }
@@ -184,6 +184,26 @@ static void get_num_blocks_in_use_test(void **state) {
     assert_int_equal(actual_num_blocks_in_use, FAKE_NUM_BLOCKS_IN_USE);
 }
 
+void __wrap_load_pdbr_asm(physical_address new_pdbr_base_addr) {
+    (void) new_pdbr_base_addr;
+}
+
+static void load_pdbr_test(void **state) {
+    (void) state;
+
+    physical_address new_pdbr_base_addr = 0x1234;
+    load_pdbr(new_pdbr_base_addr);
+
+    assert_true(new_pdbr_base_addr == get_curr_pdbr());
+}
+
+static void get_curr_pdbr_test(void **state) {
+    (void) state;
+
+    current_pdbr_base_addr = 0x1234;
+    assert_true(current_pdbr_base_addr == get_curr_pdbr());
+}
+
 int main() {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test_teardown(test_init_phys_mem,
@@ -194,7 +214,9 @@ int main() {
         cmocka_unit_test_setup(alloc_block_test,
             setup_alloc_block_test),
         cmocka_unit_test_setup(free_block_test,
-            setup_free_block_test)
+            setup_free_block_test),
+        cmocka_unit_test(load_pdbr_test),
+        cmocka_unit_test(get_curr_pdbr_test)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
