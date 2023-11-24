@@ -1,15 +1,15 @@
 #include "pde.h"
 
-void add_pde_attrib(page_dir_entry* entry, page_dir_entry_flag attrib) {
+void add_pde_attrib(page_dir_entry* entry, page_dir_entry_attrib attrib) {
     *entry |= attrib;
 }
 
-void rm_pde_attrib(page_dir_entry* entry, page_dir_entry_flag attrib) {
+void rm_pde_attrib(page_dir_entry* entry, page_dir_entry_attrib attrib) {
     *entry = *entry & ~(attrib);
 }
 
-void set_pde_frame(page_dir_entry* entry, physical_address phys_addr) {
-    *entry |= phys_addr << 12;
+void set_pt_base_addr(page_dir_entry* entry, physical_address pt_base_addr) {
+    *entry |= pt_base_addr << 12;
 }
 
 bool pde_is_present(page_dir_entry* entry) {
@@ -28,10 +28,18 @@ bool pde_is_writeable(page_dir_entry* entry) {
     return (*entry & PDE_WRITABLE);
 }
 
-physical_address get_pde_frame(page_dir_entry* entry) {
+physical_address get_page_table_base_addr(page_dir_entry* entry) {
     return *entry >> 12;
 }
 
 void enable_global(page_dir_entry* entry) {
     *entry |= PDE_CPU_GLOBAL;
+}
+
+bool is_pde_attrib_set(page_dir_entry* entry, page_dir_entry_attrib attrib) {
+    return (*entry & attrib);
+}
+
+page_dir_entry new_pde() {
+    return (page_dir_entry) 0;
 }

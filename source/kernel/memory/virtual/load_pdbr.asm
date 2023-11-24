@@ -1,6 +1,6 @@
 ; A small wrapper that loads
 ; the CR3 register. Uses
-; the 32 bit value on the
+; a 32 bit value on the
 ; stack.
 global _load_pdbr_asm:
     push ebp

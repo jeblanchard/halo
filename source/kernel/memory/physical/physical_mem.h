@@ -46,8 +46,8 @@ typedef enum block_alloc_stat {
 
 typedef struct block_alloc_resp {
     block_alloc_stat status;
-    int buffer_size;
-    void* buffer;
+    unsigned int buffer_size;
+    void* buffer;    
 } block_alloc_resp;
 
 block_alloc_resp alloc_block();
@@ -57,7 +57,3 @@ typedef unsigned int physical_address;
 void free_block(physical_address block_address);
 
 unsigned int get_num_blocks_in_use();
-
-void load_pdbr(physical_address new_pdbr_base_addr);
-
-physical_address get_curr_pdbr();

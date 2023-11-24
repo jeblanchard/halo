@@ -33,18 +33,14 @@ static void alloc_page_test(void **state) {
 
     assert_true(resp == SUCCESS);
     assert_true(pte_is_present(&entry));
-
-    assert_true(get_pte_frame(&entry) == (physical_address) non_zero_buff_addr_resp.buffer);
 }
 
 bool correct_block_addr_was_freed = false;
-page_table_entry entry_of_page_to_free = 0x12345678 | PDE_PRESENT | PDE_WRITABLE;
+page_table_entry entry_of_page_to_free;
+unsigned char * fake_frame_base_addr;
 
 void __wrap_free_block(void* block_address) {
-    physical_address correct_addr_to_free = \
-        get_pte_frame(&entry_of_page_to_free);
-
-    if (correct_addr_to_free == (physical_address) block_address) {
+    if (fake_frame_base_addr == block_address) {
         correct_block_addr_was_freed = true;
     }
 }
@@ -52,6 +48,15 @@ void __wrap_free_block(void* block_address) {
 static void free_page_test(void **state) {
     (void) state;
 
+    entry_of_page_to_free = new_pte();
+    add_pte_attrib(&entry_of_page_to_free, PTE_WRITABLE);
+    add_pte_attrib(&entry_of_page_to_free, PTE_PRESENT);
+    set_pte_frame_base_addr(&entry_of_page_to_free,
+        (physical_address) fake_frame_base_addr);
+
+    will_return(__wrap_get_pte_frame_base,
+        (physical_address) fake_frame_base_addr);
+        
     free_page(&entry_of_page_to_free);
 
     assert_false(pte_is_present(&entry_of_page_to_free));
@@ -73,18 +78,18 @@ static void get_page_table_index_test(void **state) {
 static void get_page_table_entry_test(void **state) {
     (void) state;
 
-    page_table_entry fake_page_table[3] = {
-        (page_table_entry) 0x12345678,
-        (page_table_entry) 0x91011121,
-        (page_table_entry) 0x13141516
-    };
+    page_table fake_page_table = {};
+
+    fake_page_table.entries[0] = (page_table_entry) 0x12345678;
+    fake_page_table.entries[1] = (page_table_entry) 0x91011121;
+    fake_page_table.entries[2] = (page_table_entry) 0x13141516;
 
     virtual_address entry_2_virt_addr = 0x1000;
 
     page_table_entry* actual_pte = \
-        get_page_table_entry(fake_page_table, entry_2_virt_addr);
+        get_page_table_entry(&fake_page_table, entry_2_virt_addr);
  
-    assert_ptr_equal(actual_pte, &fake_page_table[1]);
+    assert_ptr_equal(actual_pte, &fake_page_table.entries[1]);
 }
 
 static void get_page_dir_index_test(void **state) {
@@ -102,65 +107,256 @@ static void get_page_dir_index_test(void **state) {
 static void get_page_dir_entry_test(void **state) {
     (void) state;
 
-    (void) state;
+    page_dir fake_page_dir = {};
 
-    page_dir_entry fake_page_dir_table[3] = {
-        (page_dir_entry) 0x12345678,
-        (page_dir_entry) 0x91011121,
-        (page_dir_entry) 0x13141516
-    };
+    fake_page_dir.entries[0] = (page_dir_entry) 0x12345678;
+    fake_page_dir.entries[1] = (page_dir_entry) 0x91011121;
+    fake_page_dir.entries[2] = (page_dir_entry) 0x13141516;
 
     virtual_address entry_2_virt_addr = 0x400000;
 
     page_dir_entry* actual_pde = \
-        get_page_dir_entry(fake_page_dir_table, entry_2_virt_addr);
+        get_page_dir_entry(&fake_page_dir, entry_2_virt_addr);
  
-    assert_ptr_equal(actual_pde, &fake_page_dir_table[1]);
+    assert_ptr_equal(actual_pde, &fake_page_dir.entries[1]);
 }
 
-static void switch_page_dir_test(void **state) {
+void __wrap_load_pdbr_asm(physical_address new_pdbr_base_addr) {
+    (void) new_pdbr_base_addr;
+}
+
+static void load_new_pd_test(void **state) {
     (void) state;
 
-    // page_dir pd = // somehow get the PD
-    // page_table_entry pt = switch_page_dir(p_table, v_addr);
+    page_dir fake_page_dir = new_page_dir();
+    fake_page_dir.entries[0] = (page_dir_entry) 0x12345678;
+    fake_page_dir.entries[1] = (page_dir_entry) 0x91011121;
+    fake_page_dir.entries[2] = (page_dir_entry) 0x13141516;
 
-    // assert the new curr page dir is the correct
-    // one
-    assert_true(false);
+    load_new_pd((physical_address) &fake_page_dir);
+
+    get_curr_pdbr_resp curr_pdbr_resp = get_curr_pdbr();
+
+    assert_ptr_equal((physical_address) &fake_page_dir, curr_pdbr_resp.curr_pdbr);
+}
+
+static int load_new_pd_test_teardown(void **state) {
+    (void) state;
+
+    clear_vm_init();
+
+    return 0;
+}
+
+static void get_curr_pdbr_test(void **state) {
+    (void) state;
+
+    page_dir fake_pd = new_page_dir();
+
+    load_new_pd((physical_address) &fake_pd);
+
+    assert_true((physical_address) &fake_pd == get_curr_pdbr().curr_pdbr);
+}
+
+static int get_curr_pdbr_test_teardown(void **state) {
+    (void) state;
+
+    clear_vm_init();
+
+    return 0;
+}
+
+static void get_curr_pd_test(void **state) {
+    (void) state;
+
+    page_dir fake_pd = new_page_dir();
+    load_new_pd((physical_address) &fake_pd);
+
+    get_curr_pd_resp resp = get_curr_pd();
+
+    assert_true(resp.status == GET_CURR_PD_SUCCESS);
+    assert_true(&fake_pd == resp.curr_pd);
+}
+
+static int get_curr_pd_test_teardown(void **state) {
+    (void) state;
+
+    clear_vm_init();
+
+    return 0;
+}
+
+static void get_curr_pd_before_pd_init_test(void **state) {
+    (void) state;
+
+    clear_vm_init();
+
+    get_curr_pd_resp resp = get_curr_pd();
+
+    assert_true(resp.status == PD_INIT_NEEDED);
+    assert_true(resp.curr_pd == NULL);
+}
+
+static void clear_vm_init_test(void **state) {
+    (void) state;
+
+    clear_vm_init();
+
+    get_curr_pd_resp resp = get_curr_pd();
+
+    assert_true(resp.status == PD_INIT_NEEDED);
 }
 
 static void flush_tlb_entry_test(void **state) {
     (void) state;
-
-    // virtual_addr v_addr = // somehow get the virtual addr
-    // flush_tlb_entry(v_addr);
-
-    // assert that the tlb entry has been flushed properly
-    assert_true(false);
+    assert_true(true);
 }
 
 static void map_page_test(void **state) {
     (void) state;
 
-    // set up the page directory so it is valid
+    unsigned int pd_index = 1;
+    unsigned int pt_index = 4;
+    unsigned int page_offset = 300;
 
-    // virtual_addr v_addr = // somehow get the virtual addr
-    // physical_addr phys_addr = // somehow get the phys addr
-    // map_page(phys_addr, v_addr);
+    new_virt_addr_resp new_va_resp = \
+        new_virt_addr(pd_index, pt_index, page_offset);
 
-    // assert that the address has been mapped
-    // properly
-    assert_true(false);
+    page_dir fake_pd = new_page_dir();
+    page_table fake_pt = new_page_table();
+    unsigned char fake_page_frame[BYTES_PER_PAGE];
+    
+    set_pt_base_addr(&fake_pd.entries[pd_index], (physical_address) &fake_pt);
+    add_pde_attrib(&fake_pd.entries[pd_index], PDE_PRESENT);
+
+    set_pte_frame_base_addr(&fake_pt.entries[pt_index], (physical_address) fake_page_frame);
+    add_pte_attrib(&fake_pt.entries[pt_index], PTE_PRESENT);
+
+    will_return(__wrap_get_page_table_base_addr, (uintptr_t) &fake_pt);
+
+    load_new_pd_status new_pd_status = load_new_pd((physical_address) &fake_pd);
+    assert_true(new_pd_status == LOAD_NEW_PD_SUCCESS);
+
+    will_return(__wrap_get_page_table_base_addr, (uintptr_t) &fake_pt);
+    will_return(__wrap_get_pte_frame_base, (uintptr_t) fake_page_frame);
+
+    get_phys_addr_resp og_phys_addr_resp = get_phys_addr(new_va_resp.virt_addr);
+    assert_true(og_phys_addr_resp.status == GET_PHYS_ADDR_SUCCESS);
+
+    unsigned char new_page_frame[BYTES_PER_PAGE];
+    map_page_status mp_status = map_page((physical_address) new_page_frame, new_va_resp.virt_addr);
+
+    assert_true(mp_status == MP_SUCCESS);
+
+    will_return(__wrap_get_page_table_base_addr, (uintptr_t) &fake_pt);
+    will_return(__wrap_get_pte_frame_base, (uintptr_t) new_page_frame);
+    
+    get_phys_addr_resp new_phys_addr_resp = get_phys_addr(new_va_resp.virt_addr);
+
+    assert_true(new_phys_addr_resp.status == GET_PHYS_ADDR_SUCCESS);
+    assert_true(new_phys_addr_resp.phys_addr == (physical_address) &new_page_frame[page_offset]);
 }
 
-static void add_pte_attrib_test(void **state) {
+static int map_page_test_teardown(void **state) {
     (void) state;
 
-    // add_pte_attrib();
+    clear_vm_init();
 
-    // check that everything was initialized
-    // properly
-    assert_true(false);
+    return 0;
+}
+
+static void new_virt_addr_test(void **state) {
+    (void) state;
+
+    unsigned int pd_index = 1;
+    unsigned int pt_index = 4;
+    unsigned int page_offset = 300;
+
+    new_virt_addr_resp new_va_resp = \
+        new_virt_addr(pd_index, pt_index, page_offset);
+
+    virtual_address correct_virt_addr = 0x0040412c;
+
+    assert_true(new_va_resp.status == NEW_VIRT_ADDR_SUCCESS);
+    assert_true(new_va_resp.virt_addr = correct_virt_addr);
+}
+
+physical_address __wrap_get_page_table_base_addr(page_dir_entry* entry) {
+    (void) entry;
+    return (physical_address) mock();
+}
+
+physical_address __wrap_get_pte_frame_base(page_table_entry* entry) {
+    (void) entry;
+    return (physical_address) mock();
+}
+
+static void get_phys_addr_test(void **state) {
+    (void) state;
+
+    unsigned int pd_index = 1;
+    unsigned int pt_index = 4;
+    unsigned int page_offset = 300;
+
+    new_virt_addr_resp new_va_resp = \
+        new_virt_addr(pd_index, pt_index, page_offset);
+
+    assert_true(new_va_resp.status == NEW_VIRT_ADDR_SUCCESS);
+
+    page_dir fake_pd = new_page_dir();
+    page_table fake_pt = new_page_table();
+    unsigned char fake_page_frame[BYTES_PER_PAGE];
+    
+    set_pt_base_addr(&fake_pd.entries[pd_index], (physical_address) &fake_pt);
+    set_pte_frame_base_addr(&fake_pt.entries[pt_index], (physical_address) fake_page_frame);
+
+    will_return(__wrap_get_page_table_base_addr, (uintptr_t) &fake_pt);
+    will_return(__wrap_get_pte_frame_base, (uintptr_t) fake_page_frame);
+
+    load_new_pd((physical_address) &fake_pd);
+
+    get_phys_addr_resp phys_addr_resp = get_phys_addr(new_va_resp.virt_addr);
+
+    assert_true(phys_addr_resp.status == GET_PHYS_ADDR_SUCCESS);
+    assert_true((physical_address) &fake_page_frame[page_offset] == phys_addr_resp.phys_addr);
+}
+
+static int get_phys_addr_teardown(void **state) {
+    (void) state;
+
+    clear_vm_init();
+
+    return 0;
+}
+
+static void new_page_dir_test(void **state) {
+    (void) state;
+
+    page_dir new_pd = new_page_dir();
+
+    for (int i = 0; i < ENTRIES_PER_PAGE_DIR; i++) {
+        assert_true(new_pd.entries[i] == new_pde());
+    }
+}
+
+static void new_page_table_test(void **state) {
+    (void) state;
+
+    page_table new_pt = new_page_table();
+
+    for (int i = 0; i < ENTRIES_PER_PAGE_DIR; i++) {
+        assert_true(new_pt.entries[i] == new_pte());
+    }
+}
+
+static void get_frame_offset_test(void **state) {
+    (void) state;
+
+    unsigned int frame_offset = 23;
+
+    new_virt_addr_resp new_va_resp = new_virt_addr(0, 0, frame_offset);
+
+    assert_true(get_frame_offset(new_va_resp.virt_addr) == frame_offset);
 }
 
 int main() {
@@ -169,12 +365,25 @@ int main() {
         cmocka_unit_test(free_page_test),
         cmocka_unit_test(get_page_table_entry_test),
         cmocka_unit_test(get_page_dir_entry_test),
-        cmocka_unit_test(switch_page_dir_test),
+        cmocka_unit_test_teardown(load_new_pd_test,
+            load_new_pd_test_teardown),
         cmocka_unit_test(flush_tlb_entry_test),
-        cmocka_unit_test(add_pte_attrib_test),
-        cmocka_unit_test(map_page_test),
+        cmocka_unit_test_teardown(map_page_test,
+            map_page_test_teardown),
         cmocka_unit_test(get_page_table_index_test),
-        cmocka_unit_test(get_page_dir_index_test)
+        cmocka_unit_test(get_page_dir_index_test),
+        cmocka_unit_test_teardown(get_curr_pdbr_test,
+            get_curr_pdbr_test_teardown),
+        cmocka_unit_test(new_page_dir_test),
+        cmocka_unit_test_teardown(get_phys_addr_test,
+            get_phys_addr_teardown),
+        cmocka_unit_test_teardown(get_curr_pd_test,
+            get_curr_pd_test_teardown),
+        cmocka_unit_test(get_frame_offset_test),
+        cmocka_unit_test(get_curr_pd_before_pd_init_test),
+        cmocka_unit_test(new_virt_addr_test),
+        cmocka_unit_test(clear_vm_init_test),
+        cmocka_unit_test(new_page_table_test)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

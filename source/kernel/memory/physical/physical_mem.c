@@ -16,7 +16,7 @@
 
 #define NUM_MEMORY_MAP_SECTIONS NUM_MEMORY_BLOCKS / BITS_PER_MEMORY_MAP_SECTION
 
-unsigned int memory_map[NUM_MEMORY_MAP_SECTIONS];
+unsigned int mem_map[NUM_MEMORY_MAP_SECTIONS];
 
 #define BYTES_PER_KB 1024
 
@@ -36,7 +36,7 @@ void clear_mem_block(unsigned int block_num) {
     unsigned int block_section = get_mem_map_section(block_num);
     unsigned int block_mask = get_mem_map_section_offset_mask(block_num);
 
-    memory_map[block_section] &= ~ block_mask;
+    mem_map[block_section] &= ~ block_mask;
 }
 
 // Number of blocks currently in use
@@ -64,11 +64,11 @@ void set_memory_block(unsigned int block_num) {
     unsigned int block_section = get_mem_map_section(block_num);
     unsigned int block_mask = get_mem_map_section_offset_mask(block_num);
 
-    if ((memory_map[block_section] & block_mask) == 0) {
+    if ((mem_map[block_section] & block_mask) == 0) {
         num_blocks_in_use += 1;
     }
 
-    memory_map[block_section] |= block_mask;
+    mem_map[block_section] |= block_mask;
 }
 
 void set_mem_blocks_of_address_range(physical_address base_addr,
@@ -112,8 +112,8 @@ void config_mem_regions(boot_info* boot_info) {
 }
 
 void set_all_mem_blocks() {
-    unsigned int num_bytes_to_null_out = sizeof(memory_map);
-    set_memory(memory_map, 0xff, num_bytes_to_null_out);
+    unsigned int num_bytes_to_null_out = sizeof(mem_map);
+    set_memory(mem_map, 0xff, num_bytes_to_null_out);
 
     num_blocks_in_use = num_accessible_memory_blocks;
 }
@@ -135,7 +135,7 @@ bool block_is_set(unsigned int block_num) {
     unsigned int block_section = get_mem_map_section(block_num);
     unsigned int block_mask = get_mem_map_section_offset_mask(block_num);
 
-    unsigned int result = memory_map[block_section] & block_mask;
+    unsigned int result = mem_map[block_section] & block_mask;
 
     if (result != 0) {
         return true;
@@ -149,7 +149,7 @@ bool block_is_set(unsigned int block_num) {
 #define MEMORY_MAP_SECTION_MAX_VALUE 0xffffffff
 
 bool mem_map_section_has_space(unsigned int section_num) {
-    if (memory_map[section_num] != MEMORY_MAP_SECTION_MAX_VALUE) {
+    if (mem_map[section_num] != MEMORY_MAP_SECTION_MAX_VALUE) {
         return true;
     }
 
@@ -159,7 +159,7 @@ bool mem_map_section_has_space(unsigned int section_num) {
 bool offset_in_section_is_free(unsigned int section_num, unsigned int offset) {
     unsigned int block_mask = 1 << offset;
 
-    if ((memory_map[section_num] & block_mask) != 0) {
+    if ((mem_map[section_num] & block_mask) != 0) {
         return false;
     }
 
@@ -240,22 +240,11 @@ block_alloc_resp alloc_block() {
 
 	physical_address block_address = block_num * BYTES_PER_MEMORY_BLOCK;
 
-    return (block_alloc_resp) {status: BLOCK_ALLOC_SUCCESS, buffer: (void*) block_address};
+    return (block_alloc_resp) {status: BLOCK_ALLOC_SUCCESS,
+                               buffer: (void*) block_address,
+                               buffer_size: BYTES_PER_MEMORY_BLOCK};
 }
 
 void free_block(physical_address block_address) {
     free_mem_blocks_of_address_range(block_address, BYTES_PER_MEMORY_BLOCK);
-}
-
-static physical_address current_pdbr_base_addr;
-
-extern void load_pdbr_asm(physical_address new_pdbr_base_addr);
-
-void load_pdbr(physical_address new_pdbr_base_addr) {
-    current_pdbr_base_addr = new_pdbr_base_addr;
-    load_pdbr_asm(new_pdbr_base_addr);
-}
-
-physical_address get_curr_pdbr() {
-    return current_pdbr_base_addr;
 }

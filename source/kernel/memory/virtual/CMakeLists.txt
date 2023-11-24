@@ -5,6 +5,10 @@ set(C_SOURCES
     pte.c
     virtual_mem_mgr.c)
 
+set(ASM_SOURCES
+    load_pdbr.asm
+)
+
 include(GetAbsolutePaths)
 get_absolute_paths("${C_SOURCES}" C_SOURCES_ABS)
 
