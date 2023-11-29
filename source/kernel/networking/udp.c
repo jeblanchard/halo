@@ -17,7 +17,7 @@ struct ip_v6_message {
 #pragma pack(pop)
 
 void handle_received_datagram(struct ip_v6_message msg) {
-    msg.to_do_1 += 1;
+    (void) msg;
 }
 
 unsigned short compute_checksum() {
@@ -47,5 +47,5 @@ void send_datagram(unsigned short source_port,
 }
 
 void create_new_receive_port(unsigned short new_port) {
-    new_port += 1;
+    (void) new_port;
 }

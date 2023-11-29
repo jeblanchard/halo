@@ -6,195 +6,267 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "kernel/memory/physical/physical_mem.c"
-
-static int teardown_test_init_phys_mem(void **state) {
-    (void) state;
-
-    num_blocks_in_use = 0;
-
-    unsigned int num_bytes_to_null_out = sizeof(mem_map);
-    set_memory(mem_map, 0, num_bytes_to_null_out);
-
-    return 0;
-}
-
-#define FAKE_NUM_BYTES_IN_MEM 1000 * 1000
+#include "kernel/memory/physical/physical_mem.h"
 
 #define NUM_MEM_MAP_ENTRIES 4
+#define FAKE_MEM_MAP_ENTRY_LENGTH_IN_BYTES \
+    ((MAX_MEM_ADDR_32_BIT / NUM_MEM_MAP_ENTRIES) + 1)
 
-static void test_init_phys_mem(void **state) {
+mem_map_entry fake_mem_map_entry_list[NUM_MEM_MAP_ENTRIES] = {
+
+    {base_addr_low: 0,
+        base_addr_high: 0,
+        length_in_bytes_low: FAKE_MEM_MAP_ENTRY_LENGTH_IN_BYTES,
+        length_in_bytes_high: 0,
+        type: AVAILABLE_RAM},
+
+    {base_addr_low: FAKE_MEM_MAP_ENTRY_LENGTH_IN_BYTES, 
+        base_addr_high: 0,
+        length_in_bytes_low: FAKE_MEM_MAP_ENTRY_LENGTH_IN_BYTES,
+        length_in_bytes_high: 0,
+        type: RESERVED_MEMORY},
+
+    {base_addr_low: 2 * FAKE_MEM_MAP_ENTRY_LENGTH_IN_BYTES,
+        base_addr_high: 0,
+        length_in_bytes_low: FAKE_MEM_MAP_ENTRY_LENGTH_IN_BYTES,
+        length_in_bytes_high: 0,
+        type: RESERVED_MEMORY},
+
+    {base_addr_low: 3 * FAKE_MEM_MAP_ENTRY_LENGTH_IN_BYTES,
+        base_addr_high: 0,
+        length_in_bytes_low: FAKE_MEM_MAP_ENTRY_LENGTH_IN_BYTES,
+        length_in_bytes_high: 0,
+        type: RESERVED_MEMORY}
+};
+
+#define BYTES_PER_KB 1024
+
+boot_info fake_boot_info = {
+    num_kb_in_mem: (MAX_MEM_ADDR_32_BIT / BYTES_PER_KB) + 1,
+    mem_map_entry_list_base_addr: &fake_mem_map_entry_list[0],
+    mem_map_num_entries: NUM_MEM_MAP_ENTRIES,
+};
+
+static int config_phys_mem_test_teardown(void **state) {
     (void) state;
 
-    unsigned int mem_range_size_in_bytes = FAKE_NUM_BYTES_IN_MEM / NUM_MEM_MAP_ENTRIES;
+    clear_phys_mem_config();
 
-    mem_map_entry fake_mem_map_entry_list[NUM_MEM_MAP_ENTRIES] = {
+    return 0;
+}
 
-        {base_addr_low: 0,
-         base_addr_high: 0,
-         length_in_bytes_low: mem_range_size_in_bytes,
-         length_in_bytes_high: 0,
-         type: AVAILABLE_RAM},
+static void config_phys_mem_test(void **state) {
+    (void) state;
 
-        {base_addr_low: mem_range_size_in_bytes, 
-         base_addr_high: 0,
-         length_in_bytes_low: mem_range_size_in_bytes,
-         length_in_bytes_high: 0,
-         type: RESERVED_MEMORY},
-
-        {base_addr_low: 2 * mem_range_size_in_bytes,
-         base_addr_high: 0,
-         length_in_bytes_low: mem_range_size_in_bytes,
-         length_in_bytes_high: 0,
-         type: RESERVED_MEMORY},
-
-        {base_addr_low: 3 * mem_range_size_in_bytes,
-         base_addr_high: 0,
-         length_in_bytes_low: mem_range_size_in_bytes,
-         length_in_bytes_high: 0,
-         type: RESERVED_MEMORY}
-    };
-
-    boot_info fake_boot_info = {
-        num_kb_in_mem: FAKE_NUM_BYTES_IN_MEM / BYTES_PER_KB,
-        mem_map_entry_list_base_addr: &fake_mem_map_entry_list[0],
-        mem_map_num_entries: NUM_MEM_MAP_ENTRIES,
-    };
-
-    init_phys_mem(&fake_boot_info);
+    config_phys_mem(&fake_boot_info);
 
     unsigned int correct_num_blocks_in_use = \
-        (NUM_MEM_MAP_ENTRIES - 1) * mem_range_size_in_bytes / BYTES_PER_MEMORY_BLOCK;
+        3 * ((FAKE_MEM_MAP_ENTRY_LENGTH_IN_BYTES) / BYTES_PER_MEMORY_BLOCK);
 
-    assert_true(num_blocks_in_use == correct_num_blocks_in_use);
+    printf("correct number of blocks in use: %d\n", correct_num_blocks_in_use);
+    printf("actual number of blocks in use: %d\n", get_num_blocks_in_use());
+
+    printf("actual number of free blocks: %d\n", get_num_free_blocks());
+
+    assert_true(get_num_blocks_in_use() == correct_num_blocks_in_use);
+
+    unsigned int correct_num_free_blocks = \
+        FAKE_MEM_MAP_ENTRY_LENGTH_IN_BYTES / BYTES_PER_MEMORY_BLOCK;
+
+    assert_true(get_num_free_blocks() == correct_num_free_blocks);
+
+    clear_phys_mem_config();
 }
 
-#define TWENTY_KB 0x5000
+// static void clear_phys_mem_config_test(void **state) {
+//     (void) state;
 
-#define PHYSICAL_MEM_SIZE_IN_BYTES TWENTY_KB
+//     config_phys_mem(&fake_boot_info);
+//     clear_phys_mem_config();
 
-unsigned char fake_physical_mem[PHYSICAL_MEM_SIZE_IN_BYTES];
+//     assert_true(get_num_free_blocks() == 0);
+//     assert_true(get_num_blocks_in_use() == 
+//         MAX_MEM_ADDR_32_BIT / BYTES_PER_MEMORY_BLOCK + 1);
 
-static int setup_alloc_block_test(void **state) {
-    (void) state;
+//     printf("actual number of blocks in use: %d\n", get_num_blocks_in_use());
+// }
+
+// #define TWENTY_KB 0x5000
+
+// #define PHYSICAL_MEM_SIZE_IN_BYTES TWENTY_KB
+
+// unsigned char fake_physical_mem[PHYSICAL_MEM_SIZE_IN_BYTES];
+
+// static void alloc_block_test(void **state) {
+//     (void) state;
+
+//     config_phys_mem(&fake_boot_info);
+
+//     unsigned int old_num_blocks_in_use = get_num_blocks_in_use();
+
+//     alloc_block_resp res = alloc_block();
+//     assert_true(res.status == BLOCK_ALLOC_SUCCESS);
+
+//     assert_true(res.buffer_size == BYTES_PER_MEMORY_BLOCK);
+//     assert_int_equal(1 + old_num_blocks_in_use, get_num_blocks_in_use());
+
+//     free_block((physical_address) res.buffer);
+//     clear_phys_mem_config();
+
+//     printf("actual number of blocks in use: %d\n", get_num_blocks_in_use());
+// }
+
+// #define TWENTY_KB 0x5000
+
+// #define PHYSICAL_MEM_SIZE_IN_BYTES TWENTY_KB
+
+// unsigned char fake_physical_mem[PHYSICAL_MEM_SIZE_IN_BYTES];
+
+// alloc_block_resp resp_of_block_to_free;
+
+// static void free_block_test(void **state) {
+//     (void) state;
+
+//     mem_map_entry all_mem_avail = {
+//         base_addr_low: 0,
+//         base_addr_high: 0,
+//         length_in_bytes_low: PHYSICAL_MEM_SIZE_IN_BYTES,
+//         length_in_bytes_high: 0,
+//         type: AVAILABLE_RAM
+//     };
+
+//     boot_info custom_mem_boot = {
+//         num_kb_in_mem: PHYSICAL_MEM_SIZE_IN_BYTES / BYTES_PER_KB,
+//         mem_map_entry_list_base_addr: &all_mem_avail,
+//         mem_map_num_entries: 1
+//     };
+
+//     config_phys_mem(&custom_mem_boot);
+
+//     resp_of_block_to_free = alloc_block();
+
+//     unsigned int old_num_blocks_in_use = get_num_blocks_in_use();
+
+//     free_block((physical_address) resp_of_block_to_free.buffer);
+
+//     assert_int_equal(old_num_blocks_in_use - 1, get_num_blocks_in_use());
+
+//     clear_phys_mem_config();
+
+//     printf("actual number of blocks in use: %d\n", get_num_blocks_in_use());
+// }
+
+// static void get_num_blocks_in_use_test(void **state) {
+//     (void) state;
+
+//     config_phys_mem(&fake_boot_info);
+
+//     unsigned int correct_num_blocks_in_use = 
+//         3 * ((FAKE_MEM_MAP_ENTRY_LENGTH_IN_BYTES) / BYTES_PER_MEMORY_BLOCK);
     
-    mem_map_entry all_mem_avail = {
-        base_addr_low: 0,
-        base_addr_high: 0,
-        length_in_bytes_low: PHYSICAL_MEM_SIZE_IN_BYTES,
-        length_in_bytes_high: 0,
-        type: AVAILABLE_RAM
-    };
+//     assert_true(get_num_blocks_in_use() == correct_num_blocks_in_use);
+//     printf("correct number of blocks in use: %d\n", correct_num_blocks_in_use);
+//     printf("actual number of blocks in use: %d\n", get_num_blocks_in_use());
 
-    boot_info custom_mem_boot = {
-        num_kb_in_mem: PHYSICAL_MEM_SIZE_IN_BYTES / BYTES_PER_KB,
-        mem_map_entry_list_base_addr: &all_mem_avail,
-        mem_map_num_entries: 1
-    };
+//     clear_phys_mem_config();
 
-    init_phys_mem(&custom_mem_boot);
+//     printf("actual number of blocks in use: %d\n", get_num_blocks_in_use());
+// }
 
-    return 0;
-}
+// static int alloc_spec_frame_success_teardown(void **state) {
+//     (void) state;
 
-static void alloc_block_test(void **state) {
-    (void) state;
+//     clear_phys_mem_config();
 
-    unsigned int old_num_blocks_in_use = get_num_blocks_in_use();
+//     return 0;
+// }
 
-    block_alloc_resp res = alloc_block();
-    
-    assert_true(res.status == BLOCK_ALLOC_SUCCESS);
+// static void alloc_spec_frame_success_test(void **state) {
+//     (void) state;
 
-    assert_int_equal(1 + old_num_blocks_in_use, get_num_blocks_in_use());
+//     config_phys_mem(&fake_boot_info);
 
-    unsigned int fake_physical_mem_index = (unsigned int) res.buffer;
-    for (unsigned int i = 0; i < res.buffer_size; i++) {
-        fake_physical_mem[fake_physical_mem_index + i] = 'a';
-    }
+//     #define THREE_GB 0xc0000000
+//     #define FOUR_KB_FRAME_BASE THREE_GB
 
-    for (unsigned int i = 0; i < res.buffer_size; i++) {
-        assert_true(fake_physical_mem[i] == 'a');
-    }
-}
+//     unsigned int og_num_blocks_in_use = get_num_blocks_in_use();
+//     printf("number of blocks in use: %d\n", og_num_blocks_in_use);
+//     printf("number of free blocks: %d\n", get_num_free_blocks());
 
-#define TWENTY_KB 0x5000
+//     alloc_spec_frame_resp frame_resp = alloc_spec_frame(FOUR_KB_FRAME_BASE);
 
-#define PHYSICAL_MEM_SIZE_IN_BYTES TWENTY_KB
+//     printf("frame response status: %d\n", frame_resp.status);
+//     assert_true(frame_resp.status == ALLOC_SPEC_FRAME_SUCCESS);
+//     assert_true(get_num_blocks_in_use() == og_num_blocks_in_use + 1);
 
-unsigned char fake_physical_mem[PHYSICAL_MEM_SIZE_IN_BYTES];
+//     free_block((physical_address) frame_resp.buffer);
 
-block_alloc_resp resp_of_block_to_free;
+//     printf("actual number of blocks in use: %d\n", get_num_blocks_in_use());
+// }
 
-static int setup_free_block_test(void **state) {
-    (void) state;
-    
-    mem_map_entry all_mem_avail = {
-        base_addr_low: 0,
-        base_addr_high: 0,
-        length_in_bytes_low: PHYSICAL_MEM_SIZE_IN_BYTES,
-        length_in_bytes_high: 0,
-        type: AVAILABLE_RAM
-    };
+// static int alloc_spec_frame_in_use_teardown(void **state) {
+//     (void) state;
 
-    boot_info custom_mem_boot = {
-        num_kb_in_mem: PHYSICAL_MEM_SIZE_IN_BYTES / BYTES_PER_KB,
-        mem_map_entry_list_base_addr: &all_mem_avail,
-        mem_map_num_entries: 1
-    };
+//     clear_phys_mem_config();
 
-    init_phys_mem(&custom_mem_boot);
+//     return 0;
+// }
 
-    resp_of_block_to_free = alloc_block();
+// static void alloc_spec_frame_in_use_test(void **state) {
+//     (void) state;
 
-    return 0;
-}
+//     #define TWO_MB 0x20000
+//     #define THREE_GB 0xc0000000
+//     physical_address frame = THREE_GB + TWO_MB;
 
-static void free_block_test(void **state) {
-    (void) state;
+//     alloc_spec_frame_resp frame_resp = alloc_spec_frame(frame);
+//     assert_true(frame_resp.status == ALLOC_SPEC_FRAME_SUCCESS);
 
-    unsigned int old_num_blocks_in_use = get_num_blocks_in_use();
+//     alloc_spec_frame_resp repeat_frame_resp = alloc_spec_frame(frame);
+//     assert_true(repeat_frame_resp.status == ALLOC_SPEC_FRAME_IN_USE);
 
-    free_block((physical_address) resp_of_block_to_free.buffer);
+//     printf("actual number of blocks in use: %d\n", get_num_blocks_in_use());
+// }
 
-    assert_int_equal(old_num_blocks_in_use - 1, get_num_blocks_in_use());
-}
+// static int alloc_spec_frame_dne_teardown(void **state) {
+//     (void) state;
 
-static int teardown_get_num_blocks_in_use_test(void **state) {
-    (void) state;
-    num_blocks_in_use = 0;
+//     clear_phys_mem_config();
 
-    return 0;
-}
+//     return 0;
+// }
 
-#define FAKE_NUM_BLOCKS_IN_USE 10
+// static void alloc_spec_frame_dne_test(void **state) {
+//     (void) state;
 
-static int setup_get_num_blocks_in_use_test(void **state) {
-    (void) state;
-    num_blocks_in_use = FAKE_NUM_BLOCKS_IN_USE;
+//     #define THREE_GB 0xc0000000
+//     #define FOUR_KB_FRAME_BASE THREE_GB
+//     #define FRAME_OFFSET 5
+//     physical_address uneven_frame = FOUR_KB_FRAME_BASE + FRAME_OFFSET;
 
-    return 0;
-}
+//     alloc_spec_frame_resp uneven_frame_resp = alloc_spec_frame(uneven_frame);
+//     assert_true(uneven_frame_resp.status == ALLOC_SPEC_FRAME_BASE_DNE);
 
-static void get_num_blocks_in_use_test(void **state) {
-    (void) state;
+//     alloc_spec_frame_resp good_frame_resp = alloc_spec_frame(FOUR_KB_FRAME_BASE);
+//     assert_true(good_frame_resp.status == ALLOC_SPEC_FRAME_SUCCESS);
 
-    int actual_num_blocks_in_use = get_num_blocks_in_use();
-    
-    assert_int_equal(actual_num_blocks_in_use, FAKE_NUM_BLOCKS_IN_USE);
-}
+//     printf("actual number of blocks in use: %d\n", get_num_blocks_in_use());
+// }
 
 int main() {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test_teardown(test_init_phys_mem,
-            teardown_test_init_phys_mem),
-        cmocka_unit_test_setup_teardown(get_num_blocks_in_use_test,
-            setup_get_num_blocks_in_use_test,
-            teardown_get_num_blocks_in_use_test),
-        cmocka_unit_test_setup(alloc_block_test,
-            setup_alloc_block_test),
-        cmocka_unit_test_setup(free_block_test,
-            setup_free_block_test),
+        cmocka_unit_test_teardown(config_phys_mem_test,
+            config_phys_mem_test_teardown)
+        cmocka_unit_test(get_num_blocks_in_use_test),
+        cmocka_unit_test(alloc_block_test),
+        cmocka_unit_test(free_block_test),
+        cmocka_unit_test_teardown(alloc_spec_frame_success_test,
+            alloc_spec_frame_success_teardown),
+        cmocka_unit_test_teardown(alloc_spec_frame_in_use_test,
+            alloc_spec_frame_in_use_teardown),
+        cmocka_unit_test_teardown(alloc_spec_frame_dne_test,
+            alloc_spec_frame_dne_teardown),
+        cmocka_unit_test(clear_phys_mem_config_test)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

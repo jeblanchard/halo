@@ -11,8 +11,8 @@
 #include "kernel/memory/virtual/virtual_mem_mgr.h"
 #include "kernel/memory/virtual/pde.h"
 
-block_alloc_resp __wrap_alloc_block() {
-    block_alloc_resp* resp = mock_ptr_type(block_alloc_resp*);
+alloc_block_resp __wrap_alloc_block() {
+    alloc_block_resp* resp = mock_ptr_type(alloc_block_resp*);
     return *resp;
 }
 
@@ -21,7 +21,7 @@ static void alloc_page_test(void **state) {
 
     page_table_entry entry = 0x12345678;
 
-    block_alloc_resp non_zero_buff_addr_resp = {
+    alloc_block_resp non_zero_buff_addr_resp = {
         status: BLOCK_ALLOC_SUCCESS,
         buffer_size: 100,
         buffer: (void*) 0xfff
@@ -29,10 +29,32 @@ static void alloc_page_test(void **state) {
 
     will_return(__wrap_alloc_block, (uintptr_t) &non_zero_buff_addr_resp);
 
-    alloc_page_resp resp = alloc_page(&entry);
+    alloc_page_status resp = alloc_page(&entry);
 
     assert_true(resp == SUCCESS);
     assert_true(pte_is_present(&entry));
+}
+
+static void get_pages_in_use_after_page_alloc_test(void **state) {
+    (void) state;
+
+    page_table_entry entry = new_pte();
+
+    alloc_block_resp non_zero_buff_addr_resp = {
+        status: BLOCK_ALLOC_SUCCESS,
+        buffer_size: BYTES_PER_MEMORY_BLOCK,
+        buffer: NULL
+    };
+
+    will_return(__wrap_alloc_block, (uintptr_t) &non_zero_buff_addr_resp);
+
+    unsigned int og_pages_in_use = get_pages_in_use();
+
+    alloc_page_status resp = alloc_page(&entry);
+
+    unsigned int new_pages_in_use = get_pages_in_use();
+
+    assert_true(new_pages_in_use == og_pages_in_use + 1);
 }
 
 bool correct_block_addr_was_freed = false;
@@ -226,7 +248,7 @@ static void map_page_test(void **state) {
     page_table fake_pt = new_page_table();
     unsigned char fake_page_frame[BYTES_PER_PAGE];
     
-    set_pt_base_addr(&fake_pd.entries[pd_index], (physical_address) &fake_pt);
+    set_pt_addr(&fake_pd.entries[pd_index], (physical_address) &fake_pt);
     add_pde_attrib(&fake_pd.entries[pd_index], PDE_PRESENT);
 
     set_pte_frame_base_addr(&fake_pt.entries[pt_index], (physical_address) fake_page_frame);
@@ -250,7 +272,7 @@ static void map_page_test(void **state) {
 
     will_return(__wrap_get_page_table_base_addr, (uintptr_t) &fake_pt);
     will_return(__wrap_get_pte_frame_base, (uintptr_t) new_page_frame);
-    
+
     get_phys_addr_resp new_phys_addr_resp = get_phys_addr(new_va_resp.virt_addr);
 
     assert_true(new_phys_addr_resp.status == GET_PHYS_ADDR_SUCCESS);
@@ -307,7 +329,7 @@ static void get_phys_addr_test(void **state) {
     page_table fake_pt = new_page_table();
     unsigned char fake_page_frame[BYTES_PER_PAGE];
     
-    set_pt_base_addr(&fake_pd.entries[pd_index], (physical_address) &fake_pt);
+    set_pt_addr(&fake_pd.entries[pd_index], (physical_address) &fake_pt);
     set_pte_frame_base_addr(&fake_pt.entries[pt_index], (physical_address) fake_page_frame);
 
     will_return(__wrap_get_page_table_base_addr, (uintptr_t) &fake_pt);
@@ -359,6 +381,68 @@ static void get_frame_offset_test(void **state) {
     assert_true(get_frame_offset(new_va_resp.virt_addr) == frame_offset);
 }
 
+static void init_vm_test(void **state) {
+    (void) state;
+
+    init_vm_status ivm_status = init_virtual_mem();
+    assert_true(ivm_status == INIT_VM_SUCCESS);
+
+    get_curr_pd_resp curr_pd_resp = get_curr_pd();
+    assert_true(curr_pd_resp.status == GET_CURR_PD_SUCCESS);
+    page_dir* curr_pd = curr_pd_resp.curr_pd;
+
+    for (virtual_address io_addr = IO_BASE_ADDR; io_addr <= IO_MAX_ADDR; io_addr += 0xf) {
+        page_dir_entry* pde = get_page_dir_entry(curr_pd, io_addr);
+        
+        // will_return(__wrap_get_page_table_base_addr, curr_pd -> entries[]);
+        // get_phys_addr_resp phys_addr_resp = get_phys_addr(io_addr);
+
+        // assert_true(phys_addr_resp.status == GET_PHYS_ADDR_SUCCESS);
+        // assert_true(phys_addr_resp.phys_addr == io_addr);
+
+        assert_true(pde_is_present(pde));
+        assert_true(pde_is_user(pde) == false);
+    }
+
+    #define FOUR_MB 0x400000
+    #define ONE_KB 1024
+    #define THREE_GB 0xc0000000
+    for (physical_address user_addr = ONE_MB; user_addr < THREE_GB; user_addr += ONE_KB) {
+        // need to assert that the page exists, the exact address isn't super
+        // relevant
+    }
+
+    #define ONE_GB 0x40000000
+    #define MAX_MEM_ADDR 0xffffffff
+
+    #define KERNEL_BASE_PHYS_ADDR ONE_MB
+    #define KERNEL_BASE_VIRT_ADDR THREE_GB
+    physical_address kernel_phys_addr;
+    virtual_address kernel_virt_addr;
+    for (kernel_phys_addr = KERNEL_BASE_PHYS_ADDR,
+         kernel_virt_addr = KERNEL_BASE_VIRT_ADDR;
+         kernel_phys_addr < KERNEL_BASE_PHYS_ADDR + ONE_GB &&
+         kernel_virt_addr <= MAX_MEM_ADDR;
+         kernel_virt_addr += ONE_KB, kernel_phys_addr += ONE_KB) {
+
+        get_phys_addr_resp phys_addr_resp = get_phys_addr(kernel_virt_addr);
+        assert_true(phys_addr_resp.status == GET_PHYS_ADDR_SUCCESS);
+        assert_true(phys_addr_resp.phys_addr == kernel_phys_addr);
+
+        page_dir_entry* pde = get_page_dir_entry(curr_pd, kernel_virt_addr);
+        assert_true(is_kernel_pde(pde));
+    }
+}
+
+static void get_page_table_base_addr_test(void **state) {
+    (void) state;
+
+    physical_address pt_addr = 0x1234;
+    page_dir_entry fake_entry = pt_addr << 12;
+
+    assert_true((physical_address) get_page_table(&fake_entry) == pt_addr);
+}
+
 int main() {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(alloc_page_test),
@@ -383,7 +467,10 @@ int main() {
         cmocka_unit_test(get_curr_pd_before_pd_init_test),
         cmocka_unit_test(new_virt_addr_test),
         cmocka_unit_test(clear_vm_init_test),
-        cmocka_unit_test(new_page_table_test)
+        cmocka_unit_test(new_page_table_test),
+        cmocka_unit_test(init_vm_test),
+        cmocka_unit_test(get_page_table_base_addr_test),
+        cmocka_unit_test(get_pages_in_use_after_page_alloc_test)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

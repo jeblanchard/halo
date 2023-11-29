@@ -6,11 +6,11 @@
 halloc_resp halloc(unsigned int num_bytes) {
     (void) num_bytes;
 
-    block_alloc_resp block_alloc_resp = alloc_block();
+    alloc_block_resp alloc_block_resp = alloc_block();
 
-    if (block_alloc_resp.status == BLOCK_ALLOC_SUCCESS) {
+    if (alloc_block_resp.status == BLOCK_ALLOC_SUCCESS) {
         return (halloc_resp) {status: HALLOC_SUCCESS,
-                              buffer: block_alloc_resp.buffer};
+                              buffer: alloc_block_resp.buffer};
     }
 
     return (halloc_resp) {status: NOT_ENOUGH_MEM,

@@ -1,0 +1,1 @@
+global _KERNEL_PHYS_ADDRESS 0x1000

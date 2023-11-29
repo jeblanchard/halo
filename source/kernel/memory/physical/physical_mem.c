@@ -6,21 +6,14 @@
 #include "kernel/memory/manager.h"
 #include "physical_mem.h"
 
-#define BLOCK_ALIGNMENT	BYTES_PER_MEMORY_BLOCK
-
-#define MAX_MEMORY_32_BIT_IN_BYTES 0x40000000
-
-#define NUM_MEMORY_BLOCKS MAX_MEMORY_32_BIT_IN_BYTES / BYTES_PER_MEMORY_BLOCK
-
+#define NUM_MEMORY_BLOCKS MAX_MEM_ADDR_32_BIT / BYTES_PER_MEMORY_BLOCK
 #define BITS_PER_MEMORY_MAP_SECTION 32
-
 #define NUM_MEMORY_MAP_SECTIONS NUM_MEMORY_BLOCKS / BITS_PER_MEMORY_MAP_SECTION
 
 unsigned int mem_map[NUM_MEMORY_MAP_SECTIONS];
 
 #define BYTES_PER_KB 1024
 
-// Number of memory blocks
 static unsigned int num_accessible_memory_blocks;
 
 unsigned int get_mem_map_section(unsigned int block_num) {
@@ -39,14 +32,13 @@ void clear_mem_block(unsigned int block_num) {
     mem_map[block_section] &= ~ block_mask;
 }
 
-// Number of blocks currently in use
 static unsigned int num_blocks_in_use;
 
 unsigned int get_num_blocks_in_use() {
     return num_blocks_in_use;
 }
 
-void free_mem_blocks_of_address_range(physical_address base_addr,
+void free_mem_blocks_of_addr_range(physical_address base_addr,
                                       unsigned int length) {
 
     unsigned int end_addr = base_addr + length;
@@ -66,6 +58,14 @@ void set_memory_block(unsigned int block_num) {
 
     if ((mem_map[block_section] & block_mask) == 0) {
         num_blocks_in_use += 1;
+
+        if (num_blocks_in_use > 786432) {
+            printf("block number: %x\n", block_num);
+            printf("block section: %x\n", block_section);
+            printf("block mask: %x\n", block_mask);
+            printf("memory map, block section %x: %x", block_section, mem_map[block_section]);
+            printf("\n");
+        }
     }
 
     mem_map[block_section] |= block_mask;
@@ -74,24 +74,31 @@ void set_memory_block(unsigned int block_num) {
 void set_mem_blocks_of_address_range(physical_address base_addr,
                                      unsigned int range_length) {
 
-    unsigned int end_addr = base_addr + range_length;
+    unsigned int end_addr = base_addr + range_length - 1;
+
+    printf("base address: %x\n", base_addr);
+    printf("end address: %x\n", end_addr);
 
 	unsigned int start_block_num = base_addr / BYTES_PER_MEMORY_BLOCK;
-	unsigned int end_block_num = end_addr / BYTES_PER_MEMORY_BLOCK + 1;
+	unsigned int end_block_num = end_addr / BYTES_PER_MEMORY_BLOCK;
+
+    printf("start block number: %x\n", start_block_num);
+    printf("end block number: %x\n", end_block_num);
+    printf("number of blocks to set: %x\n", end_block_num - start_block_num + 1);
 
     for (unsigned int b = start_block_num; b <= end_block_num; b++) {
         set_memory_block(b);
     }
 }
 
-void alloc_mem_for_mem_map_entry(mem_map_entry * entry) {
+void alloc_mem_for_mem_map_entry(mem_map_entry* entry) {
     unsigned int entry_base_addr = entry -> base_addr_low;
     unsigned int region_length = entry -> length_in_bytes_low;
 
     mem_range_type entry_type = entry -> type;
 
     if (entry_type == AVAILABLE_RAM) {
-        free_mem_blocks_of_address_range(entry_base_addr, region_length);
+        free_mem_blocks_of_addr_range(entry_base_addr, region_length);
     } else {
         set_mem_blocks_of_address_range(entry_base_addr, region_length);
     }
@@ -108,23 +115,35 @@ void config_mem_regions(boot_info* boot_info) {
         mem_map_entry* entry = mem_map_entry_list_base_addr + i;
 
         alloc_mem_for_mem_map_entry(entry);
+
+        printf("number of memory blocks after allocing entry: %d\n", num_blocks_in_use);
+        printf("i of entry just alloced: %d\n", i);
     }
 }
 
 void set_all_mem_blocks() {
-    unsigned int num_bytes_to_null_out = sizeof(mem_map);
-    set_memory(mem_map, 0xff, num_bytes_to_null_out);
-
+    // unsigned int num_bytes_to_null_out = sizeof(mem_map);
+    // set_memory(mem_map, 0xff, num_bytes_to_null_out);
+    for (unsigned int i = 0; i < NUM_MEMORY_MAP_SECTIONS; i++) {
+        mem_map[i] = 0xffffffff;
+    }
+    
+    printf("last memory map section: %x\n", mem_map[NUM_MEMORY_MAP_SECTIONS - 1]);
     num_blocks_in_use = num_accessible_memory_blocks;
 }
 
-void init_phys_mem(boot_info* boot_info) {
+void config_phys_mem(boot_info* boot_info) {
 
-	unsigned int num_kb_in_memory = boot_info -> num_kb_in_mem;
-	num_accessible_memory_blocks = (num_kb_in_memory * BYTES_PER_KB) / BYTES_PER_MEMORY_BLOCK;
+	unsigned int num_kb_in_mem = boot_info -> num_kb_in_mem;
+    unsigned int kb_per_mem_block = BYTES_PER_MEMORY_BLOCK / 1024;
+	num_accessible_memory_blocks = num_kb_in_mem / kb_per_mem_block;
+    printf("number of accessible memory blocks: %d\n", num_accessible_memory_blocks);
+    printf("number of memory blocks in use in config_phys_mem: %d\n", num_blocks_in_use);
 
     set_all_mem_blocks();
+    printf("number of memory blocks in use after setting all blocks: %d\n", num_blocks_in_use);
 	config_mem_regions(boot_info);
+    printf("number of memory blocks in use after configging mem regions: %d\n", num_blocks_in_use);
 }
 
 unsigned int get_num_mem_map_sections() {
@@ -166,28 +185,43 @@ bool offset_in_section_is_free(unsigned int section_num, unsigned int offset) {
     return true;
 }
 
-unsigned int get_offset_of_first_free_block_in_mem_map_section(unsigned int section_num) {
+typedef enum first_free_block_offset_status {
+    FIRST_FREE_BLOCK_OFFSET_SUCCESS = 0,
+    COULD_NOT_FIND_OFFSET = 1
+} first_free_block_offset_status;
 
-    unsigned int o = 0;
+typedef struct first_free_block_offset_resp {
+    first_free_block_offset_status status;
+    unsigned int offset;
+} first_free_block_offset_resp;
+
+first_free_block_offset_resp get_offset_of_first_free_block_in_mem_map_section(unsigned int section_num) {
+
+    unsigned int offset = 0;
     bool could_not_find_offset = true;
-    for (; o < BITS_PER_MEMORY_MAP_SECTION; o++) {
-        if (offset_in_section_is_free(section_num, o)) {
+    for (; offset < BITS_PER_MEMORY_MAP_SECTION; offset++) {
+        if (offset_in_section_is_free(section_num, offset)) {
             could_not_find_offset = false;
             break;
         }
     }
 
     if (could_not_find_offset) {
-        char error_msg[] = "Could not find offset of first free block in\nmemory map section.";
-        halt_and_display_error_msg(error_msg);
+        return (first_free_block_offset_resp) {
+            status: COULD_NOT_FIND_OFFSET,
+            offset: 0
+        };
     }
 
-    return o;
+    return (first_free_block_offset_resp) {
+            status: FIRST_FREE_BLOCK_OFFSET_SUCCESS,
+            offset: offset};
 }
 
 typedef enum get_first_free_block_num_status {
     SUCCESS = 0,
-    NO_FREE_MEM_BLOCKS = 1
+    NO_FREE_MEM_BLOCKS = 1,
+    FAILED_GETTING_SECTION_OFFSET = 2
 } get_first_free_block_num_status;
 
 typedef struct get_first_free_block_num_resp {
@@ -200,10 +234,17 @@ get_first_free_block_num_resp get_first_free_block_num() {
     bool free_block_dne = true;
     unsigned int num_mem_map_sections = get_num_mem_map_sections();
     unsigned int section_num;
-    unsigned int section_offset;
+    first_free_block_offset_resp section_offset_resp;
 	for (unsigned int s = 0; s < num_mem_map_sections; s++) {
 		if (mem_map_section_has_space(s)) {
-		    section_offset = get_offset_of_first_free_block_in_mem_map_section(s);
+		    section_offset_resp = get_offset_of_first_free_block_in_mem_map_section(s);
+            if (section_offset_resp.status == FIRST_FREE_BLOCK_OFFSET_SUCCESS) {        
+            } else {
+                return (get_first_free_block_num_resp) {
+                    status: FAILED_GETTING_SECTION_OFFSET,
+                    block_num: 0};
+            }
+
 		    section_num = s;
 
             free_block_dne = false;
@@ -215,7 +256,8 @@ get_first_free_block_num_resp get_first_free_block_num() {
         return (get_first_free_block_num_resp) {status: NO_FREE_BLOCKS, block_num: 0};
 	}
 
-    unsigned int block_num = section_num * BITS_PER_MEMORY_MAP_SECTION + section_offset;
+    unsigned int block_num = section_num * BITS_PER_MEMORY_MAP_SECTION \
+        + section_offset_resp.offset;
 
 	return (get_first_free_block_num_resp) {status: SUCCESS, block_num: block_num};
 }
@@ -224,27 +266,95 @@ unsigned int get_num_free_blocks() {
     return num_accessible_memory_blocks - num_blocks_in_use;
 }
 
-block_alloc_resp alloc_block() {
+typedef enum get_next_free_frame_status {
+    GET_NEXT_FREE_FRAME_SUCCESS = 0,
+    COULD_NOT_GET_FIRST_FREE_BLOCK = 1
+} get_next_free_frame_status;
 
-	get_first_free_block_num_resp first_free_block_resp = get_first_free_block_num();
+typedef struct get_next_free_frame_resp {
+    get_next_free_frame_status status;
+    physical_address next_free_frame;
+} get_next_free_frame_resp;
 
-    if (first_free_block_resp.status == NO_FREE_MEM_BLOCKS) {
-        return (block_alloc_resp) {status: NO_FREE_BLOCKS,
-                                   buffer_size: 0,
-                                   buffer: NULL};
+get_next_free_frame_resp get_next_free_frame() {
+    get_first_free_block_num_resp free_block_num_resp = get_first_free_block_num();
+    if (free_block_num_resp.status == SUCCESS) {
+    } else {
+        return (get_next_free_frame_resp) {
+            status: COULD_NOT_GET_FIRST_FREE_BLOCK,
+            next_free_frame: 0};
     }
 
-    unsigned int block_num = first_free_block_resp.block_num;
+    return (get_next_free_frame_resp) {
+        status: GET_NEXT_FREE_FRAME_SUCCESS,
+        next_free_frame: BYTES_PER_MEMORY_BLOCK * free_block_num_resp.block_num};
+}
 
+bool frame_dne(physical_address frame_base) {
+    if (frame_base % BYTES_PER_MEMORY_BLOCK != 0) {
+        return true;
+    }
+
+    return false;
+}
+
+bool frame_is_in_use(physical_address frame_base) {
+    unsigned int block_num = frame_base / BYTES_PER_MEMORY_BLOCK;
+    return block_is_set(block_num);
+}
+
+alloc_spec_frame_resp alloc_spec_frame(physical_address frame_base) {
+    if (frame_dne(frame_base)) {
+        return (alloc_spec_frame_resp) {
+            status: ALLOC_SPEC_FRAME_BASE_DNE,
+            buffer_size: 0,
+            buffer: NULL};
+    }
+
+    if (frame_is_in_use(frame_base)) {
+        return (alloc_spec_frame_resp) {
+            status: ALLOC_SPEC_FRAME_IN_USE,
+            buffer_size: 0,
+            buffer: NULL};
+    }
+
+    unsigned int block_num = frame_base / BYTES_PER_MEMORY_BLOCK;
 	set_memory_block(block_num);
 
-	physical_address block_address = block_num * BYTES_PER_MEMORY_BLOCK;
+    return (alloc_spec_frame_resp) {
+        status: ALLOC_SPEC_FRAME_SUCCESS,
+        buffer_size: BYTES_PER_MEMORY_BLOCK,
+        buffer: (void*) frame_base};
+}
 
-    return (block_alloc_resp) {status: BLOCK_ALLOC_SUCCESS,
-                               buffer: (void*) block_address,
+alloc_block_resp alloc_block() {
+    get_next_free_frame_resp next_free_frame_resp = get_next_free_frame();
+    if (next_free_frame_resp.status == GET_NEXT_FREE_FRAME_SUCCESS) {
+    } else {
+        return (alloc_block_resp) {
+            status: COULD_NOT_GET_FREE_FRAME,
+            buffer_size: 0,
+            buffer: NULL};
+    }
+
+    alloc_spec_frame_resp spec_frame_resp = alloc_spec_frame(next_free_frame_resp.next_free_frame);
+    if (spec_frame_resp.status == ALLOC_SPEC_FRAME_SUCCESS) {
+    } else {
+        return (alloc_block_resp) {
+            status: COULD_NOT_ALLOC_SPEC_FRAME,
+            buffer_size: 0,
+            buffer: NULL};
+    }
+
+    return (alloc_block_resp) {status: BLOCK_ALLOC_SUCCESS,
+                               buffer: (void*) spec_frame_resp.buffer,
                                buffer_size: BYTES_PER_MEMORY_BLOCK};
 }
 
 void free_block(physical_address block_address) {
-    free_mem_blocks_of_address_range(block_address, BYTES_PER_MEMORY_BLOCK);
+    free_mem_blocks_of_addr_range(block_address, BYTES_PER_MEMORY_BLOCK);
+}
+
+void clear_phys_mem_config() {
+    set_all_mem_blocks();
 }

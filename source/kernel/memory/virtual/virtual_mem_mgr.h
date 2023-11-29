@@ -1,13 +1,13 @@
 #include "pte.h"
 #include "pde.h"
 
-typedef enum alloc_page_resp {
+typedef enum alloc_page_status {
     SUCCESS = 0,
     NO_MEM_AVAIL = 1,
     GENERAL_FAILURE = 2
-} alloc_page_resp;
+} alloc_page_status;
 
-alloc_page_resp alloc_page(page_table_entry* entry);
+alloc_page_status alloc_page(page_table_entry* entry);
 
 void free_page(page_table_entry* entry);
 
@@ -113,3 +113,24 @@ new_virt_addr_resp new_virt_addr(unsigned int pd_index,
 void clear_vm_init();
 
 page_table new_page_table();
+
+#define ONE_MB 0x10000
+
+#define IO_BASE_ADDR 0
+#define IO_MAX_ADDR ONE_MB - 1
+
+typedef enum init_vm_status {
+    INIT_VM_SUCCESS = 0,
+    COULD_NOT_INIT_IO_MEM = 3,
+    COULD_NOT_INIT_KERNEL_MEM = 4,
+    INIT_VM_GENERAL_FAILURE = 2,
+    INIT_VM_FAILED_ALLOC_PT = 5,
+    INIT_VM_FAILED_ALLOC_ALL_PTES = 6,
+    INIT_VM_FAILED_LOADING_PD = 7
+} init_vm_status;
+
+init_vm_status init_virtual_mem();
+
+page_table* get_page_table(page_dir_entry* entry);
+
+unsigned int get_pages_in_use();

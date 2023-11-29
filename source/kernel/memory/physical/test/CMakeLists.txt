@@ -1,7 +1,9 @@
 set(TEST_LINK_OPTIONS -Wl,--wrap=load_pdbr_asm)
 
 add_cmocka_test(physical_mem
-    SOURCES physical_mem_test.c ${SOURCE_DIR}/kernel/utils/memory.c
+    SOURCES physical_mem_test.c 
+        ${SOURCE_DIR}/kernel/memory/physical/physical_mem.c
+        ${SOURCE_DIR}/kernel/utils/memory.c
         ${SOURCE_DIR}/kernel/utils/errors.c
         ${SOURCE_DIR}/kernel/drivers/vesa-display/vesa_display.c
         ${SOURCE_DIR}/kernel/drivers/vesa-display/video_buffer.c

@@ -1,10 +1,12 @@
 #pragma once
 
+#define MAX_MEM_ADDR_32_BIT 0xffffffff
+
 typedef enum {
-    AVAILABLE_RAM = (unsigned int) 1,
-    ACPI_INFO = (unsigned int) 3,
-    RESERVED_MEMORY = (unsigned int) 4,
-    DEFECTIVE_RAM_MODULES = (unsigned int) 5
+    AVAILABLE_RAM = 1,
+    ACPI_INFO = 3,
+    RESERVED_MEMORY = 4,
+    DEFECTIVE_RAM_MODULES = 5
 } mem_range_type;
 
 #pragma pack(push, 1)
@@ -25,8 +27,6 @@ typedef struct mem_map_entry {
 } mem_map_entry;
 #pragma pack(pop)
 
-// A struct representing what the boot sector provides
-// the kernel upon entry.
 #pragma pack(push, 1)
 typedef struct boot_info {
     unsigned int num_kb_in_mem;
@@ -35,25 +35,47 @@ typedef struct boot_info {
 } boot_info;
 #pragma pack(pop)
 
-void init_phys_mem(struct boot_info* boot_info);
+void config_phys_mem(struct boot_info* boot_info);
 
-typedef enum block_alloc_stat {
+typedef enum alloc_block_status {
     BLOCK_ALLOC_SUCCESS = 0, 
-    NO_FREE_BLOCKS = 1
-} block_alloc_stat;
+    NO_FREE_BLOCKS = 1,
+    COULD_NOT_GET_FREE_FRAME = 2,
+    COULD_NOT_ALLOC_SPEC_FRAME = 3
+} alloc_block_status;
 
 #define BYTES_PER_MEMORY_BLOCK 4096
 
-typedef struct block_alloc_resp {
-    block_alloc_stat status;
+typedef struct alloc_block_resp {
+    alloc_block_status status;
     unsigned int buffer_size;
     void* buffer;    
-} block_alloc_resp;
+} alloc_block_resp;
 
-block_alloc_resp alloc_block();
+alloc_block_resp alloc_block();
 
 typedef unsigned int physical_address;
 
 void free_block(physical_address block_address);
 
 unsigned int get_num_blocks_in_use();
+
+typedef enum alloc_spec_frame_status {
+    ALLOC_SPEC_FRAME_SUCCESS = 0,
+    ALLOC_SPEC_FRAME_BASE_DNE = 1,
+    ALLOC_SPEC_FRAME_IN_USE = 2
+} alloc_spec_frame_status;
+
+typedef struct alloc_spec_frame_resp {
+    alloc_spec_frame_status status;
+    unsigned int buffer_size;
+    void* buffer;
+} alloc_spec_frame_resp;
+
+alloc_spec_frame_resp alloc_spec_frame(physical_address frame);
+
+void clear_phys_mem_config();
+
+unsigned int get_num_blocks_in_use();
+
+unsigned int get_num_free_blocks();

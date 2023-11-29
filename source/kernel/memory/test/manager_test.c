@@ -11,8 +11,8 @@
 
 #define FAKE_BYTES_PER_MEM_BLOCK 4096
 
-block_alloc_resp __wrap_alloc_block() {
-    block_alloc_resp* resp = mock_ptr_type(block_alloc_resp*);
+alloc_block_resp __wrap_alloc_block() {
+    alloc_block_resp* resp = mock_ptr_type(alloc_block_resp*);
     return *resp;
 }
 
@@ -20,7 +20,7 @@ block_alloc_resp __wrap_alloc_block() {
 #define NUM_BYTES_HALLOCED 20
 char fake_physical_mem_block[NUM_BYTES_HALLOCED];
 
-block_alloc_resp block_alloc_success_resp = \
+alloc_block_resp block_alloc_success_resp = \
     {status: BLOCK_ALLOC_SUCCESS, buffer: &fake_physical_mem_block};
 
 static void alloc_page(void **state) {
@@ -43,7 +43,7 @@ static void alloc_page(void **state) {
     }
 }
 
-block_alloc_resp no_free_blocks_resp = {status: NO_FREE_BLOCKS, buffer: NULL};
+alloc_block_resp no_free_blocks_resp = {status: NO_FREE_BLOCKS, buffer: NULL};
 
 static void halloc_not_enough_mem(void **state) {
     (void) state;

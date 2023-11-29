@@ -8,12 +8,11 @@ typedef enum page_table_entry_attrib {
     PTE_WRITABLE = 2,
     PTE_USER = 4,
     PTE_WRITE_THROUGH = 8,
-    PTE_NOT_CACHEABLE = 0x10,
+    PTE_PAGE_LVL_CACHE_DISABLE = 0x10,
     PTE_ACCESSED = 0x20,
     PTE_DIRTY = 0x40,
     PTE_PAT = 0x80,
     PTE_CPU_GLOBAL = 0x100,
-    PTE_LV4_GLOBAL = 0x200,
 } page_table_entry_attrib;
 
 typedef unsigned int page_table_entry;

@@ -39,7 +39,7 @@ static void set_pt_addr_test(void **state) {
     physical_address pt_addr = 0x1234;
     page_dir_entry fake_entry = 0;
 
-    set_pt_base_addr(&fake_entry, pt_addr);
+    set_pt_addr(&fake_entry, pt_addr);
 
     page_dir_entry correct_res = pt_addr << 12;
 
@@ -86,15 +86,6 @@ static void pde_is_writeable_test(void **state) {
     assert_true(is_writeable);
 }
 
-static void get_page_table_base_addr_test(void **state) {
-    (void) state;
-
-    physical_address pt_addr = 0x1234;
-    page_dir_entry fake_entry = pt_addr << 12;
-
-    assert_true(get_page_table_base_addr(&fake_entry) == pt_addr);
-}
-
 static void enable_global_test(void **state) {
     (void) state;
 
@@ -125,6 +116,18 @@ static void new_blank_pde_test(void **state) {
     assert_true(blank_entry == new_pde());
 }
 
+static void pde_is_kernel_space_test(void **state) {
+    (void) state;
+
+    page_dir_entry kernel_entry = 0;
+    add_pde_attrib(&kernel_entry, PDE_USER);
+    assert_true(is_pde_attrib_set(&kernel_entry, PDE_USER));
+
+    rm_pde_attrib(&kernel_entry, PDE_USER);
+
+    assert_true(is_kernel_pde(&kernel_entry));
+}
+
 int main() {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(add_pde_attrib_test),
@@ -134,10 +137,10 @@ int main() {
         cmocka_unit_test(pde_is_user_test),
         cmocka_unit_test(pde_is_4mb_test),
         cmocka_unit_test(pde_is_writeable_test),
-        cmocka_unit_test(get_page_table_base_addr_test),
         cmocka_unit_test(enable_global_test),
         cmocka_unit_test(is_attrib_set_test),
-        cmocka_unit_test(new_blank_pde_test)
+        cmocka_unit_test(new_blank_pde_test),
+        cmocka_unit_test(pde_is_kernel_space_test)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
