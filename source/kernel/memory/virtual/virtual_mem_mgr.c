@@ -2,7 +2,9 @@
 #include "kernel/memory/virtual/pte.h"
 #include "kernel/memory/physical/physical_mem.h"
 #include "stddef.h"
-#include "kernel/memory/virtual/pde.h"
+#include "kernel/memory/virtual/pde/pde.h"
+#include "stdio.h"
+#include "kernel/memory/virtual/pde/get_pt_base_addr.h"
 
 static unsigned int pages_in_use;
 
@@ -11,19 +13,19 @@ unsigned int get_pages_in_use() {
 }
 
 alloc_page_status alloc_page(page_table_entry* entry) {
-    alloc_block_resp resp = alloc_block();
-    if (resp.status == BLOCK_ALLOC_SUCCESS) {
-    } else if (resp.status == NO_FREE_BLOCKS) {
-        return NO_MEM_AVAIL;
+    alloc_block_resp phys_block_resp = alloc_block();
+    if (phys_block_resp.status == ALLOC_BLOCK_SUCCESS) {
+    } else if (phys_block_resp.status == NO_FREE_BLOCKS) {
+        return ALLOC_PAGE_NO_MEM_AVAIL;
     } else {
-        return GENERAL_FAILURE;
+        return ALLOC_PAGE_GEN_FAILURE;
     }
 
-    set_pte_frame_base_addr(entry, (physical_address) resp.buffer);
+    set_pte_frame_base_addr(entry, phys_block_resp.buffer);
     add_pte_attrib(entry, PTE_PRESENT);
     pages_in_use += 1;
 
-    return SUCCESS;
+    return ALLOC_PAGE_SUCCESS;
 }
 
 void free_page(page_table_entry* entry) {
@@ -119,7 +121,7 @@ typedef enum init_pde_status {
 
 init_pde_status init_pde(page_dir_entry* pde_to_init) {
     alloc_block_resp resp = alloc_block();
-    if (resp.status == BLOCK_ALLOC_SUCCESS) {
+    if (resp.status == ALLOC_BLOCK_SUCCESS) {
     } else if (resp.status == NO_FREE_BLOCKS) {
         return INIT_PDE_NOT_ENOUGH_MEM;
     } else {
@@ -131,7 +133,7 @@ init_pde_status init_pde(page_dir_entry* pde_to_init) {
     }
 
     page_table_entry* new_pt = (page_table_entry*) resp.buffer;
-    set_pt_addr(pde_to_init, (physical_address) new_pt);
+    set_pt_base_addr(pde_to_init, (physical_address) new_pt);
 
     add_pde_attrib(pde_to_init, PDE_PRESENT);
     add_pde_attrib(pde_to_init, PDE_WRITABLE);
@@ -139,7 +141,7 @@ init_pde_status init_pde(page_dir_entry* pde_to_init) {
     return INIT_PDE_SUCCESS;
 }
 
-map_page_status map_page(physical_address new_page_base_addr, virtual_address virt_addr) {
+map_page_status map_page_base_addr(physical_address new_page_base_addr, virtual_address virt_addr) {
     unsigned int pd_index = get_page_dir_index(virt_addr);
     page_dir_entry* pde = &current_page_dir -> entries[pd_index];
 
@@ -158,7 +160,7 @@ map_page_status map_page(physical_address new_page_base_addr, virtual_address vi
         }
     }   
 
-    page_table* pt = (page_table*) get_page_table(pde);
+    page_table* pt = (page_table*) get_pt_base_addr(pde);
     page_table_entry* pte = get_page_table_entry(pt, virt_addr);
 
     set_pte_frame_base_addr(pte, new_page_base_addr);
@@ -178,9 +180,6 @@ page_dir new_page_dir() {
 }
 
 get_phys_addr_resp get_phys_addr(virtual_address virt_addr) {
-
-    // need to change this because this section
-    // can easily grab the current page dir variable
     get_curr_pd_resp resp = get_curr_pd();
     if (resp.status == GET_CURR_PD_SUCCESS) {
     } else if (resp.status == PD_INIT_NEEDED) {
@@ -196,15 +195,16 @@ get_phys_addr_resp get_phys_addr(virtual_address virt_addr) {
     unsigned int pd_index = get_page_dir_index(virt_addr);
     page_dir_entry* pde = &resp.curr_pd -> entries[pd_index];
 
-    page_table* pt = (page_table*) get_page_table(pde);
+    page_table* pt = (page_table*) get_pt_base_addr(pde);
+
     unsigned int pt_index = get_page_table_index(virt_addr);
     page_table_entry* pte = &pt -> entries[pt_index];
 
-    physical_address frame_addr = get_pte_frame_base(pte);
+    physical_address frame_base_addr = get_pte_frame_base(pte);
 
     unsigned int page_offset = get_frame_offset(virt_addr);
 
-    physical_address translation = frame_addr + page_offset;
+    physical_address translation = frame_base_addr + page_offset;
 
     return (get_phys_addr_resp) {status: GET_PHYS_ADDR_SUCCESS, phys_addr: translation};
 }
@@ -274,7 +274,7 @@ new_virt_addr_resp new_virt_addr(unsigned int pd_index,
                                  virt_addr: new_virt_addr};
 }
 
-void clear_vm_init() {
+void clear_vm_config() {
     pd_has_been_loaded = false;
 }
 
@@ -315,10 +315,10 @@ alloc_all_ptes_status alloc_all_ptes(page_table* pt) {
     alloc_all_ptes_status status = ALLOC_ALL_PTE_SUCCESS;
     for (int i = 0; i < ENTRIES_PER_PAGE_TABLE; i++) {
         alloc_page_status ap_status = alloc_page(&pt -> entries[i]);
-        if (ap_status == SUCCESS) {
-        } else if (ap_status == NO_MEM_AVAIL) {
+        if (ap_status == ALLOC_PAGE_SUCCESS) {
+        } else if (ap_status == ALLOC_PAGE_NO_MEM_AVAIL) {
             status = ALLOC_ALL_PTE_NOT_ENOUGH_MEM;
-        } else if (GENERAL_FAILURE) {
+        } else if (ALLOC_PAGE_GEN_FAILURE) {
             status = ALLOC_ALL_PTE_GENERAL_FAILURE;
         } else {
             status = ALLOC_ALL_PTE_GENERAL_FAILURE;
@@ -346,7 +346,7 @@ typedef struct alloc_pt_resp {
 
 alloc_pt_resp alloc_page_table() {
     alloc_block_resp ab_resp = alloc_block();
-    if (ab_resp.status == BLOCK_ALLOC_SUCCESS) {
+    if (ab_resp.status == ALLOC_BLOCK_SUCCESS) {
     } else if (ab_resp.status == NO_FREE_BLOCKS) {
         return (alloc_pt_resp) {
             status: ALLOC_PT_COULD_NOT_ALLOC_BLOCK,
@@ -387,10 +387,6 @@ bool is_io_virt_addr(virtual_address virt_addr) {
     return false;
 }
 
-#define THREE_GB 0xc0000000
-#define USER_SPACE_BASE_ADDR IO_MAX_ADDR + 1
-#define USER_SPACE_MAX_ADDR THREE_GB - 1
-
 bool is_a_user_virt_addr(virtual_address addr) {
     if (addr >= USER_SPACE_BASE_ADDR &&
         addr <= USER_SPACE_MAX_ADDR) {
@@ -400,14 +396,9 @@ bool is_a_user_virt_addr(virtual_address addr) {
     return false;
 }
 
-#define MAX_32_BIT_MEM_ADDR 0xffffffff
-
-#define KERNEL_SPACE_BASE_ADDR USER_SPACE_BASE_ADDR + 1
-#define KERNEL_SPACE_MAX_ADDR MAX_32_BIT_MEM_ADDR
-
 bool is_a_kernel_virt_addr(virtual_address addr) {
-    if (addr >= KERNEL_SPACE_BASE_ADDR &&
-        addr <= KERNEL_SPACE_MAX_ADDR) {
+    if (addr >= KERNEL_SPACE_BASE_VIRT_ADDR &&
+        addr <= KERNEL_SPACE_MAX_VIRT_ADDR) {
             return true;
     }
 
@@ -416,9 +407,67 @@ bool is_a_kernel_virt_addr(virtual_address addr) {
 
 void free_pd(page_dir* pd) {
     for (int i = 0; i < ENTRIES_PER_PAGE_DIR; i++) {
-        page_table* pt = get_page_table(&pd -> entries[i]);
+        page_table* pt = (page_table*) get_pt_base_addr(&pd -> entries[i]);
         free_pt(pt);
     }
+}
+
+typedef enum translate_to_kernel_phys_addr_status {
+    TRANSLATE_KERNEL_VA_TO_PA_SUCCESS = 0,
+    NOT_A_KERNEL_VIRT_ADDR = 1
+}
+
+physical_address translate_to_kernel_phys_addr(virtual_address virt_addr) {
+    if (is_a_kernel_virt_addr(kernel_virt_addr)) {
+        extern KERNEL_PHYS_ADDRESS;
+        physical_address kernel_phys_addr = \
+            virt_addr - (KERNEL_SPACE_BASE_VIRT_ADDR - KERNEL_PHYS_ADDRESS);
+        return 
+    }
+
+}
+
+typedef enum init_kernel_virt_mem_status {
+    INIT_KERNEL_VM_SUCCESS = 0,
+    INIT_KERNEL_FAILED_ALLOC_PT = 1,
+    INIT_KERNEL_FAILED_ALLOC_SPEC_FRAME = 2
+} init_kernel_virt_mem_status;
+
+init_kernel_virtual_mem(page_dir* curr_pd) {
+    init_kernel_virt_mem_status failure_status = INIT_KERNEL_VM_SUCCESS;
+    for (virtual_address kernel_virt_addr = KERNEL_SPACE_BASE_VIRT_ADDR;
+         kernel_virt_addr <= KERNEL_SPACE_MAX_ADDR;
+         kernel_virt_addr += BYTES_PER_PAGE) {
+
+        page_dir_entry* curr_pde = get_page_dir_entry(curr_pd, kernel_virt_addr);
+
+        if (is_a_pt_base_addr(kernel_virt_addr)) {
+            alloc_pt_resp pt_resp = alloc_page_table();
+            if (pt_resp.status == ALLOC_PT_SUCCESS) {
+            } else {
+                failure_status = INIT_KERNEL_FAILED_ALLOC_PT;
+                break;
+            }
+
+            set_pt_base_addr(curr_pde, (physical_address) pt_resp.pt);
+        }
+
+        page_table* curr_pt = (page_table*) get_pt_base_addr(curr_pde);
+        page_table_entry* curr_pte = get_page_table_entry(curr_pt, kernel_virt_addr);
+
+        add_pde_attrib(curr_pde, PDE_PRESENT);
+        add_pte_attrib(curr_pte, PTE_PRESENT);
+
+        physical_address kernel_phys_addr = translate_to_kernel_phys_addr(kernel_virt_addr);
+        alloc_spec_frame_resp resp = alloc_spec_frame(kernel_phys_addr);
+        if (resp.status == ALLOC_SPEC_FRAME_SUCCESS) {
+            set_pte_frame_base_addr(pte);
+        } else {
+            return INIT_KERNEL_FAILED_ALLOC_SPEC_FRAME;
+        }
+    }
+
+    return INIT_KERNEL_VM_SUCCESS;
 }
 
 init_vm_status init_virtual_mem() {
@@ -427,7 +476,7 @@ init_vm_status init_virtual_mem() {
     bool failed_setting_up_pd = false;
     init_vm_status failure_status = INIT_VM_SUCCESS;
     for (virtual_address virt_addr = 0;
-         virt_addr <= MAX_32_BIT_MEM_ADDR;
+         virt_addr <= MAX_32_BIT_VIRT_MEM_ADDR;
          virt_addr += BYTES_PER_PAGE) {
 
         page_dir_entry* curr_pde = get_page_dir_entry(&default_pd, virt_addr);
@@ -437,17 +486,14 @@ init_vm_status init_virtual_mem() {
             if (pt_resp.status == ALLOC_PT_SUCCESS) {
             } else {
                 failure_status = INIT_VM_FAILED_ALLOC_PT;
+                break;
             }
 
-            set_pt_addr(curr_pde, (physical_address) pt_resp.pt);
+            set_pt_base_addr(curr_pde, (physical_address) pt_resp.pt);
         }
 
-        // i should add something that checks for whether or not
-        // we're in paging mode yet
-        page_table* curr_pt = get_page_table(curr_pde);
+        page_table* curr_pt = (page_table*) get_pt_base_addr(curr_pde);
         page_table_entry* curr_pte = get_page_table_entry(curr_pt, virt_addr);
-
-        // make sure to alloc the pages.
 
         add_pde_attrib(curr_pde, PDE_PRESENT);
         add_pte_attrib(curr_pte, PTE_PRESENT);
@@ -455,21 +501,22 @@ init_vm_status init_virtual_mem() {
         if (is_io_virt_addr(virt_addr)) {
             alloc_spec_frame((physical_address) virt_addr);
         } else if (is_a_user_virt_addr(virt_addr)) {
+
+            // can use a general address
             add_pde_attrib(curr_pde, PDE_USER);
             add_pte_attrib(curr_pte, PTE_USER);
         } else if (is_a_kernel_virt_addr(virt_addr)) {
+
+            // need to convert to the right address
             alloc_spec_frame((physical_address) virt_addr);
+        } else {
+            failure_status = INIT_VM_UNKNOWN_ADDR;
+            break;
         }
     }
 
-    // as i iterate through the virtual addresses
-    // i need to check whether i'm in io, user, or
-    // kernel space.
-    //
-    // does the address of the alloced memory block
-    // even mean anything? yes it does. we need to
-    // be able to reliably map, for example, the
-    // io space to 0 -> 0xffff.
+    // what if i do io, then kernel, then the user space
+    // can be alloced anonymously
 
     if (failed_setting_up_pd) {
         free_pd(&default_pd);
@@ -485,9 +532,4 @@ init_vm_status init_virtual_mem() {
     }
 
     return INIT_VM_SUCCESS;
-}
-
-page_table* get_page_table(page_dir_entry* entry) {
-    unsigned int raw_pt_addr = *entry >> 12;
-    return (page_table*) raw_pt_addr;
 }

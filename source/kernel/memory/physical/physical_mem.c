@@ -17,7 +17,7 @@ unsigned int mem_map[NUM_MEMORY_MAP_SECTIONS];
 static unsigned int num_accessible_memory_blocks;
 
 unsigned int get_mem_map_section(unsigned int block_num) {
-    return block_num / BITS_PER_MEMORY_MAP_SECTION;
+    return block_num / BITS_PER_MEMORY_MAP_SECTION - 1;
 }
 
 unsigned int get_mem_map_section_offset_mask(unsigned int block_num) {
@@ -26,10 +26,10 @@ unsigned int get_mem_map_section_offset_mask(unsigned int block_num) {
 }
 
 void clear_mem_block(unsigned int block_num) {
-    unsigned int block_section = get_mem_map_section(block_num);
+    unsigned int map_section = get_mem_map_section(block_num);
     unsigned int block_mask = get_mem_map_section_offset_mask(block_num);
 
-    mem_map[block_section] &= ~ block_mask;
+    mem_map[map_section] &= ~ block_mask;
 }
 
 static unsigned int num_blocks_in_use;
@@ -58,14 +58,6 @@ void set_memory_block(unsigned int block_num) {
 
     if ((mem_map[block_section] & block_mask) == 0) {
         num_blocks_in_use += 1;
-
-        if (num_blocks_in_use > 786432) {
-            printf("block number: %x\n", block_num);
-            printf("block section: %x\n", block_section);
-            printf("block mask: %x\n", block_mask);
-            printf("memory map, block section %x: %x", block_section, mem_map[block_section]);
-            printf("\n");
-        }
     }
 
     mem_map[block_section] |= block_mask;
@@ -76,28 +68,19 @@ void set_mem_blocks_of_address_range(physical_address base_addr,
 
     unsigned int end_addr = base_addr + range_length - 1;
 
-    printf("base address: %x\n", base_addr);
-    printf("end address: %x\n", end_addr);
-
 	unsigned int start_block_num = base_addr / BYTES_PER_MEMORY_BLOCK;
 	unsigned int end_block_num = end_addr / BYTES_PER_MEMORY_BLOCK;
-
-    printf("start block number: %x\n", start_block_num);
-    printf("end block number: %x\n", end_block_num);
-    printf("number of blocks to set: %x\n", end_block_num - start_block_num + 1);
 
     for (unsigned int b = start_block_num; b <= end_block_num; b++) {
         set_memory_block(b);
     }
 }
 
-void alloc_mem_for_mem_map_entry(mem_map_entry* entry) {
+void classify_mem_region(mem_map_entry* entry) {
     unsigned int entry_base_addr = entry -> base_addr_low;
     unsigned int region_length = entry -> length_in_bytes_low;
 
-    mem_range_type entry_type = entry -> type;
-
-    if (entry_type == AVAILABLE_RAM) {
+    if (entry -> type == AVAILABLE_RAM) {
         free_mem_blocks_of_addr_range(entry_base_addr, region_length);
     } else {
         set_mem_blocks_of_address_range(entry_base_addr, region_length);
@@ -114,36 +97,28 @@ void config_mem_regions(boot_info* boot_info) {
     for (unsigned int i = 0; i < num_mem_map_entries; i++) {
         mem_map_entry* entry = mem_map_entry_list_base_addr + i;
 
-        alloc_mem_for_mem_map_entry(entry);
-
-        printf("number of memory blocks after allocing entry: %d\n", num_blocks_in_use);
-        printf("i of entry just alloced: %d\n", i);
+        classify_mem_region(entry);
     }
 }
 
 void set_all_mem_blocks() {
-    // unsigned int num_bytes_to_null_out = sizeof(mem_map);
-    // set_memory(mem_map, 0xff, num_bytes_to_null_out);
     for (unsigned int i = 0; i < NUM_MEMORY_MAP_SECTIONS; i++) {
         mem_map[i] = 0xffffffff;
     }
-    
-    printf("last memory map section: %x\n", mem_map[NUM_MEMORY_MAP_SECTIONS - 1]);
+
     num_blocks_in_use = num_accessible_memory_blocks;
 }
+
+#define BYTES_PER_KB 1024
 
 void config_phys_mem(boot_info* boot_info) {
 
 	unsigned int num_kb_in_mem = boot_info -> num_kb_in_mem;
-    unsigned int kb_per_mem_block = BYTES_PER_MEMORY_BLOCK / 1024;
+    unsigned int kb_per_mem_block = BYTES_PER_MEMORY_BLOCK / BYTES_PER_KB;
 	num_accessible_memory_blocks = num_kb_in_mem / kb_per_mem_block;
-    printf("number of accessible memory blocks: %d\n", num_accessible_memory_blocks);
-    printf("number of memory blocks in use in config_phys_mem: %d\n", num_blocks_in_use);
 
     set_all_mem_blocks();
-    printf("number of memory blocks in use after setting all blocks: %d\n", num_blocks_in_use);
 	config_mem_regions(boot_info);
-    printf("number of memory blocks in use after configging mem regions: %d\n", num_blocks_in_use);
 }
 
 unsigned int get_num_mem_map_sections() {
@@ -219,7 +194,7 @@ first_free_block_offset_resp get_offset_of_first_free_block_in_mem_map_section(u
 }
 
 typedef enum get_first_free_block_num_status {
-    SUCCESS = 0,
+    GET_FIRST_FREE_BLOCK_NUM_SUCCESS = 0,
     NO_FREE_MEM_BLOCKS = 1,
     FAILED_GETTING_SECTION_OFFSET = 2
 } get_first_free_block_num_status;
@@ -230,7 +205,6 @@ typedef struct get_first_free_block_num_resp {
 } get_first_free_block_num_resp;
 
 get_first_free_block_num_resp get_first_free_block_num() {
-
     bool free_block_dne = true;
     unsigned int num_mem_map_sections = get_num_mem_map_sections();
     unsigned int section_num;
@@ -259,7 +233,7 @@ get_first_free_block_num_resp get_first_free_block_num() {
     unsigned int block_num = section_num * BITS_PER_MEMORY_MAP_SECTION \
         + section_offset_resp.offset;
 
-	return (get_first_free_block_num_resp) {status: SUCCESS, block_num: block_num};
+	return (get_first_free_block_num_resp) {status: GET_FIRST_FREE_BLOCK_NUM_SUCCESS, block_num: block_num};
 }
 
 unsigned int get_num_free_blocks() {
@@ -278,7 +252,7 @@ typedef struct get_next_free_frame_resp {
 
 get_next_free_frame_resp get_next_free_frame() {
     get_first_free_block_num_resp free_block_num_resp = get_first_free_block_num();
-    if (free_block_num_resp.status == SUCCESS) {
+    if (free_block_num_resp.status == GET_FIRST_FREE_BLOCK_NUM_SUCCESS) {
     } else {
         return (get_next_free_frame_resp) {
             status: COULD_NOT_GET_FIRST_FREE_BLOCK,
@@ -334,7 +308,7 @@ alloc_block_resp alloc_block() {
         return (alloc_block_resp) {
             status: COULD_NOT_GET_FREE_FRAME,
             buffer_size: 0,
-            buffer: NULL};
+            buffer: 0};
     }
 
     alloc_spec_frame_resp spec_frame_resp = alloc_spec_frame(next_free_frame_resp.next_free_frame);
@@ -343,12 +317,12 @@ alloc_block_resp alloc_block() {
         return (alloc_block_resp) {
             status: COULD_NOT_ALLOC_SPEC_FRAME,
             buffer_size: 0,
-            buffer: NULL};
+            buffer: 0};
     }
 
-    return (alloc_block_resp) {status: BLOCK_ALLOC_SUCCESS,
-                               buffer: (void*) spec_frame_resp.buffer,
-                               buffer_size: BYTES_PER_MEMORY_BLOCK};
+    return (alloc_block_resp) {status: ALLOC_BLOCK_SUCCESS,
+                               buffer: spec_frame_resp.buffer,
+                               buffer_size: BYTES_PER_MEMORY_UNIT};
 }
 
 void free_block(physical_address block_address) {

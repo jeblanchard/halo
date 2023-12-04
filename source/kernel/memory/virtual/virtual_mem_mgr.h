@@ -1,10 +1,10 @@
 #include "pte.h"
-#include "pde.h"
+#include "pde/pde.h"
 
 typedef enum alloc_page_status {
-    SUCCESS = 0,
-    NO_MEM_AVAIL = 1,
-    GENERAL_FAILURE = 2
+    ALLOC_PAGE_SUCCESS = 0,
+    ALLOC_PAGE_NO_MEM_AVAIL = 1,
+    ALLOC_PAGE_GEN_FAILURE = 2
 } alloc_page_status;
 
 alloc_page_status alloc_page(page_table_entry* entry);
@@ -17,9 +17,11 @@ unsigned int get_page_table_index(virtual_address addr);
 
 #define ENTRIES_PER_PAGE_TABLE 1024
 
+#pragma pack(push, 1)
 typedef struct page_table {
     page_table_entry entries[ENTRIES_PER_PAGE_TABLE];
 } page_table;
+#pragma pack(pop)
 
 page_table_entry* get_page_table_entry(page_table* page_table,
                                        virtual_address addr);
@@ -61,7 +63,7 @@ typedef enum map_page_status {
     MP_SUCCESS = 2
 } map_page_status;
 
-map_page_status map_page(physical_address phys_addr, virtual_address virt_addr);
+map_page_status map_page_base_addr(physical_address phys_addr, virtual_address virt_addr);
 
 page_dir new_page_dir();
 
@@ -110,14 +112,23 @@ new_virt_addr_resp new_virt_addr(unsigned int pd_index,
                                  unsigned int pt_index,
                                  unsigned int page_offset);
 
-void clear_vm_init();
+void clear_vm_config();
 
 page_table new_page_table();
 
-#define ONE_MB 0x10000
+#define MAX_32_BIT_VIRT_MEM_ADDR 0xffffffff
 
 #define IO_BASE_ADDR 0
+
+#define ONE_MB 0x10000
 #define IO_MAX_ADDR ONE_MB - 1
+
+#define THREE_GB 0xc0000000
+#define USER_SPACE_BASE_ADDR IO_MAX_ADDR + 1
+#define USER_SPACE_MAX_ADDR THREE_GB - 1
+
+#define KERNEL_SPACE_BASE_VIRT_ADDR USER_SPACE_BASE_ADDR + 1
+#define KERNEL_SPACE_MAX_VIRT_ADDR MAX_32_BIT_VIRT_MEM_ADDR
 
 typedef enum init_vm_status {
     INIT_VM_SUCCESS = 0,
@@ -131,6 +142,6 @@ typedef enum init_vm_status {
 
 init_vm_status init_virtual_mem();
 
-page_table* get_page_table(page_dir_entry* entry);
+physical_address get_page_table_base_addr(page_dir_entry* entry);
 
 unsigned int get_pages_in_use();

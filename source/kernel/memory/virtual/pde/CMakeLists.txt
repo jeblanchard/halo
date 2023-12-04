@@ -1,14 +1,8 @@
 add_subdirectory(test)
-add_subdirectory(pde)
 
 set(C_SOURCES
-    pte.c
-    virtual_mem_mgr.c)
-
-set(ASM_SOURCES
-    load_pdbr.asm
-    flush_tlb_entry.asm
-)
+    pde.c
+    get_pt_base_addr.c)
 
 include(GetAbsolutePaths)
 get_absolute_paths("${C_SOURCES}" C_SOURCES_ABS)

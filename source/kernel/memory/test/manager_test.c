@@ -21,7 +21,7 @@ alloc_block_resp __wrap_alloc_block() {
 char fake_physical_mem_block[NUM_BYTES_HALLOCED];
 
 alloc_block_resp block_alloc_success_resp = \
-    {status: BLOCK_ALLOC_SUCCESS, buffer: &fake_physical_mem_block};
+    {status: ALLOC_BLOCK_SUCCESS, buffer: &fake_physical_mem_block};
 
 static void alloc_page(void **state) {
     (void) state;

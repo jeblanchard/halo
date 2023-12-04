@@ -25,7 +25,7 @@ bool pte_is_writeable(page_table_entry* entry) {
     return (*entry & PTE_WRITABLE);
 }
 
-bool pte_is_present(page_table_entry* entry) {
+bool page_is_present(page_table_entry* entry) {
     return (*entry & PTE_PRESENT);
 }
 
@@ -35,4 +35,8 @@ bool is_pte_attrib_set(page_table_entry* entry, page_table_entry_attrib attrib) 
 
 page_table_entry new_pte() {
     return (page_table_entry) 0;
+}
+
+bool frame_is_missing(page_table_entry* entry) {
+    return !page_is_present(entry);
 }

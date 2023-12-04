@@ -38,7 +38,7 @@ typedef struct boot_info {
 void config_phys_mem(struct boot_info* boot_info);
 
 typedef enum alloc_block_status {
-    BLOCK_ALLOC_SUCCESS = 0, 
+    ALLOC_BLOCK_SUCCESS = 0, 
     NO_FREE_BLOCKS = 1,
     COULD_NOT_GET_FREE_FRAME = 2,
     COULD_NOT_ALLOC_SPEC_FRAME = 3
@@ -46,15 +46,15 @@ typedef enum alloc_block_status {
 
 #define BYTES_PER_MEMORY_BLOCK 4096
 
+typedef unsigned int physical_address;
+
 typedef struct alloc_block_resp {
     alloc_block_status status;
     unsigned int buffer_size;
-    void* buffer;    
+    physical_address buffer;    
 } alloc_block_resp;
 
 alloc_block_resp alloc_block();
-
-typedef unsigned int physical_address;
 
 void free_block(physical_address block_address);
 
@@ -69,7 +69,7 @@ typedef enum alloc_spec_frame_status {
 typedef struct alloc_spec_frame_resp {
     alloc_spec_frame_status status;
     unsigned int buffer_size;
-    void* buffer;
+    physical_address buffer;
 } alloc_spec_frame_resp;
 
 alloc_spec_frame_resp alloc_spec_frame(physical_address frame);

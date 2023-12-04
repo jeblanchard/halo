@@ -4,18 +4,12 @@ add_cmocka_test(pte
     LINK_LIBRARIES ${CMOCKA_LIBRARY}
 )
 
-add_cmocka_test(pde
-    SOURCES pde_test.c ${SOURCE_DIR}/kernel/memory/virtual/pde.c
-    COMPILE_OPTIONS ${DEFAULT_GCC_OPTIONS} ${CMOCKA_GCC_INCLUDE_OPTION}
-    LINK_LIBRARIES ${CMOCKA_LIBRARY}
-)
-
 set(TEST_LINK_OPTIONS -Wl,--wrap=alloc_block,--wrap=free_block,--wrap=load_pdbr_asm)
-set(TEST_LINK_OPTIONS ${TEST_LINK_OPTIONS},--wrap=get_page_table_base_addr,--wrap=get_pte_frame_base)
+set(TEST_LINK_OPTIONS ${TEST_LINK_OPTIONS},--wrap=get_pt_base_addr)
 
 add_cmocka_test(virtual_mem_manager
     SOURCES virtual_mem_mgr_test.c ${SOURCE_DIR}/kernel/memory/virtual/virtual_mem_mgr.c
-        ${SOURCE_DIR}/kernel/memory/virtual/pte.c ${SOURCE_DIR}/kernel/memory/virtual/pde.c
+        ${SOURCE_DIR}/kernel/memory/virtual/pte.c ${SOURCE_DIR}/kernel/memory/virtual/pde/pde.c
         ${SOURCE_DIR}/kernel/memory/physical/physical_mem.c
         ${SOURCE_DIR}/kernel/utils/memory.c
     COMPILE_OPTIONS ${DEFAULT_GCC_OPTIONS} ${CMOCKA_GCC_INCLUDE_OPTION}

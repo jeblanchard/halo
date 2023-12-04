@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "kernel/memory/virtual/pde.h"
+#include "kernel/memory/virtual/pde/pde.h"
 
 static void add_pde_attrib_test(void **state) {
     (void) state;
@@ -39,7 +39,7 @@ static void set_pt_addr_test(void **state) {
     physical_address pt_addr = 0x1234;
     page_dir_entry fake_entry = 0;
 
-    set_pt_addr(&fake_entry, pt_addr);
+    set_pt_base_addr(&fake_entry, pt_addr);
 
     page_dir_entry correct_res = pt_addr << 12;
 
@@ -86,18 +86,6 @@ static void pde_is_writeable_test(void **state) {
     assert_true(is_writeable);
 }
 
-static void enable_global_test(void **state) {
-    (void) state;
-
-    page_dir_entry fake_entry = 0;
-
-    enable_global(&fake_entry);
-
-    page_dir_entry correct_entry = PDE_CPU_GLOBAL;
-
-    assert_true(fake_entry == correct_entry);
-}
-
 static void is_attrib_set_test(void **state) {
     (void) state;
 
@@ -137,10 +125,9 @@ int main() {
         cmocka_unit_test(pde_is_user_test),
         cmocka_unit_test(pde_is_4mb_test),
         cmocka_unit_test(pde_is_writeable_test),
-        cmocka_unit_test(enable_global_test),
         cmocka_unit_test(is_attrib_set_test),
         cmocka_unit_test(new_blank_pde_test),
-        cmocka_unit_test(pde_is_kernel_space_test)
+        cmocka_unit_test(pde_is_kernel_space_test),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

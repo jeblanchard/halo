@@ -8,7 +8,7 @@ halloc_resp halloc(unsigned int num_bytes) {
 
     alloc_block_resp alloc_block_resp = alloc_block();
 
-    if (alloc_block_resp.status == BLOCK_ALLOC_SUCCESS) {
+    if (alloc_block_resp.status == ALLOC_BLOCK_SUCCESS) {
         return (halloc_resp) {status: HALLOC_SUCCESS,
                               buffer: alloc_block_resp.buffer};
     }

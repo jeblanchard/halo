@@ -72,7 +72,7 @@ static void pte_is_present_test(void **state) {
 
     page_table_entry present_entry = PTE_PRESENT;
 
-    bool is_present = pte_is_present(&present_entry);
+    bool is_present = page_is_present(&present_entry);
 
     assert_true(is_present);
 }
@@ -95,6 +95,14 @@ static void new_pte_test(void **state) {
     assert_true(pte == (page_table_entry) 0);
 }
 
+static void frame_is_missing_test(void **state) {
+    (void) state;
+
+    page_table_entry pte = new_pte();
+
+    assert_true(frame_is_missing(&pte));
+}
+
 int main() {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(add_pte_attrib_test),
@@ -104,7 +112,8 @@ int main() {
         cmocka_unit_test(pte_is_writeable_test),
         cmocka_unit_test(pte_is_present_test),
         cmocka_unit_test(is_attrib_set_test),
-        cmocka_unit_test(new_pte_test)
+        cmocka_unit_test(new_pte_test),
+        cmocka_unit_test(frame_is_missing_test)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

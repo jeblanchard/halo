@@ -19,7 +19,7 @@ void add_pde_attrib(page_dir_entry* entry, page_dir_entry_attrib attrib);
 
 void rm_pde_attrib(page_dir_entry* entry, page_dir_entry_attrib attrib);
 
-void set_pt_addr(page_dir_entry* entry, physical_address pt_base_addr);
+void set_pt_base_addr(page_dir_entry* entry, physical_address pt_base_addr);
 
 bool pde_is_present(page_dir_entry* entry);
 

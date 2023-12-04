@@ -27,8 +27,10 @@ physical_address get_pte_frame_base(page_table_entry* entry);
 
 bool pte_is_writeable(page_table_entry* entry);
 
-bool pte_is_present(page_table_entry* entry);
+bool page_is_present(page_table_entry* entry);
 
 bool is_pte_attrib_set(page_table_entry* entry, page_table_entry_attrib attrib);
 
 page_table_entry new_pte();
+
+bool frame_is_missing(page_table_entry* entry);
