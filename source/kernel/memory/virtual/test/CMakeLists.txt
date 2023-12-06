@@ -12,6 +12,7 @@ add_cmocka_test(virtual_mem_manager
         ${SOURCE_DIR}/kernel/memory/virtual/pte.c ${SOURCE_DIR}/kernel/memory/virtual/pde/pde.c
         ${SOURCE_DIR}/kernel/memory/physical/physical_mem.c
         ${SOURCE_DIR}/kernel/utils/memory.c
+        ${SOURCE_DIR}/boot/kernel_phys_addr.asm
     COMPILE_OPTIONS ${DEFAULT_GCC_OPTIONS} ${CMOCKA_GCC_INCLUDE_OPTION}
     LINK_LIBRARIES ${CMOCKA_LIBRARY}
     LINK_OPTIONS ${TEST_LINK_OPTIONS}

@@ -35,7 +35,7 @@ static void alloc_page_success_test(void **state) {
     physical_address buffer_base_addr = 0xfff;
     alloc_block_resp block_resp = {
         status: ALLOC_BLOCK_SUCCESS,
-        buffer_size: BYTES_PER_MEMORY_UNIT,
+        buffer_size: BYTES_PER_MEMORY_BLOCK,
         buffer: buffer_base_addr
     };
 
@@ -56,7 +56,7 @@ static void alloc_page_no_mem_avail_test(void **state) {
     alloc_block_resp no_mem_alloc_block_resp = {
         status: NO_FREE_BLOCKS,
         buffer_size: 0,
-        buffer: NULL
+        buffer: 0
     };
     
     will_return(__wrap_alloc_block, (uintptr_t) &no_mem_alloc_block_resp);
@@ -75,7 +75,7 @@ static void alloc_page_gen_failure_test(void **state) {
     alloc_block_resp could_not_get_free_frame_resp = {
         status: COULD_NOT_GET_FREE_FRAME,
         buffer_size: 0,
-        buffer: NULL
+        buffer: 0
     };
 
     will_return(__wrap_alloc_block, (uintptr_t) &could_not_get_free_frame_resp);
@@ -94,17 +94,17 @@ static void get_pages_in_use_after_page_alloc_test(void **state) {
     alloc_block_resp non_zero_buff_addr_resp = {
         status: ALLOC_BLOCK_SUCCESS,
         buffer_size: BYTES_PER_MEMORY_BLOCK,
-        buffer: NULL
+        buffer: 0
     };
 
     will_return(__wrap_alloc_block, (uintptr_t) &non_zero_buff_addr_resp);
 
-    unsigned int og_pages_in_use = get_pages_in_use();
+    unsigned int og_pages_in_use = get_num_pages_in_use();
 
     alloc_page_status status = alloc_page(&entry);
     assert_true(status == ALLOC_PAGE_SUCCESS);
 
-    unsigned int new_pages_in_use = get_pages_in_use();
+    unsigned int new_pages_in_use = get_num_pages_in_use();
 
     assert_true(new_pages_in_use == og_pages_in_use + 1);
 }
@@ -123,15 +123,24 @@ static void free_page_test(void **state) {
     (void) state;
 
     entry_of_page_to_free = new_pte();
-    add_pte_attrib(&entry_of_page_to_free, PTE_WRITABLE);
-    add_pte_attrib(&entry_of_page_to_free, PTE_PRESENT);
-    set_pte_frame_base_addr(&entry_of_page_to_free,
-        (physical_address) fake_frame_base_addr);
-        
-    free_page(&entry_of_page_to_free);
+    alloc_block_resp mocked_alloc_block_resp = {
+        status: ALLOC_BLOCK_SUCCESS,
+        buffer: fake_frame_base_addr,
+        buffer_size: BYTES_PER_MEMORY_BLOCK
+    };
 
-    assert_false(page_is_present(&entry_of_page_to_free));
+    will_return(__wrap_alloc_block, (uintptr_t) &mocked_alloc_block_resp);
+    alloc_page(&entry_of_page_to_free);
+    
+    unsigned int num_pages_in_use_after_alloc = get_num_pages_in_use();
+
+    free_page(&entry_of_page_to_free);
+    unsigned int num_pages_in_use_after_free = get_num_pages_in_use();
+
+    assert_true(page_is_missing(&entry_of_page_to_free));
     assert_true(correct_block_addr_was_freed);
+    assert_true(num_pages_in_use_after_alloc - 1 \
+        == num_pages_in_use_after_free);
 }
 
 static void get_page_table_index_test(void **state) {
@@ -452,7 +461,7 @@ static void init_vm_io_addr_range_test(void **state) {
     (void) state;
 
     #define ONE_KB 1024
-    for (virtual_address io_addr = IO_BASE_ADDR; io_addr <= IO_MAX_ADDR; io_addr += ONE_KB) {
+    for (virtual_address io_addr = IO_BASE_VIRT_ADDR; io_addr <= IO_MAX_VIRT_ADDR; io_addr += ONE_KB) {
         page_dir_entry* pde = get_page_dir_entry(curr_pd, io_addr);
 
         assert_true(pde_is_present(pde));
@@ -464,7 +473,7 @@ static void init_vm_kernel_addr_range_test(void **state) {
     (void) state;
 
     for (virtual_address kernel_addr = KERNEL_SPACE_BASE_VIRT_ADDR;
-         kernel_addr <= KERNEL_SPACE_MAX_ADDR;
+         kernel_addr <= KERNEL_SPACE_MAX_VIRT_ADDR;
          kernel_addr += ONE_KB) {
 
         page_dir_entry* pde = get_page_dir_entry(curr_pd, kernel_addr);
@@ -477,14 +486,31 @@ static void init_vm_kernel_addr_range_test(void **state) {
 static void init_vm_user_addr_range_test(void **state) {
     (void) state;
 
-    for (virtual_address user_addr = USER_SPACE_BASE_ADDR;
-         user_addr <= USER_SPACE_MAX_ADDR;
+    for (virtual_address user_addr = USER_SPACE_BASE_VIRT_ADDR;
+         user_addr <= USER_SPACE_MAX_VIRT_ADDR;
          user_addr += ONE_KB) {
             
         page_dir_entry* pde = get_page_dir_entry(curr_pd, user_addr);
 
         assert_true(pde_is_present(pde));
         assert_true(pde_is_user(pde));
+    }
+}
+
+static int free_pd_test_teardown(void **state) {
+    (void) state;
+
+    return 0;
+}
+
+static void free_pd_test(void **state) {
+    (void) state;
+
+    page_dir pd = new_page_dir();
+    unsigned int num_pages_to_alloc = 5;
+    unsigned int num_pts_to_alloc = 3;
+    for (int i = 0; i < num_pages_to_alloc; i++) {
+        alloc_pte
     }
 }
 
@@ -527,7 +553,9 @@ int main() {
         cmocka_unit_test_teardown(alloc_page_no_mem_avail_test,
             alloc_page_test_teardown),
         cmocka_unit_test_teardown(alloc_page_gen_failure_test,
-            alloc_page_test_teardown)
+            alloc_page_test_teardown),
+        cmocka_unit_test_teardown(free_pd_test,
+            free_pd_test_teardown)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

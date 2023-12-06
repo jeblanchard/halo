@@ -14,7 +14,7 @@ load_kernel_from_drive:
     mov [BOOT_DRIVE], dl                ; BIOS stores our boot drive in DL, so it’s
                                         ; best to remember this for later.
 
-    %include "boot/utils/kernel_phys_addr.asm"
+    %include "source/boot/kernel_phys_addr.asm"
     MULTIBOOT2_OFFSET equ _KERNEL_PHYS_ADDRESS        ; This is the memory offset to which we
                                                       ; will load our kernel.
  

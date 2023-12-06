@@ -43,7 +43,7 @@ mem_map_entry mem_map_entry_list[NUM_MEM_MAP_ENTRIES] = {
 
 boot_info fake_boot_info = {
     num_kb_in_mem: (MAX_MEM_ADDR_32_BIT / BYTES_PER_KB) + 1,
-    mem_map_entry_list_base_addr: &fake_mem_map_entry_list[0],
+    mem_map_entry_list_base_addr: mem_map_entry_list,
     mem_map_num_entries: NUM_MEM_MAP_ENTRIES,
 };
 
@@ -104,10 +104,24 @@ static int alloc_block_success_teardown(void **state) {
     return 0;
 }
 
-static void free_block_test(void **state) {
+static int free_block_test_setup(void **state) {
     (void) state;
 
     config_phys_mem(&fake_boot_info);
+
+    return 0;
+}
+
+static int free_block_test_teardown(void **state) {
+    (void) state;
+
+    clear_phys_mem_config();
+
+    return 0;
+}
+
+static void free_block_test(void **state) {
+    (void) state;
 
     alloc_block_resp resp_of_block_to_free = alloc_block();
     assert_true(resp_of_block_to_free.status == ALLOC_BLOCK_SUCCESS);
@@ -119,12 +133,19 @@ static void free_block_test(void **state) {
     assert_int_equal(old_num_blocks_in_use - 1, get_num_blocks_in_use());
 }
 
-static int free_block_test_teardown(void **state) {
+static void free_block_duplicate_test(void **state) {
     (void) state;
 
-    clear_phys_mem_config();
+    alloc_block_resp resp_of_block_to_free = alloc_block();
+    assert_true(resp_of_block_to_free.status == ALLOC_BLOCK_SUCCESS);
 
-    return 0;
+    free_block(resp_of_block_to_free.buffer);
+    unsigned int num_blocks_in_use_after_first_free = get_num_blocks_in_use();
+
+    free_block(resp_of_block_to_free.buffer);
+    unsigned int num_blocks_in_use_after_duplic_free = get_num_blocks_in_use();
+
+    assert_true(num_blocks_in_use_after_first_free == num_blocks_in_use_after_duplic_free);
 }
 
 static void get_num_blocks_in_use_test(void **state) {
@@ -203,7 +224,11 @@ int main() {
         cmocka_unit_test_setup_teardown(alloc_block_success_test,
             alloc_spec_frame_test_setup,
             alloc_block_success_teardown),
-        cmocka_unit_test_teardown(free_block_test,
+        cmocka_unit_test_setup_teardown(free_block_test,
+            free_block_test_setup,
+            free_block_test_teardown),
+        cmocka_unit_test_setup_teardown(free_block_duplicate_test,
+            free_block_test_setup,
             free_block_test_teardown),
         cmocka_unit_test_setup_teardown(alloc_spec_frame_success_test,
             alloc_spec_frame_test_setup,

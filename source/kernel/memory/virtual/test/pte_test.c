@@ -100,7 +100,7 @@ static void frame_is_missing_test(void **state) {
 
     page_table_entry pte = new_pte();
 
-    assert_true(frame_is_missing(&pte));
+    assert_true(page_is_missing(&pte));
 }
 
 int main() {

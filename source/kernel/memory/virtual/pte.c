@@ -37,6 +37,6 @@ page_table_entry new_pte() {
     return (page_table_entry) 0;
 }
 
-bool frame_is_missing(page_table_entry* entry) {
+bool page_is_missing(page_table_entry* entry) {
     return !page_is_present(entry);
 }

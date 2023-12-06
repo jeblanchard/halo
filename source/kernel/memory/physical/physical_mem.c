@@ -6,7 +6,7 @@
 #include "kernel/memory/manager.h"
 #include "physical_mem.h"
 
-#define NUM_MEMORY_BLOCKS MAX_MEM_ADDR_32_BIT / BYTES_PER_MEMORY_BLOCK
+#define NUM_MEMORY_BLOCKS (MAX_MEM_ADDR_32_BIT / BYTES_PER_MEMORY_BLOCK + 1)
 #define BITS_PER_MEMORY_MAP_SECTION 32
 #define NUM_MEMORY_MAP_SECTIONS NUM_MEMORY_BLOCKS / BITS_PER_MEMORY_MAP_SECTION
 
@@ -17,19 +17,12 @@ unsigned int mem_map[NUM_MEMORY_MAP_SECTIONS];
 static unsigned int num_accessible_memory_blocks;
 
 unsigned int get_mem_map_section(unsigned int block_num) {
-    return block_num / BITS_PER_MEMORY_MAP_SECTION - 1;
+    return block_num / BITS_PER_MEMORY_MAP_SECTION;
 }
 
 unsigned int get_mem_map_section_offset_mask(unsigned int block_num) {
     unsigned int block_mask = 1 << (block_num % BITS_PER_MEMORY_MAP_SECTION);
     return block_mask;
-}
-
-void clear_mem_block(unsigned int block_num) {
-    unsigned int map_section = get_mem_map_section(block_num);
-    unsigned int block_mask = get_mem_map_section_offset_mask(block_num);
-
-    mem_map[map_section] &= ~ block_mask;
 }
 
 static unsigned int num_blocks_in_use;
@@ -38,40 +31,62 @@ unsigned int get_num_blocks_in_use() {
     return num_blocks_in_use;
 }
 
+void clear_mem_block(unsigned int block_num) {
+    unsigned int map_section = get_mem_map_section(block_num);
+    unsigned int block_mask = get_mem_map_section_offset_mask(block_num);
+
+    if (mem_map[map_section] & block_mask) {
+        num_blocks_in_use -= 1;
+    }
+
+    mem_map[map_section] &= ~block_mask;
+}
+
+typedef struct mem_block_range {
+    unsigned int start_block_num;
+    unsigned int last_block_num;
+} mem_block_range;
+
+mem_block_range get_mem_block_range(physical_address base_addr,
+                                    unsigned int length) {
+
+    unsigned int end_addr = base_addr + (length - 1);
+
+    return (mem_block_range) {
+        start_block_num: base_addr / BYTES_PER_MEMORY_BLOCK,
+        last_block_num: end_addr / BYTES_PER_MEMORY_BLOCK
+    };
+}
+
 void free_mem_blocks_of_addr_range(physical_address base_addr,
-                                      unsigned int length) {
+                                   unsigned int length) {
 
-    unsigned int end_addr = base_addr + length;
-
-	unsigned int start_block_num = base_addr / BYTES_PER_MEMORY_BLOCK;
-	unsigned int end_block_num = end_addr / BYTES_PER_MEMORY_BLOCK - 1;
-
-    for (unsigned int b = start_block_num; b <= end_block_num; b++) {
+    mem_block_range range_to_clear = get_mem_block_range(base_addr, length);
+    for (unsigned int b = range_to_clear.start_block_num;
+         b <= range_to_clear.last_block_num; b++) {
         clear_mem_block(b);
-        num_blocks_in_use--;
     }
 }
 
 void set_memory_block(unsigned int block_num) {
-    unsigned int block_section = get_mem_map_section(block_num);
+    unsigned int map_section = get_mem_map_section(block_num);
     unsigned int block_mask = get_mem_map_section_offset_mask(block_num);
 
-    if ((mem_map[block_section] & block_mask) == 0) {
+    if ((mem_map[map_section] & block_mask) == 0) {
         num_blocks_in_use += 1;
     }
 
-    mem_map[block_section] |= block_mask;
+    mem_map[map_section] |= block_mask;
 }
 
 void set_mem_blocks_of_address_range(physical_address base_addr,
-                                     unsigned int range_length) {
+                                     unsigned int length) {
 
-    unsigned int end_addr = base_addr + range_length - 1;
-
-	unsigned int start_block_num = base_addr / BYTES_PER_MEMORY_BLOCK;
-	unsigned int end_block_num = end_addr / BYTES_PER_MEMORY_BLOCK;
-
-    for (unsigned int b = start_block_num; b <= end_block_num; b++) {
+    mem_block_range range_to_clear = get_mem_block_range(base_addr, length);
+    for (unsigned int b = range_to_clear.start_block_num;
+         b <= range_to_clear.last_block_num;
+         b++) {
+            
         set_memory_block(b);
     }
 }
@@ -91,12 +106,10 @@ void classify_mem_region(mem_map_entry* entry) {
 void config_mem_regions(boot_info* boot_info) {
 
     unsigned int num_mem_map_entries = boot_info -> mem_map_num_entries;
-
     mem_map_entry* mem_map_entry_list_base_addr = boot_info -> mem_map_entry_list_base_addr;
 
     for (unsigned int i = 0; i < num_mem_map_entries; i++) {
         mem_map_entry* entry = mem_map_entry_list_base_addr + i;
-
         classify_mem_region(entry);
     }
 }
@@ -112,7 +125,6 @@ void set_all_mem_blocks() {
 #define BYTES_PER_KB 1024
 
 void config_phys_mem(boot_info* boot_info) {
-
 	unsigned int num_kb_in_mem = boot_info -> num_kb_in_mem;
     unsigned int kb_per_mem_block = BYTES_PER_MEMORY_BLOCK / BYTES_PER_KB;
 	num_accessible_memory_blocks = num_kb_in_mem / kb_per_mem_block;
@@ -282,14 +294,14 @@ alloc_spec_frame_resp alloc_spec_frame(physical_address frame_base) {
         return (alloc_spec_frame_resp) {
             status: ALLOC_SPEC_FRAME_BASE_DNE,
             buffer_size: 0,
-            buffer: NULL};
+            buffer: 0};
     }
 
     if (frame_is_in_use(frame_base)) {
         return (alloc_spec_frame_resp) {
             status: ALLOC_SPEC_FRAME_IN_USE,
             buffer_size: 0,
-            buffer: NULL};
+            buffer: 0};
     }
 
     unsigned int block_num = frame_base / BYTES_PER_MEMORY_BLOCK;
@@ -298,7 +310,7 @@ alloc_spec_frame_resp alloc_spec_frame(physical_address frame_base) {
     return (alloc_spec_frame_resp) {
         status: ALLOC_SPEC_FRAME_SUCCESS,
         buffer_size: BYTES_PER_MEMORY_BLOCK,
-        buffer: (void*) frame_base};
+        buffer: frame_base};
 }
 
 alloc_block_resp alloc_block() {
@@ -322,7 +334,7 @@ alloc_block_resp alloc_block() {
 
     return (alloc_block_resp) {status: ALLOC_BLOCK_SUCCESS,
                                buffer: spec_frame_resp.buffer,
-                               buffer_size: BYTES_PER_MEMORY_UNIT};
+                               buffer_size: BYTES_PER_MEMORY_BLOCK};
 }
 
 void free_block(physical_address block_address) {

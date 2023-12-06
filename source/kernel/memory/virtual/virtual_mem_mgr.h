@@ -118,30 +118,27 @@ page_table new_page_table();
 
 #define MAX_32_BIT_VIRT_MEM_ADDR 0xffffffff
 
-#define IO_BASE_ADDR 0
+#define IO_BASE_VIRT_ADDR 0
 
 #define ONE_MB 0x10000
-#define IO_MAX_ADDR ONE_MB - 1
+#define IO_MAX_VIRT_ADDR ONE_MB - 1
 
 #define THREE_GB 0xc0000000
-#define USER_SPACE_BASE_ADDR IO_MAX_ADDR + 1
-#define USER_SPACE_MAX_ADDR THREE_GB - 1
+#define USER_SPACE_BASE_VIRT_ADDR IO_MAX_VIRT_ADDR + 1
+#define USER_SPACE_MAX_VIRT_ADDR THREE_GB - 1
 
-#define KERNEL_SPACE_BASE_VIRT_ADDR USER_SPACE_BASE_ADDR + 1
+#define KERNEL_SPACE_BASE_VIRT_ADDR USER_SPACE_BASE_VIRT_ADDR + 1
 #define KERNEL_SPACE_MAX_VIRT_ADDR MAX_32_BIT_VIRT_MEM_ADDR
 
 typedef enum init_vm_status {
     INIT_VM_SUCCESS = 0,
-    COULD_NOT_INIT_IO_MEM = 3,
-    COULD_NOT_INIT_KERNEL_MEM = 4,
-    INIT_VM_GENERAL_FAILURE = 2,
-    INIT_VM_FAILED_ALLOC_PT = 5,
-    INIT_VM_FAILED_ALLOC_ALL_PTES = 6,
-    INIT_VM_FAILED_LOADING_PD = 7
+    INIT_VM_FAILED_KERNEL_SPACE = 1,
+    INIT_VM_FAILED_IO_SPACE = 2,
+    INIT_VM_FAILED_USER_SPACE = 3
 } init_vm_status;
 
 init_vm_status init_virtual_mem();
 
 physical_address get_page_table_base_addr(page_dir_entry* entry);
 
-unsigned int get_pages_in_use();
+unsigned int get_num_pages_in_use();
