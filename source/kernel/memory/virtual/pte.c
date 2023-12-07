@@ -40,3 +40,13 @@ page_table_entry new_pte() {
 bool page_is_missing(page_table_entry* entry) {
     return !page_is_present(entry);
 }
+
+page_table new_page_table() {
+    page_table new_pt = {};
+
+    for (int i = 0; i < ENTRIES_PER_PAGE_TABLE; i++) {
+        new_pt.entries[i] = new_pte();
+    }
+
+    return new_pt;
+}

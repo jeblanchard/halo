@@ -15,24 +15,10 @@ typedef unsigned int virtual_address;
 
 unsigned int get_page_table_index(virtual_address addr);
 
-#define ENTRIES_PER_PAGE_TABLE 1024
-
-#pragma pack(push, 1)
-typedef struct page_table {
-    page_table_entry entries[ENTRIES_PER_PAGE_TABLE];
-} page_table;
-#pragma pack(pop)
-
 page_table_entry* get_page_table_entry(page_table* page_table,
                                        virtual_address addr);
 
 unsigned int get_page_dir_index(virtual_address addr);
-
-#define ENTRIES_PER_PAGE_DIR 1024
-
-typedef struct page_dir {
-    page_dir_entry entries[ENTRIES_PER_PAGE_DIR];
-} page_dir;
 
 page_dir_entry* get_page_dir_entry(page_dir* page_dir, virtual_address addr);
 
@@ -58,19 +44,21 @@ get_curr_pdbr_resp get_curr_pdbr();
 void flush_tlb_entry(virtual_address addr_to_flush);
 
 typedef enum map_page_status {
-    MP_NOT_ENOUGH_MEM = 0,
-    MP_GENERAL_FAILURE = 1,
-    MP_SUCCESS = 2
+    MAP_PAGE_NOT_ENOUGH_MEM = 0,
+    MAP_PAGE_SUCCESS = 1,
+    MAP_PAGE_FAILED_GETTING_PT_BASE_ADDR = 2,
+    MAP_PAGE_PDE_OF_VA_MISSING = 3
 } map_page_status;
 
-map_page_status map_page_base_addr(physical_address phys_addr, virtual_address virt_addr);
-
-page_dir new_page_dir();
+map_page_status map_page_base_addr(physical_address new_page_base_addr,
+                                   virtual_address virt_addr_to_map);
 
 typedef enum get_phys_addr_status {
     NO_INITIALIZED_PD = 0,
     GET_PHYS_ADDR_SUCCESS = 1,
-    GET_PHYS_ADDR_GEN_FAILURE = 2
+    GET_PHYS_ADDR_GEN_FAILURE = 2,
+    GET_PHYS_ADDR_PT_DNE = 3,
+    GET_PHYS_ADDR_FAILED_GET_PT_ADDR = 4
 } get_phys_addr_status;
 
 typedef struct get_phys_addr_resp {
@@ -114,8 +102,6 @@ new_virt_addr_resp new_virt_addr(unsigned int pd_index,
 
 void clear_vm_config();
 
-page_table new_page_table();
-
 #define MAX_32_BIT_VIRT_MEM_ADDR 0xffffffff
 
 #define IO_BASE_VIRT_ADDR 0
@@ -139,6 +125,11 @@ typedef enum init_vm_status {
 
 init_vm_status init_virtual_mem();
 
-physical_address get_page_table_base_addr(page_dir_entry* entry);
-
 unsigned int get_num_pages_in_use();
+
+typedef enum free_pd_status {
+    FREE_PD_SUCCESS = 0,
+    FREE_PD_FAILED_GETTING_PT = 1
+} free_pd_status;
+
+free_pd_status free_pd(page_dir* pd);

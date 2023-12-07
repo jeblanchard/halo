@@ -1,8 +1,7 @@
 add_subdirectory(test)
 
 set(C_SOURCES
-    pde.c
-    get_pt_base_addr.c)
+    pde.c)
 
 include(GetAbsolutePaths)
 get_absolute_paths("${C_SOURCES}" C_SOURCES_ABS)

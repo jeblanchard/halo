@@ -8,6 +8,7 @@
 #include <stdbool.h>
 
 #include "kernel/memory/virtual/pte.h"
+#include "kernel/memory/virtual/pde/pde.h"
 
 static void add_pte_attrib_test(void **state) {
     (void) state;
@@ -103,6 +104,16 @@ static void frame_is_missing_test(void **state) {
     assert_true(page_is_missing(&pte));
 }
 
+static void new_page_table_test(void **state) {
+    (void) state;
+
+    page_table new_pt = new_page_table();
+
+    for (int i = 0; i < ENTRIES_PER_PAGE_DIR; i++) {
+        assert_true(new_pt.entries[i] == new_pte());
+    }
+}
+
 int main() {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(add_pte_attrib_test),
@@ -113,7 +124,8 @@ int main() {
         cmocka_unit_test(pte_is_present_test),
         cmocka_unit_test(is_attrib_set_test),
         cmocka_unit_test(new_pte_test),
-        cmocka_unit_test(frame_is_missing_test)
+        cmocka_unit_test(frame_is_missing_test),
+        cmocka_unit_test(new_page_table_test)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

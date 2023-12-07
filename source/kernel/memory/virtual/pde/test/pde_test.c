@@ -8,6 +8,7 @@
 #include <stdbool.h>
 
 #include "kernel/memory/virtual/pde/pde.h"
+#include "kernel/memory/virtual/pte.h"
 
 static void add_pde_attrib_test(void **state) {
     (void) state;
@@ -36,14 +37,15 @@ static void rm_pde_attrib_test(void **state) {
 static void set_pt_addr_test(void **state) {
     (void) state;
 
-    physical_address pt_addr = 0x1234;
-    page_dir_entry fake_entry = 0;
+    page_dir_entry pde = new_pde();
+    page_table pt = new_page_table();
 
-    set_pt_base_addr(&fake_entry, pt_addr);
+    set_pt_base_addr(&pde, (physical_address) &pt);
 
-    page_dir_entry correct_res = pt_addr << 12;
+    pt_base_addr_resp actual_pt_base_addr_resp = get_page_table_base_addr(&pde);
+    assert_true(actual_pt_base_addr_resp.status == PT_BASE_ADDR_SUCCESS);
 
-    assert_true(correct_res == fake_entry);
+    assert_true((physical_address) &pt == actual_pt_base_addr_resp.pt_base_addr);
 }
 
 static void pde_is_present_test(void **state) {
@@ -116,6 +118,33 @@ static void pde_is_kernel_space_test(void **state) {
     assert_true(is_kernel_pde(&kernel_entry));
 }
 
+static void get_page_table_base_addr_test(void **state) {
+    (void) state;
+
+    page_dir pd = new_page_dir();
+    page_table pt = new_page_table();
+
+    unsigned int pd_index = 0;
+    set_pt_base_addr(&pd.entries[pd_index], (physical_address) &pt);
+
+    pt_base_addr_resp actual_pt_base_addr_resp = \
+        get_page_table_base_addr(&pd.entries[pd_index]);
+    assert_true(actual_pt_base_addr_resp.status == PT_BASE_ADDR_SUCCESS);
+
+    assert_true(actual_pt_base_addr_resp.pt_base_addr == \
+        (physical_address) &pt);
+}
+
+static void get_pt_base_addr_pt_dne_test(void **state) {
+    (void) state;
+
+    page_dir_entry pde = new_pde();
+
+    pt_base_addr_resp pt_resp = get_page_table_base_addr(&pde);
+    
+    assert_true(pt_resp.status == PT_DNE);
+}
+
 int main() {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(add_pde_attrib_test),
@@ -128,6 +157,8 @@ int main() {
         cmocka_unit_test(is_attrib_set_test),
         cmocka_unit_test(new_blank_pde_test),
         cmocka_unit_test(pde_is_kernel_space_test),
+        cmocka_unit_test(get_page_table_base_addr_test),
+        cmocka_unit_test(get_pt_base_addr_pt_dne_test)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

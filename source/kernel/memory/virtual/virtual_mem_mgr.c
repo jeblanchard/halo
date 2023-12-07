@@ -4,7 +4,6 @@
 #include "stddef.h"
 #include "kernel/memory/virtual/pde/pde.h"
 #include "stdio.h"
-#include "kernel/memory/virtual/pde/get_pt_base_addr.h"
 
 static unsigned int pages_in_use;
 
@@ -28,12 +27,15 @@ alloc_page_status alloc_page(page_table_entry* entry) {
     return ALLOC_PAGE_SUCCESS;
 }
 
-void free_page(page_table_entry* entry) {
-    physical_address addr_to_free = get_pte_frame_base(entry);
+void free_page(page_table_entry* pte_to_free) {
+    physical_address addr_to_free = get_pte_frame_base(pte_to_free);
     free_block(addr_to_free);
 
-    rm_pte_attrib(entry, PTE_PRESENT);
-    pages_in_use -= 1;
+    if (page_is_present(pte_to_free)) {
+        pages_in_use -= 1;
+    }
+
+    rm_pte_attrib(pte_to_free, PTE_PRESENT);
 }
 
 unsigned int get_page_table_index(virtual_address addr) {
@@ -111,71 +113,28 @@ bool pde_is_missing(page_dir_entry* entry) {
     return !(pde_is_present(entry));
 }
 
-typedef enum init_pde_status {
-    INIT_PDE_SUCCESS = 0,
-    INIT_PDE_NOT_ENOUGH_MEM = 1,
-    INIT_PDE_MEM_BLOCK_TOO_SMALL = 2,
-    INIT_PDE_GENERAL_FAILURE = 3
-} init_pde_status;
+map_page_status map_page_base_addr(physical_address new_page_base_addr,
+                                   virtual_address virt_addr_to_map) {
 
-init_pde_status init_pde(page_dir_entry* pde_to_init) {
-    alloc_block_resp resp = alloc_block();
-    if (resp.status == ALLOC_BLOCK_SUCCESS) {
-    } else if (resp.status == NO_FREE_BLOCKS) {
-        return INIT_PDE_NOT_ENOUGH_MEM;
-    } else {
-        return INIT_PDE_GENERAL_FAILURE;
-    }
-    
-    if (resp.buffer_size < sizeof(page_table)) {
-        return INIT_PDE_MEM_BLOCK_TOO_SMALL;
-    }
-
-    page_table_entry* new_pt = (page_table_entry*) resp.buffer;
-    set_pt_base_addr(pde_to_init, (physical_address) new_pt);
-
-    add_pde_attrib(pde_to_init, PDE_PRESENT);
-    add_pde_attrib(pde_to_init, PDE_WRITABLE);
-
-    return INIT_PDE_SUCCESS;
-}
-
-map_page_status map_page_base_addr(physical_address new_page_base_addr, virtual_address virt_addr) {
-    unsigned int pd_index = get_page_dir_index(virt_addr);
-    page_dir_entry* pde = &current_page_dir -> entries[pd_index];
-
-    if (pde_is_missing(pde)) {
-
-        init_pde_status status = init_pde(pde);
-
-        if (status == INIT_PDE_SUCCESS) {
-        } else if (status == INIT_PDE_NOT_ENOUGH_MEM ||
-                   status == INIT_PDE_MEM_BLOCK_TOO_SMALL) {
-            return MP_NOT_ENOUGH_MEM;
-        } else if (status == INIT_PDE_GENERAL_FAILURE) {
-            return MP_GENERAL_FAILURE;
-        } else {
-            return MP_GENERAL_FAILURE;
-        }
+    unsigned int pd_index = get_page_dir_index(virt_addr_to_map);
+    page_dir_entry* pde_of_va = &current_page_dir -> entries[pd_index];
+    if (pde_is_missing(pde_of_va)) {
+        return MAP_PAGE_PDE_OF_VA_MISSING;
     }   
 
-    page_table* pt = (page_table*) get_pt_base_addr(pde);
-    page_table_entry* pte = get_page_table_entry(pt, virt_addr);
-
-    set_pte_frame_base_addr(pte, new_page_base_addr);
-
-    add_pte_attrib(pte, PTE_PRESENT);
-
-    return MP_SUCCESS;
-}
-
-page_dir new_page_dir() {
-    page_dir new_pd = {};
-    for (int i = 0; i < ENTRIES_PER_PAGE_DIR; i++) {
-        new_pd.entries[i] = new_pde();
+    pt_base_addr_resp pt_resp = get_page_table_base_addr(pde_of_va);
+    if (pt_resp.status == PT_BASE_ADDR_SUCCESS) {
+    } else {
+        return MAP_PAGE_FAILED_GETTING_PT_BASE_ADDR;
     }
 
-    return new_pd;
+    page_table* pt_of_va = (page_table*) pt_resp.pt_base_addr;
+    page_table_entry* pte_of_va = get_page_table_entry(pt_of_va, virt_addr_to_map);
+
+    set_pte_frame_base_addr(pte_of_va, new_page_base_addr);
+    add_pte_attrib(pte_of_va, PTE_PRESENT);
+
+    return MAP_PAGE_SUCCESS;
 }
 
 get_phys_addr_resp get_phys_addr(virtual_address virt_addr) {
@@ -194,15 +153,27 @@ get_phys_addr_resp get_phys_addr(virtual_address virt_addr) {
     unsigned int pd_index = get_page_dir_index(virt_addr);
     page_dir_entry* pde = &resp.curr_pd -> entries[pd_index];
 
-    page_table* pt = (page_table*) get_pt_base_addr(pde);
+    pt_base_addr_resp pt_resp = get_page_table_base_addr(pde);
+    if (pt_resp.status == PT_BASE_ADDR_SUCCESS) {
+    } else if (pt_resp.status == PT_DNE) {
+        return (get_phys_addr_resp) {
+            status: GET_PHYS_ADDR_PT_DNE,
+            phys_addr: 0
+        };
+    } else {
+        return (get_phys_addr_resp) {
+            status: GET_PHYS_ADDR_FAILED_GET_PT_ADDR,
+            phys_addr: 0
+        };
+    }
+
+    page_table* pt = (page_table*) pt_resp.pt_base_addr;
 
     unsigned int pt_index = get_page_table_index(virt_addr);
     page_table_entry* pte = &pt -> entries[pt_index];
 
     physical_address frame_base_addr = get_pte_frame_base(pte);
-
     unsigned int page_offset = get_frame_offset(virt_addr);
-
     physical_address translation = frame_base_addr + page_offset;
 
     return (get_phys_addr_resp) {status: GET_PHYS_ADDR_SUCCESS, phys_addr: translation};
@@ -277,95 +248,28 @@ void clear_vm_config() {
     pd_has_been_loaded = false;
 }
 
-page_table new_page_table() {
-    page_table new_pt = {};
+static page_dir default_pd;
+static page_table all_page_tables[ENTRIES_PER_PAGE_DIR];
 
-    for (int i = 0; i < ENTRIES_PER_PAGE_TABLE; i++) {
-        new_pt.entries[i] = new_pte();
+void init_all_page_tables() {
+    for (int i = 0; i < ENTRIES_PER_PAGE_DIR; i++) {
+        all_page_tables[i] = new_page_table();
     }
-
-    return new_pt;
 }
 
-static page_dir default_pd;
+void init_default_pd() {
+    default_pd = new_page_dir();
+    for (int i = 0; i < ENTRIES_PER_PAGE_DIR; i++) {
+        set_pt_base_addr(
+            &default_pd.entries[i],
+            (physical_address) &all_page_tables[i]);
+    }
+}
 
 void free_pt(page_table* pt) {
     for (int i = 0; i < ENTRIES_PER_PAGE_TABLE; i++) {
         free_page(&pt -> entries[i]);
     }
-}
-
-typedef enum alloc_all_ptes_status {
-    ALLOC_ALL_PTE_SUCCESS = 0,
-    ALLOC_ALL_PTE_NOT_ENOUGH_MEM = 1,
-    ALLOC_ALL_PTE_GENERAL_FAILURE = 2
-} alloc_all_ptes_status;
-
-bool failed_allocing_pt(alloc_all_ptes_status status) {
-    if (status == ALLOC_ALL_PTE_SUCCESS) {
-        return false;
-    }
-    
-    return true;
-}
-
-alloc_all_ptes_status alloc_all_ptes(page_table* pt) {
-    bool failed_allocing_pt = false;
-    alloc_all_ptes_status status = ALLOC_ALL_PTE_SUCCESS;
-    for (int i = 0; i < ENTRIES_PER_PAGE_TABLE; i++) {
-        alloc_page_status ap_status = alloc_page(&pt -> entries[i]);
-        if (ap_status == ALLOC_PAGE_SUCCESS) {
-        } else if (ap_status == ALLOC_PAGE_NO_MEM_AVAIL) {
-            status = ALLOC_ALL_PTE_NOT_ENOUGH_MEM;
-        } else if (ALLOC_PAGE_GEN_FAILURE) {
-            status = ALLOC_ALL_PTE_GENERAL_FAILURE;
-        } else {
-            status = ALLOC_ALL_PTE_GENERAL_FAILURE;
-        }
-    }
-
-    if (failed_allocing_pt) {
-        free_pt(pt);
-    }
-
-    return status;
-}
-
-typedef enum alloc_pt_status {
-    ALLOC_PT_SUCCESS = 0,
-    ALLOC_PT_GEN_FAILURE = 1,
-    ALLOC_PT_COULD_NOT_ALLOC_BLOCK = 2,
-    ALLOC_PT_PHYS_BUFFER_TOO_SMALL = 3
-} alloc_pt_status;
-
-typedef struct alloc_pt_resp {
-    alloc_pt_status status;
-    page_table* pt;
-} alloc_pt_resp;
-
-alloc_pt_resp alloc_page_table() {
-    alloc_block_resp ab_resp = alloc_block();
-    if (ab_resp.status == ALLOC_BLOCK_SUCCESS) {
-    } else if (ab_resp.status == NO_FREE_BLOCKS) {
-        return (alloc_pt_resp) {
-            status: ALLOC_PT_COULD_NOT_ALLOC_BLOCK,
-            pt: (page_table*) NULL};
-    } else {
-        return (alloc_pt_resp) {
-            status: ALLOC_PT_GEN_FAILURE,
-            pt: (page_table*) NULL};
-    }
-
-    if (ab_resp.buffer_size < sizeof(page_table)) {
-        return (alloc_pt_resp) {
-            status: ALLOC_PT_PHYS_BUFFER_TOO_SMALL,
-            pt: (page_table*) NULL};
-    }
-
-    return (alloc_pt_resp) {
-        status: ALLOC_PT_SUCCESS,
-        pt: (page_table*) ab_resp.buffer
-    };
 }
 
 bool is_a_pt_base_addr(virtual_address addr) {
@@ -404,11 +308,19 @@ bool is_a_kernel_virt_addr(virtual_address addr) {
     return false;
 }
 
-void free_pd(page_dir* pd) {
+free_pd_status free_pd(page_dir* pd) {
     for (int i = 0; i < ENTRIES_PER_PAGE_DIR; i++) {
-        page_table* pt = (page_table*) get_pt_base_addr(&pd -> entries[i]);
-        free_pt(pt);
+        pt_base_addr_resp entry_pt_resp = get_page_table_base_addr(&pd -> entries[i]);
+        if (entry_pt_resp.status == PT_BASE_ADDR_SUCCESS) {
+        } else {
+            return FREE_PD_FAILED_GETTING_PT;
+        }
+
+        page_table* entry_pt = (page_table*) entry_pt_resp.pt_base_addr;
+        free_pt(entry_pt);
     }
+
+    return FREE_PD_SUCCESS;
 }
 
 typedef enum kernel_phys_addr_status {
@@ -443,7 +355,8 @@ typedef enum init_kernel_vm_status {
     INIT_KERNEL_VM_SUCCESS = 0,
     INIT_KERNEL_FAILED_ALLOC_PT = 1,
     INIT_KERNEL_FAILED_ALLOC_SPEC_FRAME = 2,
-    INIT_KERNEL_FAILED_TRANS_TO_KERNEL_PA = 3
+    INIT_KERNEL_FAILED_TRANS_TO_KERNEL_PA = 3,
+    INIT_KERNEL_FAILED_GETTING_PT_BASE_ADDR = 4
 } init_kernel_vm_status;
 
 init_kernel_vm_status init_kernel_virtual_mem(page_dir* curr_pd) {
@@ -452,19 +365,14 @@ init_kernel_vm_status init_kernel_virtual_mem(page_dir* curr_pd) {
          kernel_virt_addr += BYTES_PER_PAGE) {
 
         page_dir_entry* curr_pde = get_page_dir_entry(curr_pd, kernel_virt_addr);
-
-        if (is_a_pt_base_addr(kernel_virt_addr)) {
-            alloc_pt_resp pt_resp = alloc_page_table();
-            if (pt_resp.status == ALLOC_PT_SUCCESS) {
-            } else {
-                return INIT_KERNEL_FAILED_ALLOC_PT;
-            }
-
-            set_pt_base_addr(curr_pde, (physical_address) pt_resp.pt);
+        pt_base_addr_resp curr_pde_pt_resp = get_page_table_base_addr(curr_pde);
+        if (curr_pde_pt_resp.status == PT_BASE_ADDR_SUCCESS) {
+        } else {
+            return INIT_KERNEL_FAILED_GETTING_PT_BASE_ADDR;
         }
 
-        page_table* curr_pt = (page_table*) get_pt_base_addr(curr_pde);
-        page_table_entry* curr_pte = get_page_table_entry(curr_pt, kernel_virt_addr);
+        page_table* curr_pde_pt = (page_table*) curr_pde_pt_resp.pt_base_addr;
+        page_table_entry* curr_pte = get_page_table_entry(curr_pde_pt, kernel_virt_addr);
 
         add_pde_attrib(curr_pde, PDE_PRESENT);
         add_pte_attrib(curr_pte, PTE_PRESENT);
@@ -516,7 +424,8 @@ typedef enum init_io_vm_status {
     INIT_IO_VM_SUCCESS = 0,
     INIT_IO_VM_FAILED_ALLOC_PT = 1,
     INIT_IO_FAILED_TRANS_TO_IO_PA = 2,
-    INIT_IO_FAILED_ALLOC_SPEC_FRAME = 3
+    INIT_IO_FAILED_ALLOC_SPEC_FRAME = 3,
+    INIT_IO_FAILED_GETTING_PT_BASE_ADDR = 4
 } init_io_vm_status;
 
 init_io_vm_status init_io_virtual_mem(page_dir* curr_pd) {
@@ -526,17 +435,13 @@ init_io_vm_status init_io_virtual_mem(page_dir* curr_pd) {
 
         page_dir_entry* curr_pde = get_page_dir_entry(curr_pd, io_virt_addr);
 
-        if (is_a_pt_base_addr(io_virt_addr)) {
-            alloc_pt_resp pt_resp = alloc_page_table();
-            if (pt_resp.status == ALLOC_PT_SUCCESS) {
-            } else {
-                return INIT_IO_VM_FAILED_ALLOC_PT;
-            }
-
-            set_pt_base_addr(curr_pde, (physical_address) pt_resp.pt);
+        pt_base_addr_resp curr_pt_resp = get_page_table_base_addr(curr_pde);
+        if (curr_pt_resp.status == PT_BASE_ADDR_SUCCESS) {
+        } else {
+            return INIT_IO_FAILED_GETTING_PT_BASE_ADDR;
         }
 
-        page_table* curr_pt = (page_table*) get_pt_base_addr(curr_pde);
+        page_table* curr_pt = (page_table*) curr_pt_resp.pt_base_addr;
         page_table_entry* curr_pte = get_page_table_entry(curr_pt, io_virt_addr);
 
         add_pde_attrib(curr_pde, PDE_PRESENT);
@@ -589,7 +494,8 @@ typedef enum init_user_vm_status {
     INIT_USER_VM_SUCCESS = 0,
     INIT_USER_VM_FAILED_ALLOC_PT = 1,
     INIT_USER_FAILED_TRANS_TO_USER_PA = 2,
-    INIT_USER_FAILED_ALLOC_SPEC_FRAME = 3
+    INIT_USER_FAILED_ALLOC_SPEC_FRAME = 3,
+    INIT_USER_FAILED_GETTING_PT_BASE_ADDR = 4
 } init_user_vm_status;
 
 init_user_vm_status init_user_virtual_mem(page_dir* curr_pd) {
@@ -598,18 +504,13 @@ init_user_vm_status init_user_virtual_mem(page_dir* curr_pd) {
          user_virt_addr += BYTES_PER_PAGE) {
 
         page_dir_entry* curr_pde = get_page_dir_entry(curr_pd, user_virt_addr);
-
-        if (is_a_pt_base_addr(user_virt_addr)) {
-            alloc_pt_resp pt_resp = alloc_page_table();
-            if (pt_resp.status == ALLOC_PT_SUCCESS) {
-            } else {
-                return INIT_USER_VM_FAILED_ALLOC_PT;
-            }
-
-            set_pt_base_addr(curr_pde, (physical_address) pt_resp.pt);
+        pt_base_addr_resp curr_pt_resp = get_page_table_base_addr(curr_pde);
+        if (curr_pt_resp.status == PT_BASE_ADDR_SUCCESS) {
+        } else {
+            return INIT_USER_FAILED_GETTING_PT_BASE_ADDR;
         }
 
-        page_table* curr_pt = (page_table*) get_pt_base_addr(curr_pde);
+        page_table* curr_pt = (page_table*) curr_pt_resp.pt_base_addr;
         page_table_entry* curr_pte = get_page_table_entry(curr_pt, user_virt_addr);
 
         add_pde_attrib(curr_pde, PDE_PRESENT);

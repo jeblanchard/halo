@@ -36,3 +36,23 @@ bool is_pde_attrib_set(page_dir_entry* entry, page_dir_entry_attrib attrib);
 page_dir_entry new_pde();
 
 bool is_kernel_pde(page_dir_entry* entry);
+
+#define ENTRIES_PER_PAGE_DIR 1024
+
+typedef struct page_dir {
+    page_dir_entry entries[ENTRIES_PER_PAGE_DIR];
+} page_dir __attribute__ ((aligned (4096)));
+
+typedef enum pt_base_addr_status {
+    PT_DNE = 0,
+    PT_BASE_ADDR_SUCCESS = 1
+} pt_base_addr_status;
+
+typedef struct pt_base_addr_resp {
+    pt_base_addr_status status;
+    physical_address pt_base_addr;
+} pt_base_addr_resp;
+
+pt_base_addr_resp get_page_table_base_addr(page_dir_entry* entry);
+
+page_dir new_page_dir();

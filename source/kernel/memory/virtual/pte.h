@@ -34,3 +34,13 @@ bool is_pte_attrib_set(page_table_entry* entry, page_table_entry_attrib attrib);
 page_table_entry new_pte();
 
 bool page_is_missing(page_table_entry* entry);
+
+#define ENTRIES_PER_PAGE_TABLE 1024
+
+#pragma pack(push, 1)
+typedef struct page_table {
+    page_table_entry entries[ENTRIES_PER_PAGE_TABLE];
+} page_table __attribute__ ((aligned (4096)));
+#pragma pack(pop)
+
+page_table new_page_table();
