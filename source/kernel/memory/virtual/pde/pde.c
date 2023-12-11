@@ -1,6 +1,6 @@
 #include "pde.h"
 
-void add_pde_attrib(page_dir_entry* entry, page_dir_entry_attrib attrib) {
+void set_pde_attrib(page_dir_entry* entry, page_dir_entry_attrib attrib) {
     *entry |= attrib;
 }
 

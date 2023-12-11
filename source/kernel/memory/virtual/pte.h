@@ -17,7 +17,7 @@ typedef enum page_table_entry_attrib {
 
 typedef unsigned int page_table_entry;
 
-void add_pte_attrib(page_table_entry* entry, page_table_entry_attrib attrib);
+void set_pte_attrib(page_table_entry* entry, page_table_entry_attrib attrib);
 
 void rm_pte_attrib(page_table_entry* entry, page_table_entry_attrib attrib);
 

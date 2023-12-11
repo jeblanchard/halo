@@ -1,7 +1,7 @@
 #include "pte.h"
 #include "stdio.h"
 
-void add_pte_attrib(page_table_entry* entry, page_table_entry_attrib attrib) {
+void set_pte_attrib(page_table_entry* entry, page_table_entry_attrib attrib) {
     *entry |= attrib;
 }
 

@@ -307,10 +307,10 @@ static void map_page_base_addr_success_test(void **state) {
     physical_address frame_base_addr = 0x1234;
     
     set_pt_base_addr(&pd.entries[pd_index], (physical_address) &pt);
-    add_pde_attrib(&pd.entries[pd_index], PDE_PRESENT);
+    set_pde_attrib(&pd.entries[pd_index], PDE_PRESENT);
 
     set_pte_frame_base_addr(&pt.entries[pt_index], (physical_address) frame_base_addr);
-    add_pte_attrib(&pt.entries[pt_index], PTE_PRESENT);
+    set_pte_attrib(&pt.entries[pt_index], PTE_PRESENT);
 
     load_new_pd_status new_pd_status = load_new_pd((physical_address) &pd);
     assert_true(new_pd_status == LOAD_NEW_PD_SUCCESS);
@@ -556,7 +556,7 @@ static void map_page_failed_getting_pt_test(void **state) {
     page_dir pd = new_page_dir();
     virtual_address some_virt_addr = 0x456;
     unsigned int va_pd_index = get_page_dir_index(some_virt_addr);
-    add_pde_attrib(&pd.entries[va_pd_index], PDE_PRESENT);
+    set_pde_attrib(&pd.entries[va_pd_index], PDE_PRESENT);
 
     load_new_pd_status new_pd_status = load_new_pd((physical_address) &pd);
     assert_true(new_pd_status == LOAD_NEW_PD_SUCCESS);

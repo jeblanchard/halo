@@ -15,7 +15,7 @@ static void add_pde_attrib_test(void **state) {
 
     page_dir_entry fake_entry = 0;
 
-    add_pde_attrib(&fake_entry, PDE_WRITABLE);
+    set_pde_attrib(&fake_entry, PDE_WRITABLE);
 
     page_dir_entry correct_res = fake_entry | PDE_WRITABLE;
 
@@ -110,7 +110,7 @@ static void pde_is_kernel_space_test(void **state) {
     (void) state;
 
     page_dir_entry kernel_entry = 0;
-    add_pde_attrib(&kernel_entry, PDE_USER);
+    set_pde_attrib(&kernel_entry, PDE_USER);
     assert_true(is_pde_attrib_set(&kernel_entry, PDE_USER));
 
     rm_pde_attrib(&kernel_entry, PDE_USER);

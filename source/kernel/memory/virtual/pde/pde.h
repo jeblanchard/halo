@@ -15,7 +15,7 @@ typedef enum page_dir_entry_attrib {
     PDE_SIZE_4MB = 0x80,
 } page_dir_entry_attrib;
 
-void add_pde_attrib(page_dir_entry* entry, page_dir_entry_attrib attrib);
+void set_pde_attrib(page_dir_entry* entry, page_dir_entry_attrib attrib);
 
 void rm_pde_attrib(page_dir_entry* entry, page_dir_entry_attrib attrib);
 

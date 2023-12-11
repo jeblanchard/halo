@@ -15,7 +15,7 @@ static void add_pte_attrib_test(void **state) {
 
     page_table_entry fake_entry = 0;
 
-    add_pte_attrib(&fake_entry, PTE_WRITABLE);
+    set_pte_attrib(&fake_entry, PTE_WRITABLE);
 
     page_table_entry correct_res = fake_entry | PTE_WRITABLE;
 

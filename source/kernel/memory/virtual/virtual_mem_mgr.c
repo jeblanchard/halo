@@ -21,7 +21,7 @@ alloc_page_status alloc_page(page_table_entry* entry) {
     }
 
     set_pte_frame_base_addr(entry, phys_block_resp.buffer);
-    add_pte_attrib(entry, PTE_PRESENT);
+    set_pte_attrib(entry, PTE_PRESENT);
     pages_in_use += 1;
 
     return ALLOC_PAGE_SUCCESS;
@@ -132,7 +132,7 @@ map_page_status map_page_base_addr(physical_address new_page_base_addr,
     page_table_entry* pte_of_va = get_page_table_entry(pt_of_va, virt_addr_to_map);
 
     set_pte_frame_base_addr(pte_of_va, new_page_base_addr);
-    add_pte_attrib(pte_of_va, PTE_PRESENT);
+    set_pte_attrib(pte_of_va, PTE_PRESENT);
 
     return MAP_PAGE_SUCCESS;
 }
@@ -257,12 +257,23 @@ void init_all_page_tables() {
     }
 }
 
+void set_all_pte_to_present(page_table* pt) {
+    for (int i = 0; i < ENTRIES_PER_PAGE_TABLE; i++) {
+        set_pte_attrib(&pt -> entries[i], PTE_PRESENT);
+    }
+}
+
 void init_default_pd() {
     default_pd = new_page_dir();
     for (int i = 0; i < ENTRIES_PER_PAGE_DIR; i++) {
+        page_dir_entry* pde_being_init = &default_pd.entries[i];
+        page_table* pt_being_init = &all_page_tables[i];
         set_pt_base_addr(
-            &default_pd.entries[i],
-            (physical_address) &all_page_tables[i]);
+            pde_being_init,
+            (physical_address) pt_being_init);
+
+        set_pde_attrib(pde_being_init, PDE_PRESENT);
+        set_all_pte_to_present(pt_being_init);
     }
 }
 
@@ -290,7 +301,7 @@ bool is_io_virt_addr(virtual_address virt_addr) {
     return false;
 }
 
-bool is_a_user_virt_addr(virtual_address addr) {
+bool is_user_virt_addr(virtual_address addr) {
     if (addr >= USER_SPACE_BASE_VIRT_ADDR &&
         addr <= USER_SPACE_MAX_VIRT_ADDR) {
             return true;
@@ -299,7 +310,7 @@ bool is_a_user_virt_addr(virtual_address addr) {
     return false;
 }
 
-bool is_a_kernel_virt_addr(virtual_address addr) {
+bool is_kernel_virt_addr(virtual_address addr) {
     if (addr >= KERNEL_SPACE_BASE_VIRT_ADDR &&
         addr <= KERNEL_SPACE_MAX_VIRT_ADDR) {
             return true;
@@ -324,7 +335,7 @@ free_pd_status free_pd(page_dir* pd) {
 }
 
 typedef enum kernel_phys_addr_status {
-    VA_TO_KERNEL_PA_SUCCESS = 0,
+    TRANS_TO_KERNEL_PA_SUCCESS = 0,
     NOT_A_KERNEL_VIRT_ADDR = 1
 } kernel_phys_addr_status;
 
@@ -333,8 +344,8 @@ typedef struct kernel_phys_addr_trans_resp {
     physical_address kernel_phys_addr;
 } kernel_phys_addr_trans_resp;
 
-kernel_phys_addr_trans_resp translate_to_kernel_phys_addr(virtual_address virt_addr) {
-    if (is_a_kernel_virt_addr(virt_addr)) {
+kernel_phys_addr_trans_resp trans_to_kernel_phys_addr(virtual_address virt_addr) {
+    if (is_kernel_virt_addr(virt_addr)) {
         extern unsigned int KERNEL_PHYS_ADDRESS;
         physical_address kernel_phys_addr = \
             virt_addr - (KERNEL_SPACE_BASE_VIRT_ADDR - KERNEL_PHYS_ADDRESS);
@@ -351,210 +362,131 @@ kernel_phys_addr_trans_resp translate_to_kernel_phys_addr(virtual_address virt_a
     };
 }
 
-typedef enum init_kernel_vm_status {
-    INIT_KERNEL_VM_SUCCESS = 0,
-    INIT_KERNEL_FAILED_ALLOC_PT = 1,
-    INIT_KERNEL_FAILED_ALLOC_SPEC_FRAME = 2,
-    INIT_KERNEL_FAILED_TRANS_TO_KERNEL_PA = 3,
-    INIT_KERNEL_FAILED_GETTING_PT_BASE_ADDR = 4
-} init_kernel_vm_status;
-
-init_kernel_vm_status init_kernel_virtual_mem(page_dir* curr_pd) {
-    for (virtual_address kernel_virt_addr = KERNEL_SPACE_BASE_VIRT_ADDR;
-         kernel_virt_addr <= KERNEL_SPACE_MAX_VIRT_ADDR;
-         kernel_virt_addr += BYTES_PER_PAGE) {
-
-        page_dir_entry* curr_pde = get_page_dir_entry(curr_pd, kernel_virt_addr);
-        pt_base_addr_resp curr_pde_pt_resp = get_page_table_base_addr(curr_pde);
-        if (curr_pde_pt_resp.status == PT_BASE_ADDR_SUCCESS) {
-        } else {
-            return INIT_KERNEL_FAILED_GETTING_PT_BASE_ADDR;
-        }
-
-        page_table* curr_pde_pt = (page_table*) curr_pde_pt_resp.pt_base_addr;
-        page_table_entry* curr_pte = get_page_table_entry(curr_pde_pt, kernel_virt_addr);
-
-        add_pde_attrib(curr_pde, PDE_PRESENT);
-        add_pte_attrib(curr_pte, PTE_PRESENT);
-
-        kernel_phys_addr_trans_resp translation_resp = translate_to_kernel_phys_addr(kernel_virt_addr);
-        if (translation_resp.status == VA_TO_KERNEL_PA_SUCCESS) {
-        } else {
-            return INIT_KERNEL_FAILED_TRANS_TO_KERNEL_PA;
-        }
-
-        alloc_spec_frame_resp resp = alloc_spec_frame(translation_resp.kernel_phys_addr);
-        if (resp.status == ALLOC_SPEC_FRAME_SUCCESS) {
-            set_pte_frame_base_addr(curr_pte, resp.buffer);
-        } else {
-            return INIT_KERNEL_FAILED_ALLOC_SPEC_FRAME;
-        }
-    }
-
-    return INIT_KERNEL_VM_SUCCESS;
-}
-
 typedef enum io_phys_addr_status {
-    VA_TO_IO_PA_SUCCESS = 0,
+    TRANS_TO_IO_PA_SUCCESS = 0,
     NOT_IO_VIRT_ADDR = 1
 } io_phys_addr_status;
 
-typedef struct io_phys_addr_resp {
+typedef struct io_phys_addr_trans_resp {
     io_phys_addr_status status;
     physical_address io_phys_addr;
-} io_phys_addr_resp;
+} io_phys_addr_trans_resp;
 
-io_phys_addr_resp translate_to_io_phys_addr(virtual_address virt_addr) {
+io_phys_addr_trans_resp trans_to_io_phys_addr(virtual_address virt_addr) {
     if (is_io_virt_addr(virt_addr)) {
         physical_address io_phys_addr = (physical_address) virt_addr;
 
-        return (io_phys_addr_resp) {
+        return (io_phys_addr_trans_resp) {
             status: VA_TO_IO_PA_SUCCESS,
             io_phys_addr: io_phys_addr
         };
     }
 
-    return (io_phys_addr_resp) {
+    return (io_phys_addr_trans_resp) {
         status: NOT_IO_VIRT_ADDR,
         io_phys_addr: 0
     };
 }
 
-typedef enum init_io_vm_status {
-    INIT_IO_VM_SUCCESS = 0,
-    INIT_IO_VM_FAILED_ALLOC_PT = 1,
-    INIT_IO_FAILED_TRANS_TO_IO_PA = 2,
-    INIT_IO_FAILED_ALLOC_SPEC_FRAME = 3,
-    INIT_IO_FAILED_GETTING_PT_BASE_ADDR = 4
-} init_io_vm_status;
-
-init_io_vm_status init_io_virtual_mem(page_dir* curr_pd) {
-    for (virtual_address io_virt_addr = IO_BASE_VIRT_ADDR;
-         io_virt_addr <= IO_MAX_VIRT_ADDR;
-         io_virt_addr += BYTES_PER_PAGE) {
-
-        page_dir_entry* curr_pde = get_page_dir_entry(curr_pd, io_virt_addr);
-
-        pt_base_addr_resp curr_pt_resp = get_page_table_base_addr(curr_pde);
-        if (curr_pt_resp.status == PT_BASE_ADDR_SUCCESS) {
-        } else {
-            return INIT_IO_FAILED_GETTING_PT_BASE_ADDR;
-        }
-
-        page_table* curr_pt = (page_table*) curr_pt_resp.pt_base_addr;
-        page_table_entry* curr_pte = get_page_table_entry(curr_pt, io_virt_addr);
-
-        add_pde_attrib(curr_pde, PDE_PRESENT);
-        add_pte_attrib(curr_pte, PTE_PRESENT);
-
-        io_phys_addr_resp translation_resp = translate_to_io_phys_addr(io_virt_addr);
-        if (translation_resp.status == VA_TO_IO_PA_SUCCESS) {
-        } else {
-            return INIT_IO_FAILED_TRANS_TO_IO_PA;
-        }
-
-        alloc_spec_frame_resp resp = alloc_spec_frame(translation_resp.io_phys_addr);
-        if (resp.status == ALLOC_SPEC_FRAME_SUCCESS) {
-            set_pte_frame_base_addr(curr_pte, resp.buffer);
-        } else {
-            return INIT_IO_FAILED_ALLOC_SPEC_FRAME;
-        }
-    }
-
-    return INIT_IO_VM_SUCCESS;
-}
-
 typedef enum user_phys_addr_status {
-    VA_TO_USER_PA_SUCCESS = 0,
+    TRANS_TO_USER_PA_SUCCESS = 0,
     NOT_USER_VIRT_ADDR = 1
 } user_phys_addr_status;
 
-typedef struct user_phys_addr_resp {
+typedef struct user_phys_addr_trans_resp {
     user_phys_addr_status status;
     physical_address user_phys_addr;
-} user_phys_addr_resp;
+} user_phys_addr_trans_resp;
 
-user_phys_addr_resp translate_to_user_phys_addr(virtual_address virt_addr) {
-    if (is_a_user_virt_addr(virt_addr)) {
+user_phys_addr_trans_resp trans_to_user_phys_addr(virtual_address virt_addr) {
+    if (is_user_virt_addr(virt_addr)) {
         physical_address user_phys_addr = (physical_address) virt_addr;
 
-        return (user_phys_addr_resp) {
+        return (user_phys_addr_trans_resp) {
             status: VA_TO_USER_PA_SUCCESS,
             user_phys_addr: user_phys_addr
         };
     }
 
-    return (user_phys_addr_resp) {
+    return (user_phys_addr_trans_resp) {
         status: NOT_USER_VIRT_ADDR,
         user_phys_addr: 0
     };
 }
 
-typedef enum init_user_vm_status {
-    INIT_USER_VM_SUCCESS = 0,
-    INIT_USER_VM_FAILED_ALLOC_PT = 1,
-    INIT_USER_FAILED_TRANS_TO_USER_PA = 2,
-    INIT_USER_FAILED_ALLOC_SPEC_FRAME = 3,
-    INIT_USER_FAILED_GETTING_PT_BASE_ADDR = 4
-} init_user_vm_status;
+typedef enum virt_addr_region {
+    IO = 0,
+    KERNEL = 1,
+    USER = 2
+} virt_addr_region;
 
-init_user_vm_status init_user_virtual_mem(page_dir* curr_pd) {
-    for (virtual_address user_virt_addr = USER_SPACE_BASE_VIRT_ADDR;
-         user_virt_addr <= USER_SPACE_MAX_VIRT_ADDR;
-         user_virt_addr += BYTES_PER_PAGE) {
+init_vm_status init_virtual_mem() {
 
-        page_dir_entry* curr_pde = get_page_dir_entry(curr_pd, user_virt_addr);
-        pt_base_addr_resp curr_pt_resp = get_page_table_base_addr(curr_pde);
-        if (curr_pt_resp.status == PT_BASE_ADDR_SUCCESS) {
+    init_default_pd();
+
+    for (virtual_address virt_addr = MIN_32_BIT_VIRT_MEM_ADDR;
+         virt_addr <= MAX_32_BIT_VIRT_MEM_ADDR;
+         virt_addr += BYTES_PER_PAGE) {
+
+        page_dir_entry* pde_of_va = get_page_dir_entry(default_pd, virt_addr);
+        pt_base_addr_resp pt_of_va_resp = get_page_table_base_addr(pde_of_va);
+        if (pt_of_va_resp.status == PT_BASE_ADDR_SUCCESS) {
         } else {
             return INIT_USER_FAILED_GETTING_PT_BASE_ADDR;
         }
 
-        page_table* curr_pt = (page_table*) curr_pt_resp.pt_base_addr;
-        page_table_entry* curr_pte = get_page_table_entry(curr_pt, user_virt_addr);
+        virt_addr_region va_region_of_addr = USER;
+        physical_address frame_to_alloc = 0;
+        if (is_io_virt_addr(virt_addr)) {
+            va_region_of_addr = IO;
+            io_phys_addr_trans_resp io_va_trans_resp = trans_to_io_phys_addr(virt_addr);
+            if (io_phys_addr_trans_resp.status == TRANS_TO_IO_PA_SUCCESS) {
+            } else {
+                return FAILED_TRANS_TO_IO_PHYS_ADDR;
+            }
 
-        add_pde_attrib(curr_pde, PDE_PRESENT);
-        add_pte_attrib(curr_pte, PTE_PRESENT);
+            frame_to_alloc = io_va_trans_resp.io_phys_addr;
 
-        user_phys_addr_resp translation_resp = translate_to_user_phys_addr(user_virt_addr);
-        if (translation_resp.status == VA_TO_USER_PA_SUCCESS) {
+        } else if (is_kernel_virt_addr(virt_addr)) {
+            va_region_of_addr = KERNEL;
+            kernel_phys_addr_trans_resp kernel_pa_trans_resp = trans_to_kernel_phys_addr(virt_addr);
+            if (kernel_phys_addr_trans_resp.status == TRANS_TO_KERNEL_PA_SUCCESS) {
+            } else {
+                return FAILED_TRANS_TO_KERNEL_PHYS_ADDR;
+            }
+
+            frame_to_alloc = kernel_pa_trans_resp.kernel_phys_addr;
+
+        } else if (is_user_virt_addr(virt_addr)) {
+            va_region_of_addr = USER;
+            user_phys_addr_trans_resp user_pa_trans_resp = trans_to_user_phys_addr(virt_addr);
+            if (user_phys_addr_trans_resp.status == TRANS_TO_USER_PA_SUCCESS) {
+            } else {
+                return FAILED_TRANS_TO_USER_PHYS_ADDR;
+            }
+
+            frame_to_alloc = user_pa_trans_resp.user_phys_addr;
+
         } else {
-            return INIT_USER_FAILED_TRANS_TO_USER_PA;
+            return UNKNOWN_VIRT_ADDR;
+        }
+        
+        if (va_region_of_addr == USER) {
+            set_pte_attrib(pte_of_va, PTE_USER);
         }
 
-        alloc_spec_frame_resp resp = alloc_spec_frame(translation_resp.user_phys_addr);
+        alloc_spec_frame_resp resp = alloc_spec_frame(frame_to_alloc);
         if (resp.status == ALLOC_SPEC_FRAME_SUCCESS) {
-            set_pte_frame_base_addr(curr_pte, resp.buffer);
+            set_pte_frame_base_addr(pte_of_va, resp.buffer);
         } else {
             return INIT_USER_FAILED_ALLOC_SPEC_FRAME;
         }
     }
 
-    return INIT_USER_VM_SUCCESS;
-}
-
-init_vm_status init_virtual_mem() {
-    default_pd = new_page_dir();
-
-    init_io_vm_status io_space_status = init_io_virtual_mem(&default_pd);
-    if (io_space_status == INIT_IO_VM_SUCCESS) {
+    load_new_pd_status default_pd_load_status = load_new_pd((physical_address) default_pd);
+    if (default_pd_load_status == LOAD_NEW_PD_SUCCESS) {
     } else {
-        free_pd(&default_pd);
-        return INIT_VM_FAILED_IO_SPACE;
-    }
-
-    init_kernel_vm_status kernel_space_status = init_kernel_virtual_mem(&default_pd);
-    if (kernel_space_status == INIT_KERNEL_VM_SUCCESS) {
-    } else {
-        free_pd(&default_pd);
-        return INIT_VM_FAILED_KERNEL_SPACE;
-    }
-
-    init_user_vm_status user_space_status = init_user_virtual_mem(&default_pd);
-    if (user_space_status == INIT_USER_VM_SUCCESS) {
-    } else {
-        free_pd(&default_pd);
-        return INIT_VM_FAILED_USER_SPACE;
+        return FAILED_LOADING_DEFAULT_PD;
     }
 
     return INIT_VM_SUCCESS;

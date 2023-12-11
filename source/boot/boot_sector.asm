@@ -1,7 +1,5 @@
-; A boot sector that boots a C kernel in 32-bit protected mode
-
-; This is where the bootsector is expected to be loaded by the BIOS.
-[org 0x7c00]
+%define BIOS_BOOT_SECTOR_MEM_LOCATION 0x7c00
+[org BIOS_BOOT_SECTOR_MEM_LOCATION]
 
 mov bp, 0x9000                      ; First of all, we set-up the stack.
 mov sp, bp
@@ -11,8 +9,7 @@ call print_string                   ; started.
 
 ; Load our kernel and Multiboot2 code from the disk drive into memory.
 load_kernel_from_drive:
-    mov [BOOT_DRIVE], dl                ; BIOS stores our boot drive in DL, so it’s
-                                        ; best to remember this for later.
+    mov [BOOT_DRIVE], dl                ; BIOS stores our boot drive in DL
 
     %include "source/boot/kernel_phys_addr.asm"
     MULTIBOOT2_OFFSET equ _KERNEL_PHYS_ADDRESS        ; This is the memory offset to which we
@@ -30,9 +27,6 @@ load_kernel_from_drive:
 jmp MULTIBOOT2_OFFSET          ; Jump to the address of our
                                ; Multiboot2 code.
 
-;mov bx, AFTER_MULTIBOOT
-;call print_string
-
 jmp $                           ; We should never arrive here,
                                 ; but we'll hang if so.
 
@@ -42,7 +36,6 @@ jmp $                           ; We should never arrive here,
 ; Global variables
 BOOT_DRIVE                   db 0
 MSG_REAL_MODE                db "Started in 16-bit Real Mode.", 0
-AFTER_MULTIBOOT              db "After Multiboot.", 0
 IN_LOAD_KERNEL               db "Loaded kernel and multiboot from drive.", 0
 
 ; Boot sector padding

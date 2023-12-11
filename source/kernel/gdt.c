@@ -37,16 +37,14 @@ struct gdt_descriptor {
 };
 #pragma pack(pop)
 
-// Global Descriptor Table (GDT)
-struct gdt_descriptor gdt[3];
+struct gdt_descriptor default_gdt[3];
 
 void clear_gdt() {
-    void* gdt_base_address = &gdt[0];
-    int num_bytes_to_null_out = sizeof(gdt);
+    void* gdt_base_address = &default_gdt[0];
+    int num_bytes_to_null_out = sizeof(default_gdt);
     set_memory(gdt_base_address, 0, num_bytes_to_null_out);
 }
 
-// Sets a descriptor in the GDT.
 void set_gdt_descriptor(unsigned char gdt_index,
                         unsigned int segment_base_address,
                         unsigned short segment_limit_low,
@@ -57,16 +55,15 @@ void set_gdt_descriptor(unsigned char gdt_index,
 	unsigned char segment_base_address_mid = (unsigned char) (segment_base_address >> 16) & 0xff;
 	unsigned char segment_base_address_hi = (unsigned char) (segment_base_address >> 24) & 0xff;
 
-	gdt[gdt_index].base_low = segment_base_address_low;
-	gdt[gdt_index].base_mid = segment_base_address_mid;
-	gdt[gdt_index].base_hi	= segment_base_address_hi;
+	default_gdt[gdt_index].base_low = segment_base_address_low;
+	default_gdt[gdt_index].base_mid = segment_base_address_mid;
+	default_gdt[gdt_index].base_hi	= segment_base_address_hi;
 
-	gdt[gdt_index].segment_limit_low = segment_limit_low;
-	gdt[gdt_index].access = access;
-	gdt[gdt_index].granularity = granularity;
+	default_gdt[gdt_index].segment_limit_low = segment_limit_low;
+	default_gdt[gdt_index].access = access;
+	default_gdt[gdt_index].granularity = granularity;
 }
 
-// Installs an GDTR into the processor's GDTR register.
 static inline void load_gdt(void* base, unsigned short size) {
 
     #pragma pack(push,1)
@@ -108,6 +105,6 @@ void initialize_gdt() {
     unsigned char data_granularity = 0xcf;
     set_gdt_descriptor(2, 0, 0xffff, data_access, data_granularity);
 
-    unsigned short limit = (unsigned short) sizeof(gdt) - 1;
-    load_gdt(&gdt, limit);
+    unsigned short limit = (unsigned short) sizeof(default_gdt) - 1;
+    load_gdt(&default_gdt, limit);
 }

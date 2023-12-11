@@ -103,6 +103,7 @@ new_virt_addr_resp new_virt_addr(unsigned int pd_index,
 void clear_vm_config();
 
 #define MAX_32_BIT_VIRT_MEM_ADDR 0xffffffff
+#define MIN_32_BIT_VIRT_MEM_ADDR 0
 
 #define IO_BASE_VIRT_ADDR 0
 
