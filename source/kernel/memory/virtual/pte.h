@@ -17,13 +17,20 @@ typedef enum page_table_entry_attrib {
 
 typedef unsigned int page_table_entry;
 
+#define PAGE_SIZE_IN_BYTES 4096
+
 void set_pte_attrib(page_table_entry* entry, page_table_entry_attrib attrib);
 
 void rm_pte_attrib(page_table_entry* entry, page_table_entry_attrib attrib);
 
-void set_pte_frame_base_addr(page_table_entry* entry, physical_address phys_addr);
+typedef enum set_pte_frame_base_addr_status {
+    FRAME_BASE_ADDR_NOT_ALIGNED = 0,
+    SET_PTE_FRAME_BASE_ADDR_SUCCESS = 1
+} set_pte_frame_base_addr_status;
 
-physical_address get_pte_frame_base(page_table_entry* entry);
+set_pte_frame_base_addr_status set_pte_frame_base_addr(page_table_entry* entry, physical_address phys_addr);
+
+physical_address get_pte_frame_base_addr(page_table_entry* entry);
 
 bool pte_is_writeable(page_table_entry* entry);
 

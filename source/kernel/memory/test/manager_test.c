@@ -21,7 +21,7 @@ alloc_block_resp __wrap_alloc_block() {
 char fake_physical_mem_block[NUM_BYTES_HALLOCED];
 
 alloc_block_resp alloc_block_success_resp = \
-    {status: ALLOC_BLOCK_SUCCESS, buffer: (physical_address) &fake_physical_mem_block};
+    {status: ALLOC_BLOCK_SUCCESS, buffer_base_addr: (physical_address) &fake_physical_mem_block};
 
 static void alloc_page(void **state) {
     (void) state;
@@ -43,7 +43,7 @@ static void alloc_page(void **state) {
     }
 }
 
-alloc_block_resp no_free_blocks_resp = {status: NO_FREE_BLOCKS, buffer: 0};
+alloc_block_resp no_free_blocks_resp = {status: ALLOC_BLOCK_ALL_BLOCKS_IN_USE, buffer_base_addr: 0};
 
 static void halloc_not_enough_mem(void **state) {
     (void) state;

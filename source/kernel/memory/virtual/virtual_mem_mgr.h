@@ -3,8 +3,9 @@
 
 typedef enum alloc_page_status {
     ALLOC_PAGE_SUCCESS = 0,
-    ALLOC_PAGE_NO_MEM_AVAIL = 1,
-    ALLOC_PAGE_GEN_FAILURE = 2
+    ALLOC_PAGE_FAILED_SETTING_PTE_FRAME = 1,
+    ALLOC_PAGE_PHYS_MEM_IS_FULL = 2,
+    ALLOC_PAGE_FAILED_ALLOC_BLOCK = 3
 } alloc_page_status;
 
 alloc_page_status alloc_page(page_table_entry* entry);
@@ -56,7 +57,7 @@ map_page_status map_page_base_addr(physical_address new_page_base_addr,
 typedef enum get_phys_addr_status {
     NO_INITIALIZED_PD = 0,
     GET_PHYS_ADDR_SUCCESS = 1,
-    GET_PHYS_ADDR_GEN_FAILURE = 2,
+    GET_PHYS_ADDR_FAILED_GETTING_CURR_PD = 2,
     GET_PHYS_ADDR_PT_DNE = 3,
     GET_PHYS_ADDR_FAILED_GET_PT_ADDR = 4
 } get_phys_addr_status;
@@ -105,23 +106,17 @@ void clear_vm_config();
 #define MAX_32_BIT_VIRT_MEM_ADDR 0xffffffff
 #define MIN_32_BIT_VIRT_MEM_ADDR 0
 
-#define IO_BASE_VIRT_ADDR 0
-
-#define ONE_MB 0x10000
-#define IO_MAX_VIRT_ADDR ONE_MB - 1
-
 #define THREE_GB 0xc0000000
-#define USER_SPACE_BASE_VIRT_ADDR IO_MAX_VIRT_ADDR + 1
-#define USER_SPACE_MAX_VIRT_ADDR THREE_GB - 1
+#define USER_SPACE_BASE_VIRT_ADDR 0
+#define USER_SPACE_MAX_VIRT_ADDR (THREE_GB - 1)
 
-#define KERNEL_SPACE_BASE_VIRT_ADDR USER_SPACE_BASE_VIRT_ADDR + 1
+#define KERNEL_SPACE_BASE_VIRT_ADDR (USER_SPACE_MAX_VIRT_ADDR + 1)
 #define KERNEL_SPACE_MAX_VIRT_ADDR MAX_32_BIT_VIRT_MEM_ADDR
 
 typedef enum init_vm_status {
-    INIT_VM_SUCCESS = 0,
-    INIT_VM_FAILED_KERNEL_SPACE = 1,
-    INIT_VM_FAILED_IO_SPACE = 2,
-    INIT_VM_FAILED_USER_SPACE = 3
+    INIT_VM_FAILED_MAPPING_ALL_VIRT_ADDR = 0,
+    INIT_VM_FAILED_LOADING_PD = 1,
+    INIT_VM_SUCCESS = 0
 } init_vm_status;
 
 init_vm_status init_virtual_mem();
@@ -134,3 +129,15 @@ typedef enum free_pd_status {
 } free_pd_status;
 
 free_pd_status free_pd(page_dir* pd);
+
+typedef enum kernel_phys_addr_status {
+    TRANS_TO_KERNEL_PA_SUCCESS = 0,
+    NOT_A_KERNEL_VIRT_ADDR = 1
+} kernel_phys_addr_status;
+
+typedef struct kernel_phys_addr_trans_resp {
+    kernel_phys_addr_status status;
+    physical_address kernel_phys_addr;
+} kernel_phys_addr_trans_resp;
+
+kernel_phys_addr_trans_resp trans_to_kernel_phys_addr(virtual_address virt_addr);

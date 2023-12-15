@@ -10,7 +10,7 @@ halloc_resp halloc(unsigned int num_bytes) {
 
     if (alloc_block_resp.status == ALLOC_BLOCK_SUCCESS) {
         return (halloc_resp) {status: HALLOC_SUCCESS,
-                              buffer: (void*) alloc_block_resp.buffer};
+                              buffer: (void*) alloc_block_resp.buffer_base_addr};
     }
 
     return (halloc_resp) {status: NOT_ENOUGH_MEM,

@@ -91,22 +91,115 @@ void set_mem_blocks_of_address_range(physical_address base_addr,
     }
 }
 
-void classify_mem_region(mem_map_entry* entry) {
-    unsigned int entry_base_addr = entry -> base_addr_low;
-    unsigned int region_length = entry -> length_in_bytes_low;
+typedef struct addr_range {
+    physical_address base_addr;
+    physical_address end_addr_incl;
+} addr_range;
 
-    if (entry -> type == AVAILABLE_RAM) {
+#define MAX_NUM_POTENTIAL_IO_RANGES 50
+addr_range all_potential_io_ranges[MAX_NUM_POTENTIAL_IO_RANGES];
+unsigned int next_io_range_index = 0;
+
+bool ranges_overlap(addr_range range_a, addr_range range_b) {
+    if (range_b.base_addr >= range_a.base_addr &&
+        range_b.base_addr <= range_a.end_addr_incl) {
+        
+        return true;
+    }
+
+    if (range_a.base_addr >= range_b.base_addr &&
+        range_a.base_addr <= range_b.end_addr_incl) {
+
+        return true;
+    }
+
+    return false;
+}
+
+addr_range new_addr_range(physical_address range_base_addr, unsigned int range_length) {
+    return (addr_range) {
+        base_addr: range_base_addr,
+        end_addr_incl: range_base_addr + range_length - 1
+    };
+}
+
+bool frame_base_dne(physical_address frame_base) {
+    if (frame_base % BYTES_PER_MEMORY_BLOCK != 0) {
+        return true;
+    }
+
+    return false;
+}
+
+mem_mapped_io_resp frame_has_mem_mapped_io(physical_address frame_base_addr) {
+    if (frame_base_dne(frame_base_addr)) {
+        return (mem_mapped_io_resp) {
+            status: MEM_MAPPED_IO_FRAME_BASE_DNE,
+            has_mem_mapped_io: false
+        };
+    }
+
+    addr_range frame_addr_range = new_addr_range(frame_base_addr, BYTES_PER_MEMORY_BLOCK);
+
+    for (unsigned int i = 0; i < next_io_range_index; i++) {
+        addr_range curr_io_range = all_potential_io_ranges[i];
+        if (ranges_overlap(frame_addr_range, curr_io_range)) {
+            return (mem_mapped_io_resp) {
+                status: MEM_MAPPED_IO_SUCCESS,
+                has_mem_mapped_io: true
+            };
+        }
+    }
+
+    return (mem_mapped_io_resp) {
+        status: MEM_MAPPED_IO_SUCCESS,
+        has_mem_mapped_io: false
+    };
+}
+
+typedef enum save_potential_io_range_status {
+    SAVE_POTENTIAL_IO_RANGE_SUCCESS = 0,
+    SAVE_POTENTIAL_IO_RANGE_FAILED_TO_ADD_TO_BUFFER = 1
+} save_potential_io_range_status;
+
+save_potential_io_range_status save_potential_io_range(physical_address potential_io_region_base_addr,
+                                                       unsigned int potential_io_region_length) {
+
+    if (next_io_range_index == MAX_NUM_POTENTIAL_IO_RANGES) {
+        return SAVE_POTENTIAL_IO_RANGE_FAILED_TO_ADD_TO_BUFFER;
+    }
+
+    physical_address last_addr_in_range = potential_io_region_base_addr + potential_io_region_length - 1;
+
+    all_potential_io_ranges[next_io_range_index] = \
+        (addr_range) {
+            base_addr: potential_io_region_base_addr,
+            end_addr_incl: last_addr_in_range
+        };
+
+    next_io_range_index += 1;
+    return SAVE_POTENTIAL_IO_RANGE_SUCCESS;
+}
+
+void classify_mem_region(mem_map_entry* mem_region_entry) {
+    unsigned int entry_base_addr = mem_region_entry -> base_addr_low;
+    unsigned int region_length = mem_region_entry -> length_in_bytes_low;
+
+    if (mem_region_entry -> type == AVAILABLE_TO_OS) {
         free_mem_blocks_of_addr_range(entry_base_addr, region_length);
+    } else if (mem_region_entry -> type == SYSTEM_RESERVED) {
+        save_potential_io_range((physical_address) entry_base_addr, region_length);
+        set_mem_blocks_of_address_range(entry_base_addr, region_length);
     } else {
         set_mem_blocks_of_address_range(entry_base_addr, region_length);
     }
 
 }
 
-void config_mem_regions(boot_info* boot_info) {
+void config_mem_regions(boot_info* curr_boot_info) {
 
-    unsigned int num_mem_map_entries = boot_info -> mem_map_num_entries;
-    mem_map_entry* mem_map_entry_list_base_addr = boot_info -> mem_map_entry_list_base_addr;
+    unsigned int num_mem_map_entries = curr_boot_info -> mem_map_num_entries;
+    mem_map_entry* mem_map_entry_list_base_addr = curr_boot_info -> mem_map_entry_list_base_addr;
 
     for (unsigned int i = 0; i < num_mem_map_entries; i++) {
         mem_map_entry* entry = mem_map_entry_list_base_addr + i;
@@ -122,15 +215,23 @@ void set_all_mem_blocks() {
     num_blocks_in_use = num_accessible_memory_blocks;
 }
 
+bool config_finished = false;
+
+bool phys_mem_needs_config() {
+    return !config_finished;
+}
+
 #define BYTES_PER_KB 1024
 
-void config_phys_mem(boot_info* boot_info) {
-	unsigned int num_kb_in_mem = boot_info -> num_kb_in_mem;
+void config_phys_mem(boot_info* curr_boot_info) {
+	unsigned int num_kb_in_mem = curr_boot_info -> num_kb_in_mem;
     unsigned int kb_per_mem_block = BYTES_PER_MEMORY_BLOCK / BYTES_PER_KB;
 	num_accessible_memory_blocks = num_kb_in_mem / kb_per_mem_block;
 
     set_all_mem_blocks();
-	config_mem_regions(boot_info);
+	config_mem_regions(curr_boot_info);
+
+    config_finished = true;
 }
 
 unsigned int get_num_mem_map_sections() {
@@ -207,7 +308,7 @@ first_free_block_offset_resp get_offset_of_first_free_block_in_mem_map_section(u
 
 typedef enum get_first_free_block_num_status {
     GET_FIRST_FREE_BLOCK_NUM_SUCCESS = 0,
-    NO_FREE_MEM_BLOCKS = 1,
+    GET_FIRST_FREE_BLOCK_ALL_IN_USE = 1,
     FAILED_GETTING_SECTION_OFFSET = 2
 } get_first_free_block_num_status;
 
@@ -239,7 +340,9 @@ get_first_free_block_num_resp get_first_free_block_num() {
 	}
 
 	if (free_block_dne) {
-        return (get_first_free_block_num_resp) {status: NO_FREE_BLOCKS, block_num: 0};
+        return (get_first_free_block_num_resp) {
+            status: GET_FIRST_FREE_BLOCK_ALL_IN_USE,
+            block_num: 0};
 	}
 
     unsigned int block_num = section_num * BITS_PER_MEMORY_MAP_SECTION \
@@ -254,7 +357,8 @@ unsigned int get_num_free_blocks() {
 
 typedef enum get_next_free_frame_status {
     GET_NEXT_FREE_FRAME_SUCCESS = 0,
-    COULD_NOT_GET_FIRST_FREE_BLOCK = 1
+    GET_NEXT_FREE_FRAME_ALL_IN_USE = 1,
+    GET_NEXT_FREE_FRAME_FAILED_GET_FIRST_FREE_BLOCK = 2
 } get_next_free_frame_status;
 
 typedef struct get_next_free_frame_resp {
@@ -265,9 +369,13 @@ typedef struct get_next_free_frame_resp {
 get_next_free_frame_resp get_next_free_frame() {
     get_first_free_block_num_resp free_block_num_resp = get_first_free_block_num();
     if (free_block_num_resp.status == GET_FIRST_FREE_BLOCK_NUM_SUCCESS) {
+    } else if (free_block_num_resp.status == GET_FIRST_FREE_BLOCK_ALL_IN_USE) {
+        return (get_next_free_frame_resp) {
+            status: GET_NEXT_FREE_FRAME_ALL_IN_USE,
+            next_free_frame: 0};
     } else {
         return (get_next_free_frame_resp) {
-            status: COULD_NOT_GET_FIRST_FREE_BLOCK,
+            status: GET_NEXT_FREE_FRAME_FAILED_GET_FIRST_FREE_BLOCK,
             next_free_frame: 0};
     }
 
@@ -276,64 +384,61 @@ get_next_free_frame_resp get_next_free_frame() {
         next_free_frame: BYTES_PER_MEMORY_BLOCK * free_block_num_resp.block_num};
 }
 
-bool frame_dne(physical_address frame_base) {
-    if (frame_base % BYTES_PER_MEMORY_BLOCK != 0) {
-        return true;
-    }
-
-    return false;
-}
-
 bool frame_is_in_use(physical_address frame_base) {
     unsigned int block_num = frame_base / BYTES_PER_MEMORY_BLOCK;
     return block_is_set(block_num);
 }
 
-alloc_spec_frame_resp alloc_spec_frame(physical_address frame_base) {
-    if (frame_dne(frame_base)) {
+alloc_spec_frame_resp alloc_spec_frame(physical_address frame_base_addr) {
+    if (frame_base_dne(frame_base_addr)) {
         return (alloc_spec_frame_resp) {
             status: ALLOC_SPEC_FRAME_BASE_DNE,
             buffer_size: 0,
-            buffer: 0};
+            buffer_base_addr: 0};
     }
 
-    if (frame_is_in_use(frame_base)) {
+    if (frame_is_in_use(frame_base_addr)) {
         return (alloc_spec_frame_resp) {
             status: ALLOC_SPEC_FRAME_IN_USE,
             buffer_size: 0,
-            buffer: 0};
+            buffer_base_addr: 0};
     }
 
-    unsigned int block_num = frame_base / BYTES_PER_MEMORY_BLOCK;
+    unsigned int block_num = frame_base_addr / BYTES_PER_MEMORY_BLOCK;
 	set_memory_block(block_num);
 
     return (alloc_spec_frame_resp) {
         status: ALLOC_SPEC_FRAME_SUCCESS,
         buffer_size: BYTES_PER_MEMORY_BLOCK,
-        buffer: frame_base};
+        buffer_base_addr: frame_base_addr};
 }
 
 alloc_block_resp alloc_block() {
     get_next_free_frame_resp next_free_frame_resp = get_next_free_frame();
     if (next_free_frame_resp.status == GET_NEXT_FREE_FRAME_SUCCESS) {
+    } else if (next_free_frame_resp.status == GET_NEXT_FREE_FRAME_ALL_IN_USE) {
+        return (alloc_block_resp) {
+            status: ALLOC_BLOCK_ALL_BLOCKS_IN_USE,
+            buffer_size: 0,
+            buffer_base_addr: 0};
     } else {
         return (alloc_block_resp) {
-            status: COULD_NOT_GET_FREE_FRAME,
+            status: ALLOC_BLOCK_FAILED_GET_FREE_FRAME,
             buffer_size: 0,
-            buffer: 0};
+            buffer_base_addr: 0};
     }
 
     alloc_spec_frame_resp spec_frame_resp = alloc_spec_frame(next_free_frame_resp.next_free_frame);
     if (spec_frame_resp.status == ALLOC_SPEC_FRAME_SUCCESS) {
     } else {
         return (alloc_block_resp) {
-            status: COULD_NOT_ALLOC_SPEC_FRAME,
+            status: ALLOC_BLOCK_FAILED_ALLOC_SPEC_FRAME,
             buffer_size: 0,
-            buffer: 0};
+            buffer_base_addr: 0};
     }
 
     return (alloc_block_resp) {status: ALLOC_BLOCK_SUCCESS,
-                               buffer: spec_frame_resp.buffer,
+                               buffer_base_addr: spec_frame_resp.buffer_base_addr,
                                buffer_size: BYTES_PER_MEMORY_BLOCK};
 }
 
@@ -343,4 +448,5 @@ void free_block(physical_address block_address) {
 
 void clear_phys_mem_config() {
     set_all_mem_blocks();
+    config_finished = false;
 }

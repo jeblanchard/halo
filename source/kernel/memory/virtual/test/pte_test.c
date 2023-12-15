@@ -34,28 +34,58 @@ static void rm_pte_attrib_test(void **state) {
     assert_true(correct_res == fake_entry);
 }
 
+static void set_pte_frame_100000h_test(void **state) {
+    (void) state;
+
+    page_table_entry some_pte = 0;
+    physical_address some_frame_base_addr = 0x100000;
+
+    set_pte_frame_base_addr(&some_pte, some_frame_base_addr);
+
+    physical_address actual_frame_base_addr = get_pte_frame_base_addr(&some_pte);
+    assert_true(actual_frame_base_addr == some_frame_base_addr);
+}
+
 static void set_pte_frame_test(void **state) {
     (void) state;
 
-    page_table_entry fake_entry = 0;
-    physical_address phys_addr = 0x1234;
+    page_table_entry some_pte = 0;
+    physical_address some_frame_base_addr = 3 * PAGE_SIZE_IN_BYTES;
 
-    set_pte_frame_base_addr(&fake_entry, phys_addr);
+    set_pte_frame_base_addr_status frame_set_success_status = \
+        set_pte_frame_base_addr(&some_pte, some_frame_base_addr);
+    assert_true(frame_set_success_status == SET_PTE_FRAME_BASE_ADDR_SUCCESS);
 
-    page_table_entry correct_res = phys_addr << 12;
+    physical_address actual_phys_addr = get_pte_frame_base_addr(&some_pte);
 
-    assert_true(correct_res == fake_entry);
+    assert_true(actual_phys_addr == some_frame_base_addr);
+}
+
+static void set_pte_frame_base_addr_frame_misaligned_test(void **state) {
+    (void) state;
+
+    page_table_entry some_pte = new_pte();
+    physical_address misaligned_frame_base_addr = 3;
+
+    set_pte_frame_base_addr_status misaligned_frame_status = \
+        set_pte_frame_base_addr(&some_pte, misaligned_frame_base_addr);
+
+    assert_true(misaligned_frame_status == FRAME_BASE_ADDR_NOT_ALIGNED);
 }
 
 static void get_pte_frame_test(void **state) {
     (void) state;
 
-    physical_address correct_frame = 0x1234;
-    page_table_entry fake_entry = correct_frame << 12;
+    page_table_entry some_entry = new_pte();
+    physical_address some_frame_base_addr = 4 * PAGE_SIZE_IN_BYTES;
 
-    physical_address retrieved_frame = get_pte_frame_base(&fake_entry);
+    set_pte_frame_base_addr_status frame_set_success_status = \
+        set_pte_frame_base_addr(&some_entry, some_frame_base_addr);
+    assert_true(frame_set_success_status == SET_PTE_FRAME_BASE_ADDR_SUCCESS);
 
-    assert_true(correct_frame == retrieved_frame);
+    physical_address retrieved_frame = get_pte_frame_base_addr(&some_entry);
+
+    assert_true(some_frame_base_addr == retrieved_frame);
 }
 
 static void pte_is_writeable_test(void **state) {
@@ -119,13 +149,15 @@ int main() {
         cmocka_unit_test(add_pte_attrib_test),
         cmocka_unit_test(rm_pte_attrib_test),
         cmocka_unit_test(set_pte_frame_test),
+        cmocka_unit_test(set_pte_frame_base_addr_frame_misaligned_test),
         cmocka_unit_test(get_pte_frame_test),
         cmocka_unit_test(pte_is_writeable_test),
         cmocka_unit_test(pte_is_present_test),
         cmocka_unit_test(is_attrib_set_test),
         cmocka_unit_test(new_pte_test),
         cmocka_unit_test(frame_is_missing_test),
-        cmocka_unit_test(new_page_table_test)
+        cmocka_unit_test(new_page_table_test),
+        cmocka_unit_test(set_pte_frame_100000h_test)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

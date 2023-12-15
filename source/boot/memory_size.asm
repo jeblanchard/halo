@@ -112,7 +112,7 @@ get_memory_map_from_bios:
 	xor	ebp, ebp			    ; number of entries will be stored here
 
 	mov	eax, 0x0000e820                    ; select GET SYSTEM MEMORY MAP instruction
-	mov	edx, 0x534d4150	                   ; 'SMAP'
+	mov	edx, 0x534d4150
 	mov	ecx, memory_map_entry_size		   ; memory map entry struct is 24 bytes
 
     xor	ebx, ebx                           ; set ebx to 0 to start at the beginning of the map
