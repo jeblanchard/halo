@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "kernel/memory/physical/physical_mem.h"
+#include "kernel/memory/phys_mem_mgr.h"
 
 #define BYTES_PER_KB 1024
 #define FOUR_GB 0x100000000
@@ -55,7 +55,7 @@ typedef enum get_io_addr_status {
     NO_IO_REGION = 1
 } get_io_addr_status;
 
-typedef struct get_io_addr_resp {
+typedef struct {
     get_io_addr_status status;
     physical_address io_addr;
 } get_io_addr_resp;

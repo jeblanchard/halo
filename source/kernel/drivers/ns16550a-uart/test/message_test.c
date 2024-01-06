@@ -35,7 +35,8 @@ static void test_queue_msg_for_tx(void **state) {
 
 int main() {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test_teardown(test_queue_msg_for_tx, test_queue_msg_for_tx_teardown),
+        cmocka_unit_test_teardown(test_queue_msg_for_tx,
+            test_queue_msg_for_tx_teardown),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

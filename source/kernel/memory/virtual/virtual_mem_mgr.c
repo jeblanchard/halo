@@ -1,8 +1,8 @@
 #include "virtual_mem_mgr.h"
 #include "kernel/memory/virtual/pte.h"
-#include "kernel/memory/physical/physical_mem.h"
+#include "kernel/memory/phys_mem_mgr.h"
 #include "stddef.h"
-#include "kernel/memory/virtual/pde/pde.h"
+#include "kernel/memory/virtual/pde.h"
 #include "stdio.h"
 
 static unsigned int pages_in_use;

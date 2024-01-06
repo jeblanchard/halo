@@ -1,5 +1,5 @@
 set (CMOCKA_PATH C:/"Program Files"/cmocka-1.1.7
-    CACHE STRING "Windows cmocka path")
+    CACHE STRING "Expected Windows cmocka path")
 
 # Search for the CMocka include directory
 find_path(CMOCKA_INCLUDE_DIR

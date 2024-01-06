@@ -90,7 +90,7 @@ void set_gdt_null_descriptor() {
 }
 
 // Initialize our GDT
-void initialize_gdt() {
+void init_gdt() {
     clear_gdt();
 
     set_gdt_null_descriptor();

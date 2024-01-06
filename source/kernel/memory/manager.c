@@ -1,4 +1,4 @@
-#include "kernel/memory/physical/physical_mem.h"
+#include "kernel/memory/phys_mem_mgr.h"
 #include "manager.h"
 #include "stddef.h"
 #include "stdio.h"

@@ -22,5 +22,3 @@ bool process_exists(proc_id id);
 void stop_proc(proc_id id);
 
 bool proc_is_running(proc_id id);
-
-void run_proc(proc_id id);

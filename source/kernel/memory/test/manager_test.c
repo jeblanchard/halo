@@ -7,7 +7,7 @@
 #include <stdbool.h>
 
 #include "kernel/memory/manager.c"
-#include "kernel/memory/physical/physical_mem.h"
+#include "kernel/memory/phys_mem_mgr.h"
 
 #define FAKE_BYTES_PER_MEM_BLOCK 4096
 
@@ -23,7 +23,7 @@ char fake_physical_mem_block[NUM_BYTES_HALLOCED];
 alloc_block_resp alloc_block_success_resp = \
     {status: ALLOC_BLOCK_SUCCESS, buffer_base_addr: (physical_address) &fake_physical_mem_block};
 
-static void alloc_page(void **state) {
+static void alloc_page_test(void **state) {
     (void) state;
 
     will_return(__wrap_alloc_block, (uintptr_t) &alloc_block_success_resp);
@@ -70,7 +70,7 @@ static void free(void **state) {
 
 int main() {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(alloc_page),
+        cmocka_unit_test(alloc_page_test),
         cmocka_unit_test(halloc_not_enough_mem),
         cmocka_unit_test(free)
     };

@@ -70,8 +70,3 @@ bool proc_is_running(proc_id id) {
 
     return false;
 }
-
-void run_proc(proc_id id) {
-    (void) id;
-    
-}

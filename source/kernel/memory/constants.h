@@ -1,1 +1,0 @@
-#define MEM_UNIT_SIZE_IN_BYTES 4096

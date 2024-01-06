@@ -5,7 +5,7 @@
 #include "gdt.h"
 #include "drivers/keyboard.h"
 #include "user-space/cmd-line/cmd_line.h"
-#include "kernel/memory/physical/physical_mem.h"
+#include "kernel/memory/phys_mem_mgr.h"
 #include "memory/manager.h"
 #include "drivers/pci.h"
 
@@ -13,7 +13,7 @@
 void initialize_kernel(struct boot_info* boot_info) {
     initialize_screen();
 
-    initialize_gdt();
+    init_gdt();
     init_idt();
 
     initialize_pic();

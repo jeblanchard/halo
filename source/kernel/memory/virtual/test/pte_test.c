@@ -8,9 +8,9 @@
 #include <stdbool.h>
 
 #include "kernel/memory/virtual/pte.h"
-#include "kernel/memory/virtual/pde/pde.h"
+#include "kernel/memory/virtual/pde.h"
 
-static void add_pte_attrib_test(void **state) {
+static void load_page_to_mem(void **state) {
     (void) state;
 
     page_table_entry fake_entry = 0;
@@ -146,7 +146,7 @@ static void new_page_table_test(void **state) {
 
 int main() {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(add_pte_attrib_test),
+        cmocka_unit_test(load_page_to_mem),
         cmocka_unit_test(rm_pte_attrib_test),
         cmocka_unit_test(set_pte_frame_test),
         cmocka_unit_test(set_pte_frame_base_addr_frame_misaligned_test),

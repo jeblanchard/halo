@@ -1,6 +1,6 @@
 #pragma once
 
-#include "kernel/memory/physical/physical_mem.h"
+#include "kernel/memory/phys_mem_mgr.h"
 #include <stdbool.h>
 
 typedef unsigned int page_dir_entry;

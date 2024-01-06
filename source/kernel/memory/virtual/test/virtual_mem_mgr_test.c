@@ -9,7 +9,7 @@
 
 #include "kernel/memory/virtual/pte.h"
 #include "kernel/memory/virtual/virtual_mem_mgr.h"
-#include "kernel/memory/virtual/pde/pde.h"
+#include "kernel/memory/virtual/pde.h"
 
 alloc_block_resp __wrap_alloc_block() {
     alloc_block_resp* resp = mock_ptr_type(alloc_block_resp*);

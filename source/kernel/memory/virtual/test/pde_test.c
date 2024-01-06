@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "kernel/memory/virtual/pde/pde.h"
+#include "kernel/memory/virtual/pde.h"
 #include "kernel/memory/virtual/pte.h"
 
 static void add_pde_attrib_test(void **state) {

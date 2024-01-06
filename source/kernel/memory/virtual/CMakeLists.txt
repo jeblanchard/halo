@@ -1,5 +1,4 @@
 add_subdirectory(test)
-add_subdirectory(pde)
 
 set(C_SOURCES
     pte.c

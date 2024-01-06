@@ -1,5 +1,5 @@
 #include "pte.h"
-#include "pde/pde.h"
+#include "pde.h"
 
 typedef enum alloc_page_status {
     ALLOC_PAGE_SUCCESS = 0,

@@ -4,7 +4,7 @@
 #include "kernel/drivers/vesa-display/vesa_display.h"
 #include "stdio.h"
 #include "kernel/memory/manager.h"
-#include "physical_mem.h"
+#include "phys_mem_mgr.h"
 
 #define NUM_MEMORY_BLOCKS (MAX_MEM_ADDR_32_BIT / BYTES_PER_MEMORY_BLOCK + 1)
 #define BITS_PER_MEMORY_MAP_SECTION 32
