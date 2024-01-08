@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.27.5)
 
-# declare the project name and the
+# Declare the project name and the
 # languages used
 project(Halo C ASM_NASM)
 
@@ -8,15 +8,8 @@ project(Halo C ASM_NASM)
 # modules
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
-# Mark where to find cmocka CMake modules
-list(APPEND CMAKE_MODULE_PATH
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmocka/Modules)
-
 if (UNIT_TESTING)
-
-    # Ensure that cmocka is available to use
-    find_package(CMocka)
-    include(AddCMockaTest)
+    include(AddHaloTest)
 endif()
 
 # When we process all of our source
@@ -31,7 +24,6 @@ set(ALL_BOOT_SOURCES "")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source)
 
 set(DEFAULT_GCC_OPTIONS -Werror -Wextra -Wall)
-set(CMOCKA_GCC_INCLUDE_OPTION -I${CMOCKA_INCLUDE_DIR})
 
 include(GetAbsolutePaths)
 

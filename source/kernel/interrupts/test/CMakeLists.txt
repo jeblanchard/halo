@@ -1,4 +1,5 @@
-add_cmocka_test(idt
+add_halo_test(
+    NAME idt_test
     SOURCES idt_test.c
         ${SOURCE_DIR}/kernel/utils/memory.c
         ${SOURCE_DIR}/kernel/interrupts/predefined/predefined_interrupt_loading.c
@@ -11,7 +12,4 @@ add_cmocka_test(idt
         ${SOURCE_DIR}/kernel/utils/io.c
         ${SOURCE_DIR}/kernel/drivers/pit.c
         ${SOURCE_DIR}/kernel/drivers/8259a-pic/pic.c
-
-    COMPILE_OPTIONS ${DEFAULT_GCC_OPTIONS} ${CMOCKA_GCC_INCLUDE_OPTION}
-        LINK_LIBRARIES ${CMOCKA_LIBRARY}
 )

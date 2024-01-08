@@ -1,16 +1,15 @@
 set(MEM_MGR_LINK_OPTIONS -Wl,--wrap=alloc_block)
 
-add_cmocka_test(mem_manager_test
+add_halo_test(
+    NAME mem_manager_test
     SOURCES manager_test.c
-
-    COMPILE_OPTIONS ${DEFAULT_GCC_OPTIONS} ${CMOCKA_GCC_INCLUDE_OPTION}
-    LINK_LIBRARIES ${CMOCKA_LIBRARY}
     LINK_OPTIONS ${MEM_MGR_LINK_OPTIONS}
 )
 
 set(PHYS_MEM_TEST_LINK_OPTIONS -Wl,--wrap=load_pdbr_asm)
 
-add_cmocka_test(physical_mem_test
+add_halo_test(
+    NAME physical_mem_test
     SOURCES physical_mem_test.c 
         ${SOURCE_DIR}/kernel/memory/phys_mem_mgr.c
         ${SOURCE_DIR}/kernel/utils/memory.c
@@ -26,7 +25,5 @@ add_cmocka_test(physical_mem_test
         ${SOURCE_DIR}/kernel/interrupts/predefined/interrupt_handlers.asm
         ${SOURCE_DIR}/kernel/interrupts/predefined/ia_32_core_handlers.c
 
-    COMPILE_OPTIONS ${DEFAULT_GCC_OPTIONS} ${CMOCKA_GCC_INCLUDE_OPTION}
-    LINK_LIBRARIES ${CMOCKA_LIBRARY}
     LINK_OPTIONS ${PHYS_MEM_TEST_LINK_OPTIONS}
 )

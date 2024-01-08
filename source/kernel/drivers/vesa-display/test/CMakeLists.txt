@@ -3,7 +3,8 @@ set(TEST_LINK_OPTIONS ${TEST_LINK_OPTIONS},--wrap=get_cursor_offset,--wrap=set_c
 set(TEST_LINK_OPTIONS ${TEST_LINK_OPTIONS},--wrap=port_byte_out,--wrap=port_byte_in)
 set(TEST_LINK_OPTIONS ${TEST_LINK_OPTIONS},--wrap=get_screen_offset)
 
-add_cmocka_test(vesa_display
+add_halo_test(
+    NAME vesa_display
     SOURCES vesa_display_test.c ../../../utils/memory.c
         ../../../utils/standard.c
         ../../../utils/string.c ../../pit.c ../../8259a-pic/pic.c
@@ -14,10 +15,5 @@ add_cmocka_test(vesa_display
         ../../../interrupts/predefined/interrupt_handlers.asm
         ../vesa_display.c
 
-    COMPILE_OPTIONS -Werror -Wextra -Wall
-    LINK_LIBRARIES ${CMOCKA_LIBRARY}
     LINK_OPTIONS ${TEST_LINK_OPTIONS}
 )
-
-target_include_directories(vesa_display
-    PUBLIC ${CMOCKA_INCLUDE_DIR})
